@@ -8,8 +8,15 @@ interface Props {
   onCancel: () => void;
 }
 
+const PAYMENT_LABEL: Record<string, string> = {
+  pix: 'Pagamento via Pix',
+  credit_card: 'Pagamento no cartão',
+  cash: 'Pagamento em dinheiro',
+  wallet: 'Pagamento com saldo',
+};
+
 export const SearchingDriverScreen: React.FC<Props> = ({ onCancel }) => {
-  const { activeRide } = usePassengerStore();
+  const { activeRide, busy } = usePassengerStore();
 
   return (
     <View style={styles.screen}>
@@ -40,12 +47,22 @@ export const SearchingDriverScreen: React.FC<Props> = ({ onCancel }) => {
             <Text style={styles.route}>
               {activeRide?.origin.shortAddress} → {activeRide?.destination.shortAddress}
             </Text>
-            <Text style={styles.meta}>VozTri Pop • Pagamento via Pix</Text>
+            <Text style={styles.meta}>
+              {activeRide?.categoryName ?? 'VOZTRI'} •{' '}
+              {activeRide ? PAYMENT_LABEL[activeRide.paymentMethod] ?? activeRide.paymentMethod : ''}
+            </Text>
           </View>
-          <Text style={styles.price}>R$ 24,50</Text>
+          <Text style={styles.price}>{activeRide?.formattedPrice ?? ''}</Text>
         </View>
 
-        <Button label="Cancelar Busca" onPress={onCancel} style={styles.cancel} textStyle={styles.cancelText} />
+        <Button
+          label={busy ? 'Cancelando…' : 'Cancelar Busca'}
+          accessibilityLabel="Cancelar Busca"
+          onPress={onCancel}
+          disabled={busy}
+          style={styles.cancel}
+          textStyle={styles.cancelText}
+        />
       </View>
     </View>
   );

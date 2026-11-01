@@ -1,27 +1,35 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
-import { Button, shadow } from '../ui/kit.js';
+import { useDriverStore } from '../store/driverStore.js';
+import { Button, formatBRL, shadow } from '../ui/kit.js';
 
 interface Props {
   onBack: () => void;
   onOpenPayout: () => void;
 }
 
-const DAYS = [
-  { day: 'Seg', amount: 180, height: 60 },
-  { day: 'Ter', amount: 220, height: 75 },
-  { day: 'Qua', amount: 195, height: 65 },
-  { day: 'Qui', amount: 310, height: 100 },
-  { day: 'Sex', amount: 280, height: 90 },
-  { day: 'Sáb', amount: 340, height: 110 },
-  { day: 'Dom', amount: 248, height: 80, isToday: true },
-];
+/** Altura máxima de uma barra do gráfico (a maior barra da semana). */
+const MAX_BAR = 110;
+
+function formatDay(date: string): string {
+  const [, month, day] = date.split('-');
+  return `${day}/${month}`;
+}
 
 export const WeeklyEarningsScreen: React.FC<Props> = ({ onBack, onOpenPayout }) => {
+  const { earnings, refreshEarnings } = useDriverStore();
+
+  useEffect(() => {
+    void refreshEarnings();
+  }, [refreshEarnings]);
+
+  const days = earnings?.daily ?? [];
+  const maxCents = Math.max(1, ...days.map((d) => d.cents));
+  const range = days.length ? `${formatDay(days[0]!.date)} - ${formatDay(days[days.length - 1]!.date)}` : '';
+
   return (
     <View style={styles.screen}>
-      {/* Cabeçalho */}
       <View style={styles.header}>
         <Button label="← Voltar" onPress={onBack} textStyle={styles.back} />
         <Text style={styles.headerTitle} accessibilityRole="header">
@@ -30,49 +38,58 @@ export const WeeklyEarningsScreen: React.FC<Props> = ({ onBack, onOpenPayout }) 
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Total da semana */}
-        <View style={[styles.card, styles.center]}>
-          <Text style={styles.overline}>Semana Atual (27 Out - 02 Nov)</Text>
-          <Text style={[styles.total, { color: VoztriColors.brand.primary }]}>R$ 1.773,00</Text>
-          <Text style={styles.growth}>▲ 14% a mais que a semana anterior</Text>
-
-          <Button
-            label="Transferir Saldo via Pix"
-            onPress={onOpenPayout}
-            style={[styles.payoutButton, { backgroundColor: VoztriColors.brand.primary }]}
-            textStyle={styles.payoutText}
-          />
+      {!earnings ? (
+        <View style={styles.loading}>
+          <ActivityIndicator color={VoztriColors.brand.primary} accessibilityLabel="Carregando ganhos" />
         </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.content}>
+          {/* Total da semana */}
+          <View style={[styles.card, styles.center]}>
+            <Text style={styles.overline}>Semana Atual ({range})</Text>
+            <Text style={[styles.total, { color: VoztriColors.brand.primary }]}>{formatBRL(earnings.weekCents)}</Text>
+            <Text style={styles.hint}>Valores líquidos, após a taxa da plataforma</Text>
 
-        {/* Gráfico de barras semanal */}
-        <View style={styles.card}>
-          <Text style={styles.chartTitle}>Ganhos Diários</Text>
-          <View style={styles.chart}>
-            {DAYS.map((d) => (
-              <View key={d.day} style={styles.bar}>
-                <Text style={[styles.barValue, { color: d.isToday ? VoztriColors.brand.primary : '#7B7489' }]}>
-                  {d.amount}
-                </Text>
-                <View
-                  style={[
-                    styles.barFill,
-                    { height: d.height, backgroundColor: d.isToday ? VoztriColors.brand.primary : '#E5E7FF' },
-                  ]}
-                />
-                <Text
-                  style={[
-                    styles.barDay,
-                    { fontWeight: d.isToday ? '800' : '600', color: d.isToday ? '#151A31' : '#7B7489' },
-                  ]}
-                >
-                  {d.day}
-                </Text>
-              </View>
-            ))}
+            <Button
+              label="Transferir Saldo via Pix"
+              onPress={onOpenPayout}
+              style={[styles.payoutButton, { backgroundColor: VoztriColors.brand.primary }]}
+              textStyle={styles.payoutText}
+            />
           </View>
-        </View>
-      </ScrollView>
+
+          {/* Gráfico de barras: altura proporcional ao melhor dia */}
+          <View style={styles.card}>
+            <Text style={styles.chartTitle}>Ganhos Diários</Text>
+            <View style={styles.chart}>
+              {days.map((d) => (
+                <View key={d.date} style={styles.bar} accessibilityLabel={`${d.label}: ${formatBRL(d.cents)}`}>
+                  <Text style={[styles.barValue, { color: d.isToday ? VoztriColors.brand.primary : '#7B7489' }]}>
+                    {Math.round(d.cents / 100)}
+                  </Text>
+                  <View
+                    style={[
+                      styles.barFill,
+                      {
+                        height: Math.max(4, Math.round((d.cents / maxCents) * MAX_BAR)),
+                        backgroundColor: d.isToday ? VoztriColors.brand.primary : '#E5E7FF',
+                      },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.barDay,
+                      { fontWeight: d.isToday ? '800' : '600', color: d.isToday ? '#151A31' : '#7B7489' },
+                    ]}
+                  >
+                    {d.label}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+      )}
     </View>
   );
 };
@@ -105,6 +122,11 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 40,
   },
+  loading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   content: {
     padding: 20,
   },
@@ -129,10 +151,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginVertical: 6,
   },
-  growth: {
-    fontSize: 13,
-    color: '#00C853',
-    fontWeight: '700',
+  hint: {
+    fontSize: 12,
+    color: '#7B7489',
   },
   payoutButton: {
     marginTop: 16,

@@ -112,25 +112,41 @@ docker compose exec app php artisan migrate --seed
   - As duas rotas `/auth/admin/*` têm limite de **5 requisições por minuto por IP, somadas** (`throttle:5,1`); acima disso respondem `429`.
 - `GET /api/v1/auth/me`: Retorna perfil do usuário logado e suas permissões.
 
+> As rotas de `/rides/*` e `/driver/*` são usadas pelos apps mobile e respondem em `camelCase`, no formato dos tipos de `packages/shared-types` (`Ride`, `DriverCurrentState`, `DriverEarningsSummary`, `ChatMessage`). A corrida é montada pelo `RidePresenter`: o **PIN de embarque só vai para o passageiro dono** e não há CPF, telefone nem PIN de emergência dos participantes. Erros vêm como `{ "message": "...", "error": "CODIGO" }`.
+
+### Fluxo de despacho (ofertas por polling)
+
+`REQUESTED → SEARCHING → OFFERED → ACCEPTED → DRIVER_EN_ROUTE → DRIVER_ARRIVED → IN_PROGRESS → COMPLETED` (ou `CANCELLED`), com todas as transições pela `RideStateMachine`, que grava `ride_status_history`.
+
+1. O passageiro solicita: a corrida é oferecida ao motorista **online, aprovado, livre e da mesma categoria mais próximo** do embarque (`ride_offers`, validade de **15 s**).
+2. O app do motorista consulta `GET /driver/rides/current` a cada 3 s e mostra a oferta.
+3. Aceite → `DRIVER_EN_ROUTE`. Recusa ou expiração → volta para `SEARCHING` e vai ao próximo motorista (quem já recebeu essa corrida não a recebe de novo). Sem motoristas, fica em `SEARCHING` até o passageiro cancelar.
+4. Não há worker: ofertas vencidas são tratadas no polling do passageiro (`GET /rides/{id}`) e do motorista.
+
 ### Motorista
 - `POST /api/v1/driver/register`: Cadastro de dados complementares e veículo.
 - `POST /api/v1/driver/documents`: Envio de CNH e CRLV para análise.
-- `POST /api/v1/driver/status`: Altera disponibilidade (`ONLINE`, `OFFLINE`).
+- `POST /api/v1/driver/status`: Body `{ "isOnline": true }`. Só motoristas `approved` ficam online (403 `DRIVER_NOT_APPROVED`).
+- `GET /api/v1/driver/rides/current`: Polling do app: `{ isOnline, offer, ride }`. `offer` traz `rideId`, `secondsLeft`, endereços, `earningsCents` (líquido, após 15%), `categoryName` e `passengerName`; `ride` é a corrida em andamento.
 - `POST /api/v1/driver/location`: Transmite coordenadas de GPS (`latitude`, `longitude`, `heading`, `speed`).
-- `GET /api/v1/driver/earnings`: Extrato de ganhos diários, semanais e repasses Pix.
+- `GET /api/v1/driver/earnings`: Ganhos **líquidos** do ledger: `todayCents`, `weekCents`, `daily` (segunda a domingo, com `isToday`), `ridesCount`, `availableBalanceCents`, `rating`, `pixKey`, `pixKeyType`. `onlineHours` ainda é `null`.
 
 ### Passageiro & Corridas
-- `POST /api/v1/rides/estimate`: Calcula rota via OSRM e retorna estimativa de preço por categoria.
-- `POST /api/v1/rides/request`: Inicia uma solicitação de corrida com chave de idempotência.
-- `POST /api/v1/rides/{id}/accept`: Motorista aceita a corrida oferecida (com lock atômico).
-- `POST /api/v1/rides/{id}/start`: Motorista valida PIN do passageiro e inicia a viagem.
-- `POST /api/v1/rides/{id}/complete`: Finaliza a corrida e dispara o fechamento financeiro.
-- `POST /api/v1/rides/{id}/cancel`: Cancela corrida com regras de taxa e motivo.
+- `POST /api/v1/rides/estimate`: Estimativa das 4 categorias pela distância Haversine × 1,35 (fator urbano) a 28 km/h, com o mesmo cálculo da cobrança (`FareCalculator`).
+- `POST /api/v1/rides/request`: Só passageiros. Body `{ origin, destination, category, paymentMethod }` (endereço e coordenadas). Cobra o valor da estimativa, gera PIN aleatório e já despacha. 409 `RIDE_ALREADY_ACTIVE` (com a corrida em `ride`) se houver outra em andamento.
+- `GET /api/v1/rides/{id}`: Participantes, motorista que recebeu oferta ou admin. Também faz a corrida avançar no despacho.
+- `POST /api/v1/rides/{id}/accept`: Motorista que recebeu a oferta (403 `NO_OFFER`; 409 `OFFER_EXPIRED`, `RIDE_UNAVAILABLE` ou `DRIVER_BUSY`). Lock atômico.
+- `POST /api/v1/rides/{id}/reject`: Motorista recusa a oferta; a corrida segue para o próximo.
+- `POST /api/v1/rides/{id}/validate-pin`: Motorista atribuído valida o PIN informado pelo passageiro e inicia a viagem (422 `INVALID_PIN`; 409 fora de `DRIVER_EN_ROUTE`/`DRIVER_ARRIVED`).
+- `POST /api/v1/rides/{id}/complete`: Motorista atribuído, só em `IN_PROGRESS`. Lança no ledger o líquido do motorista e a comissão de 15%.
+- `POST /api/v1/rides/{id}/cancel`: Passageiro dono ou motorista atribuído, com `reason`. Recolhe a oferta pendente.
+- `POST /api/v1/billing/rating`: Passageiro dono, só corrida `COMPLETED`, uma vez (409 `ALREADY_RATED`). Atualiza a média do motorista.
+- `POST /api/v1/billing/payout`: Repasse Pix do motorista; recusa valor acima do saldo (422 `INSUFFICIENT_BALANCE`). Mínimo R$ 10,00.
 
 ### Chat & Emergência (SOS)
-- `POST /api/v1/rides/{id}/chat`: Envia mensagem persistida via WebSocket.
-- `POST /api/v1/rides/{id}/sos`: Aciona alerta de emergência 24h com gravação de ocorrência.
-- `POST /api/v1/rides/{id}/sos/cancel`: Cancela o SOS mediante senha de segurança do passageiro.
+- `GET|POST /api/v1/rides/{id}/chat`: Histórico e envio (`{ "message": "..." }`) entre os participantes da corrida; mensagens no formato `ChatMessage` (`text`, `senderRole`). Os apps atualizam por polling.
+- `POST /api/v1/rides/{id}/sos`: Passageiro dono aciona o alerta com `latitude`/`longitude` (o app envia o embarque, pois ainda não lê o GPS).
+- `POST /api/v1/rides/{id}/sos/cancel`: Desativa com o PIN de emergência do passageiro (`emergencyPin`; 422 `INVALID_EMERGENCY_PIN`).
 
 ---
 

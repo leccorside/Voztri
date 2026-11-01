@@ -1,11 +1,17 @@
 import { VoztriApiClient } from '../client.js';
-import { DriverEarningsSummary } from '@voztri/shared-types';
+import { DriverCurrentState, DriverEarningsSummary, Ride } from '@voztri/shared-types';
 
 export class DriverApi {
   constructor(private client: VoztriApiClient) {}
 
-  async setOnlineStatus(isOnline: boolean): Promise<{ isOnline: boolean }> {
-    const res = await this.client.post<{ isOnline: boolean }>('/driver/status', { isOnline });
+  async setOnlineStatus(isOnline: boolean): Promise<{ isOnline: boolean; message: string }> {
+    const res = await this.client.post<{ isOnline: boolean; message: string }>('/driver/status', { isOnline });
+    return res.data;
+  }
+
+  /** Polling do motorista: corrida em andamento ou oferta pendente. */
+  async getCurrent(): Promise<DriverCurrentState> {
+    const res = await this.client.get<DriverCurrentState>('/driver/rides/current');
     return res.data;
   }
 
@@ -18,8 +24,8 @@ export class DriverApi {
     return res.data;
   }
 
-  async acceptOffer(rideId: string): Promise<{ success: boolean; rideId: string }> {
-    const res = await this.client.post<{ success: boolean; rideId: string }>(`/rides/${rideId}/accept`);
+  async acceptOffer(rideId: string): Promise<Ride> {
+    const res = await this.client.post<Ride>(`/rides/${rideId}/accept`);
     return res.data;
   }
 
@@ -28,4 +34,3 @@ export class DriverApi {
     return res.data;
   }
 }
-

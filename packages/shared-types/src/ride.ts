@@ -1,5 +1,4 @@
-import { Driver } from './driver.js';
-import { Passenger } from './passenger.js';
+import { VehicleCategory } from './driver.js';
 import { AddressLocation, RouteGeometry } from './location.js';
 
 export type RideStatus =
@@ -29,19 +28,52 @@ export interface FareEstimate {
   description: string;
 }
 
+/** Dados públicos de um participante da corrida (sem CPF, telefone ou PINs). */
+export interface RideUserSummary {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  rating: number | null;
+}
+
+export interface RideVehicleSummary {
+  brand: string;
+  model: string;
+  color: string;
+  plate: string;
+  category: VehicleCategory;
+}
+
+export interface RidePassengerSummary {
+  id: string;
+  user: RideUserSummary | null;
+}
+
+export interface RideDriverSummary {
+  id: string;
+  user: RideUserSummary | null;
+  vehicle: RideVehicleSummary | null;
+}
+
+/** Formato das respostas de /rides/* e /driver/rides/current (RidePresenter). */
 export interface Ride {
   id: string;
   passengerId: string;
-  passenger?: Passenger;
+  passenger?: RidePassengerSummary | null;
   driverId?: string | null;
-  driver?: Driver | null;
+  driver?: RideDriverSummary | null;
   status: RideStatus;
   category: 'pop' | 'black' | 'mulher' | 'moto';
+  categoryName?: string;
   origin: AddressLocation;
   destination: AddressLocation;
   route: RouteGeometry;
   priceCents: number;
-  boardingPin: string;
+  formattedPrice?: string;
+  /** Só vem preenchido para o passageiro dono da corrida. */
+  boardingPin: string | null;
+  /** Ganho líquido do motorista; só vem para o motorista atribuído. */
+  driverEarningsCents?: number | null;
   paymentMethod: PaymentMethodType;
   paymentStatus: PaymentStatus;
   createdAt: string;

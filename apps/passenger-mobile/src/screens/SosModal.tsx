@@ -8,14 +8,15 @@ interface Props {
 }
 
 export const SosModal: React.FC<Props> = ({ onClose }) => {
-  const { isSosActive, triggerSos, cancelSos } = usePassengerStore();
+  const { isSosActive, triggerSos, cancelSos, busy } = usePassengerStore();
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
 
-  const handleCancelSos = () => {
-    if (cancelSos(pin)) {
+  const handleCancelSos = async () => {
+    if (await cancelSos(pin)) {
       onClose();
     } else {
+      setPin('');
       setError(true);
     }
   };
@@ -44,8 +45,10 @@ export const SosModal: React.FC<Props> = ({ onClose }) => {
               </Text>
 
               <Button
-                label="ACIONAR SOS IMEDIATAMENTE"
-                onPress={triggerSos}
+                label={busy ? 'ACIONANDO…' : 'ACIONAR SOS IMEDIATAMENTE'}
+                accessibilityLabel="ACIONAR SOS IMEDIATAMENTE"
+                onPress={() => void triggerSos()}
+                disabled={busy}
                 style={styles.trigger}
                 textStyle={styles.triggerText}
               />
@@ -56,22 +59,20 @@ export const SosModal: React.FC<Props> = ({ onClose }) => {
                 ⚠️ O ALERTA SOS ESTÁ ATIVO! Nossa equipe está monitorando esta corrida.
               </Text>
 
-              <Text style={styles.pinPrompt}>
-                Para desativar o alerta, digite seu PIN de emergência (Padrão: 1234):
-              </Text>
+              <Text style={styles.pinPrompt}>Para desativar o alerta, digite seu PIN de emergência:</Text>
 
               <TextInput
                 secureTextEntry
                 keyboardType="number-pad"
-                maxLength={4}
-                placeholder="Digite o PIN (1234)"
+                maxLength={6}
+                placeholder="PIN de emergência"
                 placeholderTextColor="#7B7489"
                 value={pin}
                 onChangeText={(text) => {
                   setPin(text);
                   setError(false);
                 }}
-                onSubmitEditing={handleCancelSos}
+                onSubmitEditing={() => void handleCancelSos()}
                 accessibilityLabel="PIN de emergência"
                 style={[styles.pinInput, error ? styles.pinInputError : styles.pinInputNormal]}
               />
@@ -83,8 +84,10 @@ export const SosModal: React.FC<Props> = ({ onClose }) => {
               )}
 
               <Button
-                label="Desativar Alerta com PIN"
-                onPress={handleCancelSos}
+                label={busy ? 'Verificando…' : 'Desativar Alerta com PIN'}
+                accessibilityLabel="Desativar Alerta com PIN"
+                onPress={() => void handleCancelSos()}
+                disabled={busy || pin.length < 4}
                 style={styles.deactivate}
                 textStyle={styles.deactivateText}
               />

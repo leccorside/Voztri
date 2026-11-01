@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { PassengerState, usePassengerStore } from '../store/passengerStore.js';
 import { BottomSheetModal, Button, shadow } from '../ui/kit.js';
@@ -21,10 +21,22 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string }[] = [
 const CATEGORY_ICON: Record<string, string> = { pop: '🚗', black: '🚘', mulher: '🌸', moto: '🛵' };
 
 export const CategorySelectionSheet: React.FC<Props> = ({ onBack, onConfirm }) => {
-  const { destination, estimates, selectedCategory, selectCategory, selectedPaymentMethod, selectPaymentMethod } = usePassengerStore();
+  const {
+    destination,
+    estimates,
+    estimatesLoading,
+    loadEstimates,
+    selectedCategory,
+    selectCategory,
+    selectedPaymentMethod,
+    selectPaymentMethod,
+    busy,
+  } = usePassengerStore();
   const [paymentPickerOpen, setPaymentPickerOpen] = useState(false);
 
   const currentEstimate = estimates.find((e) => e.category === selectedCategory) || estimates[0];
+  const km = currentEstimate ? `${String(currentEstimate.distanceKm).replace('.', ',')} km` : '—';
+  const minutes = currentEstimate ? `~${currentEstimate.estimatedMinutes} minutos` : '—';
   const paymentLabel = PAYMENT_OPTIONS.find((o) => o.value === selectedPaymentMethod)?.label ?? '';
 
   return (
@@ -40,15 +52,32 @@ export const CategorySelectionSheet: React.FC<Props> = ({ onBack, onConfirm }) =
       {/* Resumo do trajeto */}
       <View style={styles.routeSummary}>
         <Text style={styles.summaryText}>
-          Distância: <Text style={{ color: '#151A31', fontWeight: '800' }}>6.8 km</Text>
+          Distância: <Text style={{ color: '#151A31', fontWeight: '800' }}>{km}</Text>
         </Text>
         <Text style={styles.summaryText}>
-          Previsão: <Text style={{ color: '#00C853', fontWeight: '800' }}>~14 minutos</Text>
+          Previsão: <Text style={{ color: '#00C853', fontWeight: '800' }}>{minutes}</Text>
         </Text>
       </View>
 
-      {/* Categorias */}
+      {/* Categorias (estimativas calculadas pela API) */}
       <ScrollView contentContainerStyle={styles.list}>
+        {estimatesLoading && (
+          <View style={styles.loading}>
+            <ActivityIndicator color={VoztriColors.brand.primary} accessibilityLabel="Calculando preços" />
+            <Text style={styles.loadingText}>Calculando preços…</Text>
+          </View>
+        )}
+        {!estimatesLoading && estimates.length === 0 && (
+          <View style={styles.loading}>
+            <Text style={styles.loadingText}>Não foi possível calcular os preços.</Text>
+            <Button
+              label="Tentar de novo"
+              onPress={() => void loadEstimates()}
+              style={styles.retry}
+              textStyle={[styles.retryText, { color: VoztriColors.brand.primary }]}
+            />
+          </View>
+        )}
         {estimates.map((item) => {
           const isSelected = item.category === selectedCategory;
           return (
@@ -104,8 +133,15 @@ export const CategorySelectionSheet: React.FC<Props> = ({ onBack, onConfirm }) =
         </View>
 
         <Button
-          label={`SOLICITAR ${currentEstimate?.categoryName.toUpperCase()} • ${currentEstimate?.formattedPrice}`}
+          label={
+            busy
+              ? 'SOLICITANDO…'
+              : currentEstimate
+                ? `SOLICITAR ${currentEstimate.categoryName.toUpperCase()} • ${currentEstimate.formattedPrice}`
+                : 'SOLICITAR'
+          }
           onPress={onConfirm}
+          disabled={busy || !currentEstimate}
           style={[styles.confirm, { backgroundColor: VoztriColors.brand.primary }]}
           textStyle={styles.confirmText}
         />
@@ -195,6 +231,26 @@ const styles = StyleSheet.create({
   list: {
     paddingVertical: 12,
     paddingHorizontal: 16,
+  },
+  loading: {
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 32,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#7B7489',
+  },
+  retry: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#ECECFF',
+  },
+  retryText: {
+    fontWeight: '700',
+    fontSize: 13,
   },
   category: {
     flexDirection: 'row',

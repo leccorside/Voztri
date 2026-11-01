@@ -1,80 +1,104 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { useDriverStore } from '../store/driverStore.js';
-import { Button, shadow } from '../ui/kit.js';
+import { Button, formatBRL, shadow } from '../ui/kit.js';
 
 interface Props {
   onOpenPinModal: () => void;
-  onFinishRide: () => void;
+  onFinishRide: () => Promise<boolean>;
+}
+
+const PAYMENT_LABEL: Record<string, string> = {
+  pix: 'Pagamento via Pix',
+  credit_card: 'Pagamento no cartão',
+  cash: 'Pagamento em dinheiro',
+  wallet: 'Pagamento com saldo',
+};
+
+function initials(name: string | undefined): string {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : '')).toUpperCase();
 }
 
 export const EnRouteNavigationScreen: React.FC<Props> = ({ onOpenPinModal, onFinishRide }) => {
-  const { currentRide } = useDriverStore();
+  const { currentRide, busy } = useDriverStore();
+  const [finishing, setFinishing] = useState(false);
 
   if (!currentRide) return null;
 
-  const isEnRoute = currentRide.status === 'DRIVER_EN_ROUTE';
+  // Até o PIN ser validado, o motorista está indo buscar o passageiro
+  const goingToPickup = ['ACCEPTED', 'DRIVER_EN_ROUTE', 'DRIVER_ARRIVED'].includes(currentRide.status);
+  const target = goingToPickup ? currentRide.origin : currentRide.destination;
+  const passengerName = currentRide.passenger?.user?.name ?? 'Passageiro';
+  const passengerRating = currentRide.passenger?.user?.rating;
+  const earnings = currentRide.driverEarningsCents ?? currentRide.priceCents;
+  const km = (currentRide.route.distanceMeters / 1000).toFixed(1).replace('.', ',');
+  const minutes = Math.round(currentRide.route.durationSeconds / 60);
+
+  const finish = async () => {
+    setFinishing(true);
+    await onFinishRide();
+    setFinishing(false);
+  };
 
   return (
     <View style={styles.screen}>
-      {/* Faixa de instrução de navegação */}
+      {/* Para onde ir agora */}
       <View style={styles.instruction}>
         <View style={[styles.turnIcon, { backgroundColor: VoztriColors.brand.primary }]}>
-          <Text style={styles.turnArrow}>➔</Text>
+          <Text style={styles.turnArrow}>{goingToPickup ? '📍' : '🏁'}</Text>
         </View>
         <View style={styles.flex}>
-          <Text style={styles.distance}>Em 250 metros</Text>
-          <Text style={styles.instructionText}>
-            {isEnRoute ? 'Chegando ao ponto de embarque' : 'Vire à direita na Av. Brigadeiro Faria Lima'}
-          </Text>
+          <Text style={styles.distance}>{goingToPickup ? 'Buscar passageiro em' : 'Levar passageiro até'}</Text>
+          <Text style={styles.instructionText}>{target.address}</Text>
         </View>
       </View>
 
-      {/* Simulação de mapa com HUD */}
+      {/* Área do mapa (navegação curva a curva ainda não integrada) */}
       <View style={styles.map}>
-        {/* Velocímetro */}
-        <View style={styles.speedometer}>
-          <Text style={styles.speed}>48</Text>
-          <Text style={styles.speedUnit}>km/h</Text>
-        </View>
-
-        {/* Resumo da rota */}
         <View style={styles.routePill}>
-          <Text style={styles.eta}>6 min</Text>
+          <Text style={styles.eta}>~{minutes} min</Text>
           <Text style={styles.dot}>•</Text>
-          <Text style={styles.km}>2.1 km</Text>
+          <Text style={styles.km}>{km} km de viagem</Text>
         </View>
       </View>
 
       {/* Painel inferior */}
       <View style={styles.sheet}>
-        {/* Resumo do passageiro */}
         <View style={styles.passengerRow}>
           <View style={styles.passenger}>
             <View style={styles.avatar}>
-              <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>BL</Text>
+              <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>{initials(passengerName)}</Text>
             </View>
-            <View>
-              <Text style={styles.passengerName}>Beatriz Lima</Text>
-              <Text style={styles.passengerMeta}>★ 4.95 • Pagamento via Pix</Text>
+            <View style={styles.flex}>
+              <Text style={styles.passengerName}>{passengerName}</Text>
+              <Text style={styles.passengerMeta}>
+                {passengerRating != null ? `★ ${passengerRating.toFixed(2).replace('.', ',')} • ` : ''}
+                {PAYMENT_LABEL[currentRide.paymentMethod] ?? currentRide.paymentMethod}
+              </Text>
             </View>
           </View>
-          <Text style={[styles.fare, { color: VoztriColors.brand.primary }]}>R$ 24,50</Text>
+          <View style={styles.fareBox}>
+            <Text style={[styles.fare, { color: VoztriColors.brand.primary }]}>{formatBRL(earnings)}</Text>
+            <Text style={styles.fareHint}>seu ganho</Text>
+          </View>
         </View>
 
-        {/* Ação conforme o estado da corrida */}
-        {isEnRoute ? (
+        {goingToPickup ? (
           <Button
-            label="VALIDAR PIN DE EMBARQUE (1234)"
+            label="VALIDAR PIN DE EMBARQUE"
             onPress={onOpenPinModal}
             style={[styles.action, { backgroundColor: VoztriColors.brand.primary }, shadow(0.35, 20, 6, 8, '#6A00FF')]}
             textStyle={styles.actionText}
           />
         ) : (
           <Button
-            label="FINALIZAR CORRIDA"
-            onPress={onFinishRide}
+            label={finishing ? 'FINALIZANDO…' : 'FINALIZAR CORRIDA'}
+            accessibilityLabel="FINALIZAR CORRIDA"
+            onPress={() => void finish()}
+            disabled={finishing || busy}
             style={[styles.action, { backgroundColor: '#00C853' }, shadow(0.35, 20, 6, 8, '#00C853')]}
             textStyle={styles.actionText}
           />
@@ -110,9 +134,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   turnArrow: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 22,
   },
   distance: {
     fontSize: 13,
@@ -127,29 +149,6 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
     backgroundColor: '#131A3B',
-  },
-  speedometer: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    backgroundColor: '#0B1026',
-    borderWidth: 2,
-    borderColor: '#6A00FF',
-    borderRadius: 14,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    alignItems: 'center',
-    ...shadow(0.5, 12, 4, 6, '#000000'),
-  },
-  speed: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  speedUnit: {
-    fontSize: 10,
-    color: '#C9B2FF',
-    fontWeight: '600',
   },
   routePill: {
     position: 'absolute',
@@ -190,9 +189,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
     marginBottom: 16,
   },
   passenger: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -217,9 +218,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#7B7489',
   },
+  fareBox: {
+    alignItems: 'flex-end',
+  },
   fare: {
     fontSize: 18,
     fontWeight: '800',
+  },
+  fareHint: {
+    fontSize: 11,
+    color: '#7B7489',
   },
   action: {
     width: '100%',

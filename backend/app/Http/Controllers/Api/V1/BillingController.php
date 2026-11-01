@@ -9,7 +9,9 @@ use App\Models\Payment;
 use App\Models\Driver;
 use App\Models\FinancialLedger;
 use App\Models\RideRating;
+use App\Models\UserProfile;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class BillingController extends Controller
@@ -85,6 +87,23 @@ class BillingController extends Controller
             'pixKeyType' => 'required|string|in:cpf,cnpj,email,phone,random',
         ]);
 
+        $balance = function () use ($driver): int {
+            $entries = FinancialLedger::where('account_type', 'driver_balance')->where('account_id', $driver->id);
+            $credits = (clone $entries)->where('entry_type', 'credit')->sum('amount_cents');
+            $debits = (clone $entries)->where('entry_type', 'debit')->sum('amount_cents');
+
+            return (int) ($credits - $debits);
+        };
+
+        $available = $balance();
+        if ($validated['amountCents'] > $available) {
+            return response()->json([
+                'message' => 'Saldo insuficiente para o repasse solicitado.',
+                'error' => 'INSUFFICIENT_BALANCE',
+                'availableBalanceCents' => $available,
+            ], 422);
+        }
+
         // Registra o débito no ledger do motorista
         FinancialLedger::create([
             'reference_id' => Str::uuid(),
@@ -93,8 +112,9 @@ class BillingController extends Controller
             'account_id' => $driver->id,
             'entry_type' => 'debit',
             'amount_cents' => $validated['amountCents'],
-            'balance_after_cents' => 0,
+            'balance_after_cents' => $available - $validated['amountCents'],
             'description' => "Repasse Pix para chave {$validated['pixKey']}",
+            'created_at' => Carbon::now(),
         ]);
 
         return response()->json([
@@ -118,17 +138,38 @@ class BillingController extends Controller
             'tags' => 'nullable|array',
         ]);
 
-        $ride = Ride::findOrFail($validated['rideId']);
+        $ride = Ride::with(['passenger', 'driver'])->findOrFail($validated['rideId']);
 
-        RideRating::create([
-            'ride_id' => $ride->id,
-            'rater_id' => $user->id,
-            'rated_user_id' => $ride->driver ? $ride->driver->user_id : $user->id,
-            'rating' => $validated['rating'],
-            'tip_cents' => $validated['tipCents'] ?? 0,
-            'feedback' => $validated['feedbackText'] ?? null,
-            'tags' => $validated['tags'] ?? [],
-        ]);
+        if (!$ride->passenger || $ride->passenger->user_id !== $user->id || !$ride->driver) {
+            return response()->json(['message' => 'Você não pode avaliar esta corrida.', 'error' => 'FORBIDDEN'], 403);
+        }
+
+        if ($ride->status !== 'COMPLETED') {
+            return response()->json(['message' => 'Só é possível avaliar corridas concluídas.', 'error' => 'INVALID_STATE'], 409);
+        }
+
+        if (RideRating::where('ride_id', $ride->id)->where('rater_id', $user->id)->exists()) {
+            return response()->json(['message' => 'Esta corrida já foi avaliada.', 'error' => 'ALREADY_RATED'], 409);
+        }
+
+        DB::transaction(function () use ($ride, $user, $validated) {
+            RideRating::create([
+                'ride_id' => $ride->id,
+                'rater_id' => $user->id,
+                'rated_user_id' => $ride->driver->user_id,
+                'rating' => $validated['rating'],
+                'tip_cents' => $validated['tipCents'] ?? 0,
+                'feedback' => $validated['feedbackText'] ?? null,
+                'tags' => $validated['tags'] ?? [],
+            ]);
+
+            // Atualiza a média exibida no perfil do motorista
+            $profile = UserProfile::firstOrCreate(['user_id' => $ride->driver->user_id], ['rating_avg' => 5.0, 'total_ratings' => 0]);
+            $total = (int) $profile->total_ratings;
+            $profile->rating_avg = round((($profile->rating_avg * $total) + $validated['rating']) / ($total + 1), 2);
+            $profile->total_ratings = $total + 1;
+            $profile->save();
+        });
 
         return response()->json([
             'success' => true,

@@ -1,13 +1,28 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
+import { usePassengerStore } from '../store/passengerStore.js';
 import { shadow } from '../ui/kit.js';
 
 interface Props {
   onOpenSearch: () => void;
 }
 
+function initials(name: string | undefined): string {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : '')).toUpperCase();
+}
+
 export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
+  const { user, logout } = usePassengerStore();
+
+  const confirmLogout = () =>
+    Alert.alert('Sair da conta', 'Deseja sair da VOZTRI neste aparelho?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Sair', style: 'destructive', onPress: () => void logout() },
+    ]);
+
   return (
     <View style={[styles.screen, { backgroundColor: VoztriColors.light.surface }]}>
       {/* Cabeçalho */}
@@ -24,9 +39,14 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
           </View>
         </View>
 
-        <View style={styles.avatar} accessibilityLabel="Perfil de Beatriz Lima">
-          <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>BL</Text>
-        </View>
+        <Pressable
+          onPress={confirmLogout}
+          accessibilityRole="button"
+          accessibilityLabel={`Conta de ${user?.name ?? 'passageiro'}. Toque para sair`}
+          style={({ pressed }) => [styles.avatar, pressed && styles.pressed]}
+        >
+          <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>{initials(user?.name)}</Text>
+        </Pressable>
       </View>
 
       {/* Simulação de mapa */}

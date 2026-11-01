@@ -1,132 +1,218 @@
 import { create } from 'zustand';
-import { Ride, DriverLiveLocation } from '@voztri/shared-types';
+import type { DriverEarningsSummary, DriverRideOffer, Ride, User } from '@voztri/shared-types';
+import { apiErrorCode, authApi, billingApi, driverApi, errorMessage, onUnauthorized, rideApi, session } from '../api.js';
+
+export type SessionStatus = 'checking' | 'anonymous' | 'authenticated';
 
 export interface DriverState {
-  isOnline: boolean;
-  todayEarningsCents: number;
-  todayRidesCount: number;
-  onlineTime: string;
-  rating: number;
-  currentLocation: DriverLiveLocation;
-  currentRide: Ride | null;
-  incomingOffer: {
-    rideId: string;
-    pickupAddress: string;
-    dropoffAddress: string;
-    distanceKm: number;
-    durationMinutes: number;
-    earningsCents: number;
-    timeoutSeconds: number;
-    category: string;
-  } | null;
+  sessionStatus: SessionStatus;
+  user: User | null;
 
-  // Actions
-  toggleOnline: () => void;
-  setIncomingOffer: (offer: DriverState['incomingOffer']) => void;
-  acceptCurrentOffer: () => void;
-  rejectCurrentOffer: () => void;
-  startRide: (pin: string) => boolean;
-  completeCurrentRide: () => void;
-  updateLocation: (lat: number, lng: number, heading?: number, speed?: number) => void;
+  isOnline: boolean;
+  earnings: DriverEarningsSummary | null;
+  offer: DriverRideOffer | null;
+  currentRide: Ride | null;
+
+  /** Ação em andamento (desabilita botões e mostra "Aguarde…"). */
+  busy: boolean;
+  /** Falha de uma ação do usuário (dispensável). */
+  error: string | null;
+  /** Falha do polling (some sozinha quando a conexão volta). */
+  connectionError: string | null;
+
+  bootstrap: () => Promise<void>;
+  requestCode: (phone: string) => Promise<string | null>;
+  login: (phone: string, code: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+
+  refresh: () => Promise<void>;
+  refreshEarnings: () => Promise<void>;
+  toggleOnline: () => Promise<void>;
+  acceptOffer: () => Promise<void>;
+  rejectOffer: () => Promise<void>;
+  validatePin: (pin: string) => Promise<boolean>;
+  completeRide: () => Promise<boolean>;
+  requestPayout: () => Promise<number | null>;
+  dismissError: () => void;
 }
 
-export const useDriverStore = create<DriverState>((set, get) => ({
-  isOnline: true,
-  todayEarningsCents: 24850, // R$ 248,50 (conforme protótipo)
-  todayRidesCount: 8,
-  onlineTime: '4h 15m',
-  rating: 4.98,
-  currentLocation: {
-    driverId: 'driver-carlos-1',
-    latitude: -23.550520,
-    longitude: -46.633308,
-    heading: 90,
-    speed: 0,
-    updatedAt: new Date().toISOString(),
-  },
+const signedOut = {
+  sessionStatus: 'anonymous' as SessionStatus,
+  user: null,
+  isOnline: false,
+  earnings: null,
+  offer: null,
   currentRide: null,
-  incomingOffer: null,
+  busy: false,
+  error: null,
+  connectionError: null,
+};
 
-  toggleOnline: () => set((state) => ({ isOnline: !state.isOnline })),
-
-  setIncomingOffer: (offer) => set({ incomingOffer: offer }),
-
-  acceptCurrentOffer: () => {
-    const offer = get().incomingOffer;
-    if (!offer) return;
-
-    const newRide: Ride = {
-      id: offer.rideId,
-      passengerId: 'passenger-beatriz-1',
-      status: 'DRIVER_EN_ROUTE',
-      category: 'pop',
-      origin: {
-        address: offer.pickupAddress,
-        shortAddress: offer.pickupAddress.split('-')[0]?.trim() || offer.pickupAddress,
-        latitude: -23.561414,
-        longitude: -46.655881,
-      },
-      destination: {
-        address: offer.dropoffAddress,
-        shortAddress: offer.dropoffAddress.split('-')[0]?.trim() || offer.dropoffAddress,
-        latitude: -23.626110,
-        longitude: -46.656387,
-      },
-      route: {
-        distanceMeters: Math.round(offer.distanceKm * 1000),
-        durationSeconds: offer.durationMinutes * 60,
-        encodedPolyline: '',
-      },
-      priceCents: offer.earningsCents,
-      boardingPin: '1234',
-      paymentMethod: 'pix',
-      paymentStatus: 'pending',
-      createdAt: new Date().toISOString(),
-    };
-
-    set({ currentRide: newRide, incomingOffer: null });
-  },
-
-  rejectCurrentOffer: () => set({ incomingOffer: null }),
-
-  startRide: (pin: string) => {
-    const current = get().currentRide;
-    if (!current) return false;
-    if (current.boardingPin === pin || pin === '1234') {
-      set({
-        currentRide: {
-          ...current,
-          status: 'IN_PROGRESS',
-          startedAt: new Date().toISOString(),
-        },
-      });
-      return true;
+export const useDriverStore = create<DriverState>((set, get) => {
+  /** Executa uma ação do usuário com indicador de carregamento e tratamento de erro. */
+  const run = async <T>(action: () => Promise<T>): Promise<T | undefined> => {
+    set({ busy: true, error: null });
+    try {
+      return await action();
+    } catch (err) {
+      set({ error: errorMessage(err) });
+      return undefined;
+    } finally {
+      set({ busy: false });
     }
-    return false;
-  },
+  };
 
-  completeCurrentRide: () => {
-    const current = get().currentRide;
-    if (!current) return;
+  const startSession = async (user: User) => {
+    set({ ...signedOut, sessionStatus: 'authenticated', user });
+    await Promise.all([get().refresh(), get().refreshEarnings()]);
+  };
 
-    set((state) => ({
-      todayEarningsCents: state.todayEarningsCents + current.priceCents,
-      todayRidesCount: state.todayRidesCount + 1,
-      currentRide: null,
-    }));
-  },
+  return {
+    ...signedOut,
+    sessionStatus: 'checking',
 
-  updateLocation: (latitude, longitude, heading = 0, speed = 0) => {
-    set((state) => ({
-      currentLocation: {
-        ...state.currentLocation,
-        latitude,
-        longitude,
-        heading,
-        speed,
-        updatedAt: new Date().toISOString(),
-      },
-    }));
-  },
-}));
+    bootstrap: async () => {
+      onUnauthorized(() => {
+        void session.clear();
+        set({ ...signedOut, error: 'Sua sessão expirou. Entre novamente.' });
+      });
 
+      const token = await session.load();
+      if (!token) {
+        set({ sessionStatus: 'anonymous' });
+        return;
+      }
+      try {
+        const user = await authApi.getMe();
+        if (user.role !== 'driver') {
+          await session.clear();
+          set({ sessionStatus: 'anonymous' });
+          return;
+        }
+        await startSession(user);
+      } catch (err) {
+        // Sem rede: mantém o token e deixa o usuário tentar de novo
+        set({ sessionStatus: 'anonymous', error: errorMessage(err) });
+      }
+    },
+
+    requestCode: async (phone) => {
+      const res = await run(() => authApi.requestOtp(phone, 'driver'));
+      return res ? res.debugOtp ?? '' : null;
+    },
+
+    login: async (phone, code) => {
+      const res = await run(() => authApi.verifyOtp(phone, code));
+      if (!res) return false;
+      if (res.user.role !== 'driver') {
+        set({ error: 'Este telefone não pertence a um motorista VOZTRI.' });
+        return false;
+      }
+      await session.save(res.token);
+      await startSession(res.user);
+      return true;
+    },
+
+    logout: async () => {
+      if (get().isOnline) {
+        // Melhor esforço: não continuar recebendo ofertas depois de sair
+        await driverApi.setOnlineStatus(false).catch(() => undefined);
+      }
+      await session.clear();
+      set({ ...signedOut });
+    },
+
+    refresh: async () => {
+      try {
+        const state = await driverApi.getCurrent();
+        set({ isOnline: state.isOnline, offer: state.offer, currentRide: state.ride, connectionError: null });
+      } catch (err) {
+        set({ connectionError: errorMessage(err) });
+      }
+    },
+
+    refreshEarnings: async () => {
+      try {
+        const earnings = await driverApi.getEarnings();
+        set({ earnings, isOnline: earnings.isOnline, connectionError: null });
+      } catch (err) {
+        set({ connectionError: errorMessage(err) });
+      }
+    },
+
+    toggleOnline: async () => {
+      const res = await run(() => driverApi.setOnlineStatus(!get().isOnline));
+      if (res) {
+        set({ isOnline: res.isOnline, offer: res.isOnline ? get().offer : null });
+      }
+    },
+
+    acceptOffer: async () => {
+      const offer = get().offer;
+      if (!offer) return;
+      set({ busy: true, error: null });
+      try {
+        const ride = await driverApi.acceptOffer(offer.rideId);
+        set({ currentRide: ride, offer: null });
+      } catch (err) {
+        // Oferta expirada ou corrida cancelada: a oferta deixa de valer
+        set({ offer: null, error: errorMessage(err) });
+      } finally {
+        set({ busy: false });
+      }
+    },
+
+    rejectOffer: async () => {
+      const offer = get().offer;
+      if (!offer) return;
+      set({ offer: null });
+      // 404 = a oferta já tinha expirado no servidor; não é erro para o usuário
+      await driverApi.rejectOffer(offer.rideId).catch(() => undefined);
+    },
+
+    validatePin: async (pin) => {
+      const ride = get().currentRide;
+      if (!ride) return false;
+      set({ busy: true, error: null });
+      try {
+        const updated = await rideApi.validatePin(ride.id, pin);
+        set({ currentRide: updated });
+        return true;
+      } catch (err) {
+        if (apiErrorCode(err) !== 'INVALID_PIN') {
+          set({ error: errorMessage(err) });
+        }
+        return false;
+      } finally {
+        set({ busy: false });
+      }
+    },
+
+    completeRide: async () => {
+      const ride = get().currentRide;
+      if (!ride) return false;
+      const done = await run(() => rideApi.completeRide(ride.id));
+      if (!done) return false;
+      set({ currentRide: null });
+      await get().refreshEarnings();
+      return true;
+    },
+
+    requestPayout: async () => {
+      const earnings = get().earnings;
+      if (!earnings || !earnings.pixKey || !earnings.pixKeyType) {
+        set({ error: 'Cadastre uma chave Pix para receber os repasses.' });
+        return null;
+      }
+      const amount = earnings.availableBalanceCents;
+      const res = await run(() =>
+        billingApi.requestPayout({ amountCents: amount, pixKey: earnings.pixKey!, pixKeyType: earnings.pixKeyType! }),
+      );
+      if (!res) return null;
+      await get().refreshEarnings();
+      return amount;
+    },
+
+    dismissError: () => set({ error: null }),
+  };
+});

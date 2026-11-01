@@ -4,34 +4,37 @@ import { VoztriColors } from '@voztri/design-tokens';
 import { BottomSheetModal, Button, shadow } from '../ui/kit.js';
 
 interface Props {
-  onSuccess: () => void;
+  /** Valida o PIN na API; resolve false quando o PIN está errado. */
+  onSubmit: (pin: string) => Promise<boolean>;
   onCancel: () => void;
 }
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
 
-export const ValidatePinModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
+export const ValidatePinModal: React.FC<Props> = ({ onSubmit, onCancel }) => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
-  const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [checking, setChecking] = useState(false);
+  const mounted = useRef(true);
 
-  // Evita chamar onSuccess depois que o modal foi fechado
   useEffect(() => () => {
-    if (successTimer.current) clearTimeout(successTimer.current);
+    mounted.current = false;
   }, []);
 
-  const handlePress = (digit: string) => {
-    if (pin.length < 4) {
-      const nextPin = pin + digit;
-      setPin(nextPin);
-      setError(false);
+  const handlePress = async (digit: string) => {
+    if (checking || pin.length >= 4) return;
+    const nextPin = pin + digit;
+    setPin(nextPin);
+    setError(false);
 
-      if (nextPin.length === 4) {
-        if (nextPin === '1234') {
-          successTimer.current = setTimeout(onSuccess, 300);
-        } else {
-          setError(true);
-        }
+    if (nextPin.length === 4) {
+      setChecking(true);
+      const ok = await onSubmit(nextPin);
+      if (!mounted.current) return;
+      setChecking(false);
+      if (!ok) {
+        setPin('');
+        setError(true);
       }
     }
   };
@@ -72,9 +75,14 @@ export const ValidatePinModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
         })}
       </View>
 
+      {checking && (
+        <Text style={styles.checking} accessibilityLiveRegion="polite">
+          Verificando PIN…
+        </Text>
+      )}
       {error && (
         <Text style={styles.error} accessibilityLiveRegion="assertive">
-          PIN inválido! Tente novamente (Dica de teste: 1234)
+          PIN incorreto. Confira com o passageiro e tente novamente.
         </Text>
       )}
 
@@ -86,7 +94,8 @@ export const ValidatePinModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
           ) : (
             <Pressable
               key={i}
-              onPress={() => (key === '⌫' ? handleDelete() : handlePress(key))}
+              onPress={() => (key === '⌫' ? handleDelete() : void handlePress(key))}
+              disabled={checking}
               accessibilityRole="button"
               accessibilityLabel={key === '⌫' ? 'Apagar' : key}
               style={({ pressed }) => [styles.keySlot, styles.key, pressed && { backgroundColor: '#F3F2FF' }]}
@@ -140,6 +149,14 @@ const styles = StyleSheet.create({
   pinDigit: {
     fontSize: 28,
     fontWeight: '800',
+  },
+  checking: {
+    textAlign: 'center',
+    color: '#7B7489',
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: -10,
+    marginBottom: 16,
   },
   error: {
     textAlign: 'center',

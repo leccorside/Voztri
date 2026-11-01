@@ -70,3 +70,47 @@ export function advance(ms: number): void {
     jest.advanceTimersByTime(ms);
   });
 }
+
+// ---- Versões assíncronas: esperam as promessas disparadas pelos toques ----
+
+/** Resolve a fila de promessas (requer setImmediate real nos timers falsos). */
+export const flush = (): Promise<void> => new Promise((resolve) => setImmediate(resolve));
+
+export async function settle(rounds = 3): Promise<void> {
+  for (let i = 0; i < rounds; i++) {
+    await act(async () => {
+      await flush();
+    });
+  }
+}
+
+export async function pressAsync(renderer: ReactTestRenderer, label: string | RegExp): Promise<void> {
+  press(renderer, label);
+  await settle();
+}
+
+export async function typeAsync(renderer: ReactTestRenderer, label: string, text: string): Promise<void> {
+  typeInto(renderer, label, text);
+  await settle();
+}
+
+export async function advanceAsync(ms: number): Promise<void> {
+  await act(async () => {
+    jest.advanceTimersByTime(ms);
+    await flush();
+  });
+  await settle();
+}
+
+/** Timers falsos que mantêm setImmediate real, usado por flush(). */
+export function useTestTimers(): void {
+  jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'] });
+}
+
+export function isDisabled(renderer: ReactTestRenderer, label: string): boolean {
+  const target = renderer.root.findAll(
+    (node: ReactTestInstance) => typeof node.props.onPress === 'function' && node.props.accessibilityLabel === label,
+  )[0];
+  if (!target) throw new Error(`Nenhum elemento tocável com accessibilityLabel ${label}`);
+  return !!target.props.disabled;
+}

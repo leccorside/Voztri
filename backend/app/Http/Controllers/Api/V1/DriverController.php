@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Ride\Services\FareCalculator;
+use App\Domain\Ride\Services\RideDispatcher;
 use App\Http\Controllers\Controller;
+use App\Http\Presenters\RidePresenter;
+use App\Models\RideOffer;
 use Illuminate\Http\Request;
 use App\Models\Driver;
 use App\Models\DriverVehicle;
@@ -102,10 +106,17 @@ class DriverController extends Controller
         $driver = Driver::where('user_id', $user->id)->firstOrFail();
 
         $validated = $request->validate([
-            'is_online' => 'required|boolean',
+            'isOnline' => 'required|boolean',
         ]);
 
-        $driver->is_online = $validated['is_online'];
+        if ($validated['isOnline'] && $driver->status !== 'approved') {
+            return response()->json([
+                'message' => 'Seu cadastro ainda não foi aprovado para receber corridas.',
+                'error' => 'DRIVER_NOT_APPROVED',
+            ], 403);
+        }
+
+        $driver->is_online = $validated['isOnline'];
         $driver->save();
 
         // Se ficou offline, remove do Redis GEO para não receber despachos
@@ -118,8 +129,63 @@ class DriverController extends Controller
         }
 
         return response()->json([
-            'is_online' => $driver->is_online,
+            'isOnline' => $driver->is_online,
             'message' => $driver->is_online ? 'Você está online e pronto para receber corridas!' : 'Você está offline.',
+        ]);
+    }
+
+    /**
+     * Situação atual do motorista (polling do app): corrida em andamento ou
+     * oferta pendente. Também expira ofertas vencidas, liberando a corrida para
+     * o próximo motorista.
+     */
+    public function currentRides(Request $request, RideDispatcher $dispatcher, RidePresenter $presenter, FareCalculator $fares)
+    {
+        $user = $request->user();
+        $driver = Driver::where('user_id', $user->id)->firstOrFail();
+
+        $ride = Ride::where('driver_id', $driver->id)
+            ->whereIn('status', RideDispatcher::DRIVER_BUSY_STATUSES)
+            ->latest('updated_at')
+            ->first();
+
+        if ($ride) {
+            return response()->json([
+                'isOnline' => (bool) $driver->is_online,
+                'offer' => null,
+                'ride' => $presenter->present($ride, $user),
+            ]);
+        }
+
+        // Ofertas vencidas deste motorista: a corrida volta a procurar motorista
+        RideOffer::where('driver_id', $driver->id)
+            ->where('status', 'sent')
+            ->where('expires_at', '<=', Carbon::now())
+            ->get()
+            ->each(fn (RideOffer $o) => $dispatcher->refresh(Ride::findOrFail($o->ride_id)));
+
+        $offer = $dispatcher->activeOfferFor($driver);
+        $offerRide = $offer ? Ride::with('passenger.user')->find($offer->ride_id) : null;
+
+        return response()->json([
+            'isOnline' => (bool) $driver->is_online,
+            'offer' => $offerRide ? [
+                'rideId' => $offerRide->id,
+                'expiresAt' => $offer->expires_at->toIso8601String(),
+                // Carbon 3 devolve float em diffInSeconds; o app exibe segundos inteiros
+                'secondsLeft' => max(0, (int) floor(Carbon::now()->diffInSeconds($offer->expires_at, false))),
+                'timeoutSeconds' => RideDispatcher::OFFER_TIMEOUT_SECONDS,
+                'pickupAddress' => $offerRide->pickup_address,
+                'dropoffAddress' => $offerRide->dropoff_address,
+                'distanceKm' => round($offerRide->distance_meters / 1000, 1),
+                'durationMinutes' => (int) round($offerRide->duration_seconds / 60),
+                'earningsCents' => $fares->driverNetCents((int) $offerRide->final_price_cents),
+                'category' => $offerRide->category,
+                'categoryName' => FareCalculator::CATEGORIES[$offerRide->category]['categoryName'] ?? $offerRide->category,
+                'paymentMethod' => $offerRide->payment_method,
+                'passengerName' => $offerRide->passenger?->user?->name,
+            ] : null,
+            'ride' => null,
         ]);
     }
 
@@ -167,17 +233,34 @@ class DriverController extends Controller
         $driver = Driver::where('user_id', $user->id)->firstOrFail();
 
         $today = Carbon::today();
-        $startOfWeek = Carbon::now()->startOfWeek();
+        $startOfWeek = Carbon::today()->startOfWeek();
 
-        $todayEarnings = Ride::where('driver_id', $driver->id)
-            ->where('status', 'COMPLETED')
-            ->whereDate('completed_at', $today)
-            ->sum('final_price_cents');
+        // Ganhos líquidos (após a comissão) lançados no ledger por corrida
+        $rideCredits = FinancialLedger::where('account_type', 'driver_balance')
+            ->where('account_id', $driver->id)
+            ->where('entry_type', 'credit')
+            ->where('reference_type', 'ride');
 
-        $weekEarnings = Ride::where('driver_id', $driver->id)
-            ->where('status', 'COMPLETED')
-            ->where('completed_at', '>=', $startOfWeek)
-            ->sum('final_price_cents');
+        $todayEarnings = (clone $rideCredits)->whereDate('created_at', $today)->sum('amount_cents');
+        $weekEarnings = (clone $rideCredits)->where('created_at', '>=', $startOfWeek)->sum('amount_cents');
+
+        $perDay = (clone $rideCredits)
+            ->where('created_at', '>=', $startOfWeek)
+            ->selectRaw('DATE(created_at) AS day, SUM(amount_cents) AS cents')
+            ->groupBy('day')
+            ->pluck('cents', 'day');
+
+        $labels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+        $daily = [];
+        for ($i = 0; $i < 7; $i++) {
+            $date = $startOfWeek->copy()->addDays($i);
+            $daily[] = [
+                'date' => $date->toDateString(),
+                'label' => $labels[$i],
+                'cents' => (int) ($perDay[$date->toDateString()] ?? 0),
+                'isToday' => $date->isSameDay($today),
+            ];
+        }
 
         $ridesCount = Ride::where('driver_id', $driver->id)
             ->where('status', 'COMPLETED')
@@ -197,14 +280,21 @@ class DriverController extends Controller
 
         $availableBalanceCents = max(0, $credits - $debits);
 
+        $user->loadMissing('profile');
+
         return response()->json([
-            'today_cents' => (int) $todayEarnings,
-            'week_cents' => (int) $weekEarnings,
-            'rides_count' => $ridesCount,
-            'available_balance_cents' => (int) $availableBalanceCents,
-            'pending_balance_cents' => 0,
-            'online_hours' => 6.5,
-            'pix_key' => $driver->pix_key ?? $user->cpf ?? '123.456.789-00',
+            'isOnline' => (bool) $driver->is_online,
+            'todayCents' => (int) $todayEarnings,
+            'weekCents' => (int) $weekEarnings,
+            'daily' => $daily,
+            'ridesCount' => $ridesCount,
+            'availableBalanceCents' => (int) $availableBalanceCents,
+            'pendingBalanceCents' => 0,
+            // Ainda não há registro de sessões online; o app mostra "—"
+            'onlineHours' => null,
+            'rating' => $user->profile ? (float) $user->profile->rating_avg : null,
+            'pixKey' => $driver->pix_key,
+            'pixKeyType' => $driver->pix_key_type,
         ]);
     }
 }

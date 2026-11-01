@@ -10,6 +10,8 @@ import {
   View,
 } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
+import { POLL_INTERVAL_MS } from '../config.js';
+import { usePolling } from '../hooks/usePolling.js';
 import { usePassengerStore } from '../store/passengerStore.js';
 import { Button, shadow } from '../ui/kit.js';
 
@@ -20,14 +22,27 @@ interface Props {
 const QUICK_REPLIES = ['Estou no portão', 'Estou descendo', 'OK, obrigado!'];
 
 export const ChatModal: React.FC<Props> = ({ onClose }) => {
-  const { chatMessages, sendChat } = usePassengerStore();
+  const { chatMessages, sendChat, loadChat, activeRide, busy } = usePassengerStore();
   const [input, setInput] = useState('');
   const scrollRef = useRef<ScrollView>(null);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    sendChat(input.trim());
+  // Histórico ao abrir e novas mensagens do motorista enquanto o chat está aberto
+  usePolling(loadChat, POLL_INTERVAL_MS, true);
+
+  const driverName = activeRide?.driver?.user?.name ?? 'Motorista';
+  const driverInitials = driverName
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  const handleSend = async () => {
+    const text = input.trim();
+    if (!text) return;
     setInput('');
+    await sendChat(text);
   };
 
   return (
@@ -42,11 +57,11 @@ export const ChatModal: React.FC<Props> = ({ onClose }) => {
           <View style={styles.header}>
             <View style={styles.row}>
               <View style={styles.avatar}>
-                <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>CS</Text>
+                <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>{driverInitials}</Text>
               </View>
               <View>
-                <Text style={styles.name}>Carlos Eduardo Silva</Text>
-                <Text style={styles.status}>● Online agora</Text>
+                <Text style={styles.name}>{driverName}</Text>
+                <Text style={styles.status}>Seu motorista nesta corrida</Text>
               </View>
             </View>
             <Button label="✕" onPress={onClose} accessibilityLabel="Fechar chat" textStyle={styles.close} />
@@ -60,6 +75,9 @@ export const ChatModal: React.FC<Props> = ({ onClose }) => {
             onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
             keyboardShouldPersistTaps="handled"
           >
+            {chatMessages.length === 0 && (
+              <Text style={styles.empty}>Nenhuma mensagem ainda. Avise o motorista se precisar.</Text>
+            )}
             {chatMessages.map((msg) => {
               const isMe = msg.senderRole === 'passenger';
               return (
@@ -87,7 +105,14 @@ export const ChatModal: React.FC<Props> = ({ onClose }) => {
             keyboardShouldPersistTaps="handled"
           >
             {QUICK_REPLIES.map((reply) => (
-              <Button key={reply} label={reply} onPress={() => sendChat(reply)} style={styles.chip} textStyle={styles.chipText} />
+              <Button
+                key={reply}
+                label={reply}
+                onPress={() => void sendChat(reply)}
+                disabled={busy}
+                style={styles.chip}
+                textStyle={styles.chipText}
+              />
             ))}
           </ScrollView>
 
@@ -98,7 +123,7 @@ export const ChatModal: React.FC<Props> = ({ onClose }) => {
               placeholderTextColor="#7B7489"
               value={input}
               onChangeText={setInput}
-              onSubmitEditing={handleSend}
+              onSubmitEditing={() => void handleSend()}
               returnKeyType="send"
               blurOnSubmit={false}
               accessibilityLabel="Mensagem para o motorista"
@@ -106,8 +131,8 @@ export const ChatModal: React.FC<Props> = ({ onClose }) => {
             />
             <Button
               label="Enviar"
-              onPress={handleSend}
-              disabled={!input.trim()}
+              onPress={() => void handleSend()}
+              disabled={busy || !input.trim()}
               style={[styles.send, { backgroundColor: VoztriColors.brand.primary }]}
               textStyle={styles.sendText}
             />
@@ -180,6 +205,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     gap: 12,
+  },
+  empty: {
+    fontSize: 13,
+    color: '#7B7489',
+    textAlign: 'center',
+    paddingVertical: 24,
   },
   bubble: {
     maxWidth: '80%',

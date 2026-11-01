@@ -1,16 +1,20 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { useDriverStore } from '../store/driverStore.js';
 import { Button, formatBRL, shadow } from '../ui/kit.js';
 
 interface Props {
-  onSimulateRide: () => void;
   onOpenEarnings: () => void;
 }
 
-export const DriverDashboardScreen: React.FC<Props> = ({ onSimulateRide, onOpenEarnings }) => {
-  const { isOnline, toggleOnline, todayEarningsCents, todayRidesCount, onlineTime, rating } = useDriverStore();
+export const DriverDashboardScreen: React.FC<Props> = ({ onOpenEarnings }) => {
+  const { isOnline, toggleOnline, earnings, busy, logout } = useDriverStore();
+
+  const todayEarnings = earnings ? formatBRL(earnings.todayCents) : '—';
+  const ridesCount = earnings ? String(earnings.ridesCount) : '—';
+  const onlineTime = earnings?.onlineHours != null ? `${earnings.onlineHours.toFixed(1).replace('.', ',')} h` : '—';
+  const rating = earnings?.rating != null ? earnings.rating.toFixed(2).replace('.', ',') : '—';
 
   return (
     <View style={[styles.screen, { backgroundColor: VoztriColors.light.surface }]}>
@@ -29,22 +33,26 @@ export const DriverDashboardScreen: React.FC<Props> = ({ onSimulateRide, onOpenE
           </View>
         </View>
 
-        {/* Alternar online/offline */}
-        <Pressable
-          onPress={toggleOnline}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: isOnline }}
-          accessibilityLabel="Disponibilidade para corridas"
-          style={({ pressed }) => [
-            styles.onlineToggle,
-            { backgroundColor: isOnline ? '#00C853' : '#7B7489' },
-            isOnline && shadow(0.3, 12, 4, 4, '#00C853'),
-            pressed && { opacity: 0.8 },
-          ]}
-        >
-          <View style={styles.onlineDot} />
-          <Text style={styles.onlineText}>{isOnline ? 'ONLINE' : 'OFFLINE'}</Text>
-        </Pressable>
+        <View style={styles.row}>
+          {/* Alternar online/offline */}
+          <Pressable
+            onPress={() => void toggleOnline()}
+            disabled={busy}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: isOnline, disabled: busy }}
+            accessibilityLabel="Disponibilidade para corridas"
+            style={({ pressed }) => [
+              styles.onlineToggle,
+              { backgroundColor: isOnline ? '#00C853' : '#7B7489' },
+              isOnline && shadow(0.3, 12, 4, 4, '#00C853'),
+              (pressed || busy) && { opacity: 0.7 },
+            ]}
+          >
+            <View style={styles.onlineDot} />
+            <Text style={styles.onlineText}>{isOnline ? 'ONLINE' : 'OFFLINE'}</Text>
+          </Pressable>
+          <Button label="Sair" onPress={() => void logout()} accessibilityLabel="Sair da conta" textStyle={styles.logout} />
+        </View>
       </View>
 
       {/* Área principal: simulação de mapa e HUD flutuante */}
@@ -65,9 +73,9 @@ export const DriverDashboardScreen: React.FC<Props> = ({ onSimulateRide, onOpenE
             <View>
               <Text style={styles.overline}>Ganhos de Hoje</Text>
               <View style={[styles.row, { alignItems: 'baseline', gap: 6, marginTop: 2 }]}>
-                <Text style={styles.earnings}>{formatBRL(todayEarningsCents)}</Text>
-                <Text style={styles.growth}>+18%</Text>
+                <Text style={styles.earnings}>{todayEarnings}</Text>
               </View>
+              <Text style={styles.netHint}>líquido, após a taxa VOZTRI</Text>
             </View>
             <Button
               label="Ver Extrato ›"
@@ -81,7 +89,7 @@ export const DriverDashboardScreen: React.FC<Props> = ({ onSimulateRide, onOpenE
           <View style={styles.metrics}>
             <View style={styles.metric}>
               <Text style={styles.metricLabel}>Viagens</Text>
-              <Text style={styles.metricValue}>{todayRidesCount}</Text>
+              <Text style={styles.metricValue}>{ridesCount}</Text>
             </View>
             <View style={[styles.metric, styles.metricDivided]}>
               <Text style={styles.metricLabel}>Online</Text>
@@ -94,17 +102,15 @@ export const DriverDashboardScreen: React.FC<Props> = ({ onSimulateRide, onOpenE
           </View>
         </View>
 
-        {/* Botão do simulador */}
-        {isOnline && (
-          <View style={styles.bottomActions}>
-            <Button
-              label="Simular Solicitação de Corrida (Demo)"
-              onPress={onSimulateRide}
-              style={[styles.simulateButton, { backgroundColor: VoztriColors.brand.primary }]}
-              textStyle={styles.simulateText}
-            />
+        {/* Situação: aguardando ofertas (chegam pelo polling) ou offline */}
+        <View style={styles.bottomActions}>
+          <View style={[styles.statusCard, isOnline ? { backgroundColor: VoztriColors.brand.primary } : styles.statusOffline]}>
+            {isOnline && <ActivityIndicator color="#FFFFFF" />}
+            <Text style={[styles.statusText, !isOnline && { color: '#494457' }]} accessibilityLiveRegion="polite">
+              {isOnline ? 'Procurando corridas próximas…' : 'Fique online para receber corridas'}
+            </Text>
           </View>
-        )}
+        </View>
       </View>
     </View>
   );
@@ -249,10 +255,15 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#151A31',
   },
-  growth: {
+  netHint: {
     fontSize: 11,
+    color: '#7B7489',
+  },
+  logout: {
+    fontSize: 13,
     fontWeight: '700',
-    color: '#9546F9',
+    color: '#7B7489',
+    paddingHorizontal: 4,
   },
   statementButton: {
     backgroundColor: '#F3F2FF',
@@ -296,12 +307,21 @@ const styles = StyleSheet.create({
     right: 16,
     gap: 10,
   },
-  simulateButton: {
+  statusCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
     padding: 14,
     borderRadius: 14,
-    ...shadow(0.35, 24, 8, 8, '#6A00FF'),
+    ...shadow(0.25, 24, 8, 8, '#6A00FF'),
   },
-  simulateText: {
+  statusOffline: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7FF',
+  },
+  statusText: {
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 15,

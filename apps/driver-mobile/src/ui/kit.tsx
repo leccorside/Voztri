@@ -102,7 +102,55 @@ export const BottomSheetModal: React.FC<BottomSheetModalProps> = ({
   </Modal>
 );
 
+interface BannerProps {
+  message: string;
+  tone?: 'error' | 'warning';
+  onDismiss?: () => void;
+}
+
+/** Aviso no topo da tela (erro de ação ou falta de conexão com a API). */
+export const Banner: React.FC<BannerProps> = ({ message, tone = 'error', onDismiss }) => (
+  <View
+    style={[kit.banner, tone === 'error' ? kit.bannerError : kit.bannerWarning]}
+    accessibilityRole="alert"
+    accessibilityLiveRegion="polite"
+  >
+    <Text style={[kit.bannerText, { color: tone === 'error' ? '#93000A' : '#7A4A00' }]}>{message}</Text>
+    {onDismiss && (
+      <Button
+        label="✕"
+        onPress={onDismiss}
+        accessibilityLabel="Dispensar aviso"
+        textStyle={[kit.bannerClose, { color: tone === 'error' ? '#93000A' : '#7A4A00' }]}
+      />
+    )}
+  </View>
+);
+
 const kit = StyleSheet.create({
+  banner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  bannerError: {
+    backgroundColor: '#FFDAD6',
+  },
+  bannerWarning: {
+    backgroundColor: '#FFF3E0',
+  },
+  bannerText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  bannerClose: {
+    fontSize: 16,
+    fontWeight: '700',
+    paddingHorizontal: 4,
+  },
   button: {
     alignItems: 'center',
     justifyContent: 'center',

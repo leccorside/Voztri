@@ -1,4 +1,29 @@
 import { User } from './user.js';
+import type { Ride } from './ride.js';
+
+/** Oferta de corrida pendente para o motorista (GET /driver/rides/current). */
+export interface DriverRideOffer {
+  rideId: string;
+  expiresAt: string;
+  secondsLeft: number;
+  timeoutSeconds: number;
+  pickupAddress: string;
+  dropoffAddress: string;
+  distanceKm: number;
+  durationMinutes: number;
+  /** Ganho líquido (após a comissão da plataforma). */
+  earningsCents: number;
+  category: VehicleCategory;
+  categoryName: string;
+  paymentMethod: string;
+  passengerName: string | null;
+}
+
+export interface DriverCurrentState {
+  isOnline: boolean;
+  offer: DriverRideOffer | null;
+  ride: Ride | null;
+}
 
 export type DriverStatus = 'pending_approval' | 'approved' | 'rejected' | 'blocked';
 

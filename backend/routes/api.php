@@ -45,6 +45,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/{id}', [RideController::class, 'show']);
             Route::post('/{id}/cancel', [RideController::class, 'cancel']);
             Route::post('/{id}/accept', [RideController::class, 'accept']);
+            Route::post('/{id}/reject', [RideController::class, 'reject']);
             Route::post('/{id}/validate-pin', [RideController::class, 'validatePin']);
             Route::post('/{id}/complete', [RideController::class, 'complete']);
             Route::post('/{id}/sos', [RideController::class, 'triggerSos']);
@@ -58,6 +59,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/register', [DriverController::class, 'register']);
             Route::post('/documents', [DriverController::class, 'uploadDocument']);
             Route::post('/status', [DriverController::class, 'toggleStatus']);
+            Route::get('/rides/current', [DriverController::class, 'currentRides']);
             Route::post('/location', [DriverController::class, 'updateLocation']);
             Route::get('/earnings', [DriverController::class, 'getEarnings']);
         });

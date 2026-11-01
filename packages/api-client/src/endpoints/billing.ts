@@ -18,5 +18,11 @@ export class BillingApi {
     const res = await this.client.post<{ success: boolean; payoutId: string }>('/billing/payout', params);
     return res.data;
   }
+
+  /** Avaliação do motorista pelo passageiro (só corridas concluídas, uma vez). */
+  async submitRating(params: { rideId: string; rating: number; tipCents?: number; tags?: string[]; feedbackText?: string }): Promise<{ success: boolean }> {
+    const res = await this.client.post<{ success: boolean }>('/billing/rating', params);
+    return res.data;
+  }
 }
 

@@ -1,27 +1,28 @@
 import { VoztriApiClient } from '../client.js';
-import { Ride, FareEstimate, AddressLocation } from '@voztri/shared-types';
+import { Ride, FareEstimate, AddressLocation, ChatMessage, PaymentMethodType } from '@voztri/shared-types';
+
+type Coordinates = Pick<AddressLocation, 'latitude' | 'longitude'>;
 
 export class RideApi {
   constructor(private client: VoztriApiClient) {}
 
-  async getEstimates(origin: AddressLocation, destination: AddressLocation): Promise<FareEstimate[]> {
+  async getEstimates(origin: Coordinates, destination: Coordinates): Promise<FareEstimate[]> {
     const res = await this.client.post<FareEstimate[]>('/rides/estimate', { origin, destination });
     return res.data;
   }
 
+  /** Cria a corrida; o preço cobrado é o mesmo da estimativa da categoria. */
   async requestRide(params: {
     origin: AddressLocation;
     destination: AddressLocation;
     category: 'pop' | 'black' | 'mulher' | 'moto';
-    paymentMethod: 'pix' | 'credit_card' | 'cash' | 'wallet';
-    idempotencyKey?: string;
+    paymentMethod: PaymentMethodType;
   }): Promise<Ride> {
-    const res = await this.client.post<Ride>('/rides/request', params, {
-      headers: params.idempotencyKey ? { 'Idempotency-Key': params.idempotencyKey } : undefined,
-    });
+    const res = await this.client.post<Ride>('/rides/request', params);
     return res.data;
   }
 
+  /** Polling do passageiro: também faz a corrida avançar no despacho. */
   async getRide(rideId: string): Promise<Ride> {
     const res = await this.client.get<Ride>(`/rides/${rideId}`);
     return res.data;
@@ -32,6 +33,7 @@ export class RideApi {
     return res.data;
   }
 
+  /** Motorista valida o PIN informado pelo passageiro e inicia a viagem. */
   async validatePin(rideId: string, pin: string): Promise<Ride> {
     const res = await this.client.post<Ride>(`/rides/${rideId}/validate-pin`, { pin });
     return res.data;
@@ -51,5 +53,14 @@ export class RideApi {
     const res = await this.client.post<{ success: boolean }>(`/rides/${rideId}/sos/cancel`, { emergencyPin });
     return res.data;
   }
-}
 
+  async getChatMessages(rideId: string): Promise<ChatMessage[]> {
+    const res = await this.client.get<ChatMessage[]>(`/rides/${rideId}/chat`);
+    return res.data;
+  }
+
+  async sendChatMessage(rideId: string, message: string): Promise<ChatMessage> {
+    const res = await this.client.post<ChatMessage>(`/rides/${rideId}/chat`, { message });
+    return res.data;
+  }
+}

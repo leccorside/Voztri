@@ -44,8 +44,8 @@ export const LoginScreen: React.FC<Props> = ({ onLogin }) => {
     setError(null);
     try {
       // Endpoint exclusivo do painel: não cria usuário para telefone desconhecido
-      const res = (await authApi.requestAdminOtp(phone)) as unknown as { debug_otp?: string | null };
-      setDebugOtp(res.debug_otp ?? null);
+      const res = await authApi.requestAdminOtp(phone);
+      setDebugOtp(res.debugOtp);
       setStep('code');
     } catch (err) {
       setError(errorMessage(err));

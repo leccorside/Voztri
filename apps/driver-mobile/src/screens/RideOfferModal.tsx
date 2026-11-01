@@ -1,25 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
+import type { DriverRideOffer } from '@voztri/shared-types';
+import { useDriverStore } from '../store/driverStore.js';
 import { BottomSheetModal, Button, formatBRL, shadow } from '../ui/kit.js';
 
 interface Props {
-  offer: {
-    rideId: string;
-    pickupAddress: string;
-    dropoffAddress: string;
-    distanceKm: number;
-    durationMinutes: number;
-    earningsCents: number;
-    timeoutSeconds: number;
-    category: string;
-  };
+  offer: DriverRideOffer;
   onAccept: () => void;
   onReject: () => void;
 }
 
+const PAYMENT_LABEL: Record<string, string> = {
+  pix: 'Pix',
+  credit_card: 'Cartão',
+  cash: 'Dinheiro',
+  wallet: 'Carteira',
+};
+
 export const RideOfferModal: React.FC<Props> = ({ offer, onAccept, onReject }) => {
-  const [secondsLeft, setSecondsLeft] = useState(offer.timeoutSeconds);
+  const busy = useDriverStore((s) => s.busy);
+  // A contagem parte do tempo que ainda resta no servidor
+  const [secondsLeft, setSecondsLeft] = useState(offer.secondsLeft);
 
   useEffect(() => {
     if (secondsLeft <= 0) {
@@ -45,7 +47,7 @@ export const RideOfferModal: React.FC<Props> = ({ offer, onAccept, onReject }) =
 
       {/* Categoria e contagem regressiva */}
       <View style={[styles.rowBetween, { marginBottom: 12 }]}>
-        <Text style={styles.category}>{offer.category.toUpperCase()} • VOZTRI</Text>
+        <Text style={styles.category}>{offer.categoryName}</Text>
         <Text style={styles.expires} accessibilityLiveRegion="polite">
           Expira em {secondsLeft}s
         </Text>
@@ -56,7 +58,10 @@ export const RideOfferModal: React.FC<Props> = ({ offer, onAccept, onReject }) =
         <Text style={styles.earningsLabel}>Seu Ganho Líquido</Text>
         <Text style={styles.earnings}>{formatBRL(offer.earningsCents)}</Text>
         <Text style={styles.tripInfo}>
-          {offer.distanceKm} km • ~{offer.durationMinutes} min de viagem
+          {String(offer.distanceKm).replace('.', ',')} km • ~{offer.durationMinutes} min de viagem
+        </Text>
+        <Text style={styles.passengerInfo}>
+          {offer.passengerName ?? 'Passageiro'} • {PAYMENT_LABEL[offer.paymentMethod] ?? offer.paymentMethod}
         </Text>
       </View>
 
@@ -80,10 +85,12 @@ export const RideOfferModal: React.FC<Props> = ({ offer, onAccept, onReject }) =
 
       {/* Recusar (1/3) e aceitar (2/3) */}
       <View style={styles.actions}>
-        <Button label="Recusar" onPress={onReject} style={styles.reject} textStyle={styles.rejectText} />
+        <Button label="Recusar" onPress={onReject} disabled={busy} style={styles.reject} textStyle={styles.rejectText} />
         <Button
-          label="ACEITAR CORRIDA"
+          label={busy ? 'ACEITANDO…' : 'ACEITAR CORRIDA'}
+          accessibilityLabel="ACEITAR CORRIDA"
           onPress={onAccept}
+          disabled={busy}
           style={[styles.accept, { backgroundColor: VoztriColors.brand.primary }]}
           textStyle={styles.acceptText}
         />
@@ -147,6 +154,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#00C853',
     fontWeight: '700',
+  },
+  passengerInfo: {
+    marginTop: 4,
+    fontSize: 12,
+    color: '#7B7489',
+    fontWeight: '600',
   },
   routeBox: {
     backgroundColor: '#F8F9FE',

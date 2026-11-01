@@ -5,20 +5,36 @@ import { usePassengerStore } from '../store/passengerStore.js';
 import { Button, shadow } from '../ui/kit.js';
 
 interface Props {
-  onFinish: () => void;
+  onFinish: (evaluation: { rating: number; tipCents?: number; tags?: string[] }) => Promise<void>;
 }
 
 const TIPS = [2, 5, 10];
 const TAGS = ['Direção Segura', 'Carro Limpo', 'Ótima Conversa', 'Música Boa'];
 
+const PAYMENT_LABEL: Record<string, string> = {
+  pix: 'Pix',
+  credit_card: 'Cartão',
+  cash: 'Dinheiro',
+  wallet: 'Saldo da carteira',
+};
+
 export const TripCompletedModal: React.FC<Props> = ({ onFinish }) => {
-  const { activeRide } = usePassengerStore();
+  const { activeRide, busy } = usePassengerStore();
   const [rating, setRating] = useState(5);
   const [selectedTip, setSelectedTip] = useState<number | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const toggleTag = (tag: string) =>
+    setSelectedTags((tags) => (tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag]));
+
+  const submit = () =>
+    onFinish({ rating, tipCents: selectedTip ? selectedTip * 100 : undefined, tags: selectedTags });
+
+  const driverFirstName = activeRide?.driver?.user?.name?.split(' ')[0] ?? 'o motorista';
 
   return (
     // Fechar pelo "voltar" do Android equivale a concluir sem alterar a avaliação
-    <Modal transparent visible animationType="slide" onRequestClose={onFinish} statusBarTranslucent>
+    <Modal transparent visible animationType="slide" onRequestClose={() => void submit()} statusBarTranslucent>
       <View style={styles.overlay}>
         <View style={styles.sheet}>
           <ScrollView contentContainerStyle={styles.content}>
@@ -37,17 +53,19 @@ export const TripCompletedModal: React.FC<Props> = ({ onFinish }) => {
             <View style={styles.receipt}>
               <View style={[styles.rowBetween, { marginBottom: 8 }]}>
                 <Text style={styles.receiptLabel}>Valor da Corrida</Text>
-                <Text style={styles.receiptValue}>R$ 24,50</Text>
+                <Text style={styles.receiptValue}>{activeRide?.formattedPrice ?? '—'}</Text>
               </View>
               <View style={styles.rowBetween}>
                 <Text style={styles.paymentLabel}>Forma de Pagamento</Text>
-                <Text style={styles.paymentValue}>Pix Confirmado ✓</Text>
+                <Text style={styles.paymentValue}>
+                  {activeRide ? PAYMENT_LABEL[activeRide.paymentMethod] ?? activeRide.paymentMethod : '—'}
+                </Text>
               </View>
             </View>
 
             {/* Avaliação por estrelas */}
             <View style={styles.ratingBlock}>
-              <Text style={styles.question}>Como foi a viagem com {activeRide?.driver?.user?.name || 'Carlos'}?</Text>
+              <Text style={styles.question}>Como foi a viagem com {driverFirstName}?</Text>
               <View style={styles.stars}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Pressable
@@ -100,17 +118,31 @@ export const TripCompletedModal: React.FC<Props> = ({ onFinish }) => {
 
             {/* Elogios */}
             <View style={styles.tags}>
-              {TAGS.map((tag) => (
-                <Text key={tag} style={styles.tag}>
-                  {tag}
-                </Text>
-              ))}
+              {TAGS.map((tag) => {
+                const selected = selectedTags.includes(tag);
+                return (
+                  <Pressable
+                    key={tag}
+                    onPress={() => toggleTag(tag)}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: selected }}
+                    accessibilityLabel={tag}
+                  >
+                    <Text style={[styles.tag, selected && { backgroundColor: '#F3F2FF', color: VoztriColors.brand.primary }]}>
+                      {selected ? '✓ ' : ''}
+                      {tag}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
 
             {/* Concluir */}
             <Button
-              label="CONCLUIR AVALIAÇÃO"
-              onPress={onFinish}
+              label={busy ? 'ENVIANDO…' : 'CONCLUIR AVALIAÇÃO'}
+              accessibilityLabel="CONCLUIR AVALIAÇÃO"
+              onPress={() => void submit()}
+              disabled={busy}
               style={[styles.submit, { backgroundColor: VoztriColors.brand.primary }]}
               textStyle={styles.submitText}
             />

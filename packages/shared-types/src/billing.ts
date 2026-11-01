@@ -26,13 +26,27 @@ export interface LedgerEntry {
   createdAt: string;
 }
 
+export interface DailyEarnings {
+  date: string;
+  label: string;
+  cents: number;
+  isToday: boolean;
+}
+
+/** GET /driver/earnings — valores líquidos (após a comissão). */
 export interface DriverEarningsSummary {
+  isOnline: boolean;
   todayCents: number;
   weekCents: number;
+  /** Segunda a domingo da semana atual. */
+  daily: DailyEarnings[];
   availableBalanceCents: number;
   pendingBalanceCents: number;
   ridesCount: number;
-  onlineHours: number;
-  pixKey?: string;
+  /** Ainda não registrado pela API (null). */
+  onlineHours: number | null;
+  rating: number | null;
+  pixKey: string | null;
+  pixKeyType: string | null;
 }
 

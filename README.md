@@ -325,6 +325,15 @@ Os projetos nativos seguem o template do React Native 0.74.7, ajustados para o m
 | `driver-mobile` | `br.com.voztri.driver` | `VoztriDriver` | VOZTRI Driver |
 | `passenger-mobile` | `br.com.voztri.passenger` | `VoztriPassenger` | VOZTRI |
 
+Os dois apps usam a API real (o backend do passo 3 precisa estar no ar). Login por código SMS com os usuários do seed, código `123456` em desenvolvimento:
+
+| App | Telefone | Usuário |
+|---|---|---|
+| `driver-mobile` | (11) 99999-2222 | Carlos Eduardo Silva (motorista Pop, já online) |
+| `passenger-mobile` | (11) 99999-1111 | Beatriz Lima (PIN de emergência 1234) |
+
+O endereço da API fica em `src/config.ts` de cada app: `http://10.0.2.2:8080/api/v1` no emulador Android (o `localhost` da máquina) e `http://localhost:8080/api/v1` no simulador iOS. Em aparelho físico, troque pelo IP da máquina na rede. As ofertas e o andamento da corrida chegam por polling a cada 3 s; a sessão fica salva no aparelho (AsyncStorage).
+
 **Android** (JDK 17+, Android SDK 34 e um emulador ou aparelho com depuração USB):
 
 ```bash
@@ -353,7 +362,7 @@ npm test -w @voztri/driver-mobile
 npm test -w @voztri/passenger-mobile
 ```
 
-Os testes percorrem o fluxo completo de cada app (oferta, PIN e finalização no motorista; destino, categoria, pagamento, busca, chat, SOS e avaliação no passageiro) e, a cada passo, falham se algum texto estiver fora de um `<Text>`, erro que derruba o app no dispositivo. Os dados das telas ainda são simulados nos stores (`zustand`); a integração com a API é um passo futuro.
+Os testes substituem a camada de API por mocks e percorrem o fluxo completo de cada app (login, oferta, aceite, PIN, finalização, ganhos e repasse no motorista; destino, estimativa, pagamento, busca, chat, SOS e avaliação no passageiro), verificando as chamadas feitas à API e a reação a cada resposta (PIN errado, oferta expirada, corrida cancelada, sem conexão). A cada passo, falham se algum texto estiver fora de um `<Text>`, erro que derruba o app no dispositivo.
 
 ## 🌐 Serviços locais
 

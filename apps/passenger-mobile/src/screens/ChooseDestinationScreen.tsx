@@ -48,6 +48,13 @@ export const ChooseDestinationScreen: React.FC<Props> = ({ onBack }) => {
   const { origin, setDestination } = usePassengerStore();
   const [query, setQuery] = useState('');
 
+  // Sem serviço de geocodificação ainda: o texto filtra os destinos sugeridos
+  const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const term = normalize(query.trim());
+  const suggestions = term
+    ? SAMPLE_DESTINATIONS.filter((d) => normalize(`${d.shortAddress} ${d.address}`).includes(term))
+    : SAMPLE_DESTINATIONS;
+
   return (
     <View style={styles.screen}>
       {/* Cabeçalho */}
@@ -84,10 +91,14 @@ export const ChooseDestinationScreen: React.FC<Props> = ({ onBack }) => {
       <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
         <Text style={styles.sectionTitle}>Destinos Recomendados</Text>
 
-        {SAMPLE_DESTINATIONS.map((dest) => (
+        {suggestions.length === 0 && (
+          <Text style={styles.empty}>Nenhum destino sugerido corresponde a “{query.trim()}”.</Text>
+        )}
+
+        {suggestions.map((dest) => (
           <Pressable
             key={dest.shortAddress}
-            onPress={() => setDestination(dest)}
+            onPress={() => void setDestination(dest)}
             accessibilityRole="button"
             accessibilityLabel={`${dest.shortAddress}, ${dest.address}`}
             style={({ pressed }) => [styles.suggestion, pressed && { opacity: 0.6 }]}
@@ -182,6 +193,11 @@ const styles = StyleSheet.create({
     color: '#7B7489',
     textTransform: 'uppercase',
     marginVertical: 10,
+  },
+  empty: {
+    fontSize: 14,
+    color: '#7B7489',
+    paddingVertical: 16,
   },
   suggestion: {
     flexDirection: 'row',

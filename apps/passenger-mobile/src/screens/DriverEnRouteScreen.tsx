@@ -7,24 +7,44 @@ import { Button, shadow } from '../ui/kit.js';
 interface Props {
   onOpenChat: () => void;
   onOpenSos: () => void;
-  onSimulateBoarding: () => void;
+  onCancel: () => void;
 }
 
-export const DriverEnRouteScreen: React.FC<Props> = ({ onOpenChat, onOpenSos, onSimulateBoarding }) => {
-  const { activeRide } = usePassengerStore();
+function initials(name: string | undefined): string {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : '')).toUpperCase();
+}
 
-  const driver = activeRide?.driver;
-  const vehicle = driver?.activeVehicle;
+const STATUS_TEXT: Record<string, { label: string; title: string }> = {
+  ACCEPTED: { label: 'Motorista confirmado', title: 'Seu motorista está a caminho' },
+  DRIVER_EN_ROUTE: { label: 'Motorista a caminho', title: 'Seu motorista está a caminho' },
+  DRIVER_ARRIVED: { label: 'Motorista chegou', title: 'Seu motorista chegou ao embarque' },
+  IN_PROGRESS: { label: 'Em viagem', title: 'A caminho do destino' },
+};
+
+export const DriverEnRouteScreen: React.FC<Props> = ({ onOpenChat, onOpenSos, onCancel }) => {
+  const { activeRide, busy } = usePassengerStore();
+
+  if (!activeRide) return null;
+
+  const driver = activeRide.driver;
+  const vehicle = driver?.vehicle;
+  const driverName = driver?.user?.name ?? 'Motorista VOZTRI';
+  const rating = driver?.user?.rating;
+  const inTrip = activeRide.status === 'IN_PROGRESS';
+  const status = STATUS_TEXT[activeRide.status] ?? STATUS_TEXT.DRIVER_EN_ROUTE!;
 
   return (
     <View style={styles.screen}>
-      {/* Simulação de mapa */}
+      {/* Área do mapa */}
       <View style={styles.map}>
-        {/* Previsão de chegada */}
         <View style={styles.etaCard}>
           <View style={styles.flex}>
-            <Text style={styles.etaLabel}>Motorista a caminho</Text>
-            <Text style={styles.etaText}>Chegando em ~3 minutos</Text>
+            <Text style={styles.etaLabel}>{status.label}</Text>
+            <Text style={styles.etaText} accessibilityLiveRegion="polite">
+              {inTrip ? `Destino: ${activeRide.destination.shortAddress}` : status.title}
+            </Text>
           </View>
           <Button
             label="SOS 24h"
@@ -35,49 +55,53 @@ export const DriverEnRouteScreen: React.FC<Props> = ({ onOpenChat, onOpenSos, on
           />
         </View>
 
-        {/* Veículo no mapa */}
         <View style={styles.vehicleLayer} pointerEvents="none">
           <View style={[styles.vehiclePin, { backgroundColor: VoztriColors.brand.primary }]}>
             <Text style={styles.vehicleEmoji}>🚗</Text>
           </View>
-          <Text style={styles.vehiclePlate}>VOZ2026</Text>
+          {vehicle && <Text style={styles.vehiclePlate}>{vehicle.plate}</Text>}
         </View>
       </View>
 
       {/* Painel inferior com o motorista */}
       <View style={styles.sheet}>
-        {/* PIN de embarque em destaque */}
-        <View style={styles.pinBox}>
-          <View style={styles.flex}>
-            <Text style={styles.pinLabel}>Código de Embarque (Informe ao motorista)</Text>
-            <Text style={styles.pinHint}>Diga o PIN ao entrar no carro</Text>
+        {/* PIN de embarque: só o passageiro recebe da API */}
+        {!inTrip && activeRide.boardingPin && (
+          <View style={styles.pinBox}>
+            <View style={styles.flex}>
+              <Text style={styles.pinLabel}>Código de Embarque (Informe ao motorista)</Text>
+              <Text style={styles.pinHint}>Diga o PIN ao entrar no carro</Text>
+            </View>
+            <Text
+              style={[styles.pin, { color: VoztriColors.brand.primary }]}
+              accessibilityLabel={`PIN ${activeRide.boardingPin.split('').join(' ')}`}
+            >
+              {activeRide.boardingPin}
+            </Text>
           </View>
-          <Text style={[styles.pin, { color: VoztriColors.brand.primary }]} accessibilityLabel="PIN 1 2 3 4">
-            1234
-          </Text>
-        </View>
+        )}
 
-        {/* Motorista e veículo */}
         <View style={styles.driverRow}>
           <View style={styles.driver}>
             <View style={styles.avatar}>
-              <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>CS</Text>
+              <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>{initials(driverName)}</Text>
             </View>
             <View>
-              <Text style={styles.driverName}>{driver?.user?.name || 'Carlos Eduardo Silva'}</Text>
-              <Text style={styles.driverMeta}>★ 4.98 • 1.420 viagens</Text>
+              <Text style={styles.driverName}>{driverName}</Text>
+              {rating != null && <Text style={styles.driverMeta}>★ {rating.toFixed(2).replace('.', ',')}</Text>}
             </View>
           </View>
 
-          <View style={styles.vehicleInfo}>
-            <Text style={styles.plate}>{vehicle?.plate || 'VOZ2026'}</Text>
-            <Text style={styles.vehicleModel}>
-              {vehicle?.brand} {vehicle?.model}
-            </Text>
-          </View>
+          {vehicle && (
+            <View style={styles.vehicleInfo}>
+              <Text style={styles.plate}>{vehicle.plate}</Text>
+              <Text style={styles.vehicleModel}>
+                {vehicle.brand} {vehicle.model} • {vehicle.color}
+              </Text>
+            </View>
+          )}
         </View>
 
-        {/* Ações */}
         <View style={styles.actions}>
           <Button
             label="💬 Mensagem (Chat)"
@@ -85,12 +109,16 @@ export const DriverEnRouteScreen: React.FC<Props> = ({ onOpenChat, onOpenSos, on
             style={styles.chat}
             textStyle={[styles.actionText, { color: VoztriColors.brand.primary }]}
           />
-          <Button
-            label="Concluir Viagem (Demo)"
-            onPress={onSimulateBoarding}
-            style={[styles.finish, { backgroundColor: VoztriColors.brand.primary }]}
-            textStyle={[styles.actionText, { color: '#FFFFFF' }]}
-          />
+          {!inTrip && (
+            <Button
+              label={busy ? 'Cancelando…' : 'Cancelar corrida'}
+              accessibilityLabel="Cancelar corrida"
+              onPress={onCancel}
+              disabled={busy}
+              style={styles.cancel}
+              textStyle={[styles.actionText, { color: '#BA1A1A' }]}
+            />
+          )}
         </View>
       </View>
     </View>
@@ -277,11 +305,13 @@ const styles = StyleSheet.create({
     borderColor: '#ECECFF',
     backgroundColor: '#FBF8FF',
   },
-  finish: {
+  cancel: {
     flex: 1,
     padding: 12,
     borderRadius: 12,
-    ...shadow(0.3, 14, 4, 6, '#6A00FF'),
+    borderWidth: 1,
+    borderColor: '#FFCDD2',
+    backgroundColor: '#FFFFFF',
   },
   actionText: {
     fontWeight: '700',

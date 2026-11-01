@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
+import { POLL_INTERVAL_MS } from './config.js';
+import { usePolling } from './hooks/usePolling.js';
 import { usePassengerStore } from './store/passengerStore.js';
+import { LoginScreen } from './screens/LoginScreen.js';
 import { HomeScreen } from './screens/HomeScreen.js';
 import { ChooseDestinationScreen } from './screens/ChooseDestinationScreen.js';
 import { CategorySelectionSheet } from './screens/CategorySelectionSheet.js';
@@ -9,23 +12,63 @@ import { DriverEnRouteScreen } from './screens/DriverEnRouteScreen.js';
 import { ChatModal } from './screens/ChatModal.js';
 import { SosModal } from './screens/SosModal.js';
 import { TripCompletedModal } from './screens/TripCompletedModal.js';
+import { Banner } from './ui/kit.js';
 
 export const App: React.FC = () => {
-  const { currentStep, setStep, confirmRideRequest, cancelActiveRide, finishRideEvaluation } = usePassengerStore();
+  const {
+    sessionStatus,
+    currentStep,
+    activeRide,
+    error,
+    connectionError,
+    bootstrap,
+    setStep,
+    confirmRideRequest,
+    cancelActiveRide,
+    refreshRide,
+    finishRideEvaluation,
+    dismissError,
+  } = usePassengerStore();
   const [showChat, setShowChat] = useState(false);
   const [showSos, setShowSos] = useState(false);
+
+  useEffect(() => {
+    void bootstrap();
+  }, [bootstrap]);
+
+  // Acompanha a corrida (despacho, aceite, embarque e conclusão) pelo polling
+  const tracking = ['SEARCHING', 'DRIVER_EN_ROUTE', 'IN_TRIP'].includes(currentStep);
+  usePolling(refreshRide, POLL_INTERVAL_MS, sessionStatus === 'authenticated' && !!activeRide && tracking);
+
+  if (sessionStatus === 'checking') {
+    return (
+      <View style={[styles.root, styles.center, { backgroundColor: '#F4F6FA' }]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F4F6FA" />
+        <ActivityIndicator color="#6A00FF" size="large" accessibilityLabel="Carregando" />
+      </View>
+    );
+  }
+
+  if (sessionStatus === 'anonymous') {
+    return (
+      <SafeAreaView style={[styles.root, { backgroundColor: '#F4F6FA' }]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F4F6FA" />
+        <LoginScreen />
+      </SafeAreaView>
+    );
+  }
 
   // A tela de busca de motorista usa o tema escuro; as demais, o claro
   const darkScreen = currentStep === 'SEARCHING';
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: darkScreen ? '#0B1026' : '#FFFFFF' }]}>
-      <StatusBar
-        barStyle={darkScreen ? 'light-content' : 'dark-content'}
-        backgroundColor={darkScreen ? '#0B1026' : '#FFFFFF'}
-      />
+      <StatusBar barStyle={darkScreen ? 'light-content' : 'dark-content'} backgroundColor={darkScreen ? '#0B1026' : '#FFFFFF'} />
+
+      {connectionError && <Banner tone="warning" message={connectionError} />}
+      {error && <Banner message={error} onDismiss={dismissError} />}
+
       <View style={styles.content}>
-        {/* Etapa atual do fluxo */}
         {currentStep === 'HOME' && <HomeScreen onOpenSearch={() => setStep('DESTINATION')} />}
 
         {currentStep === 'DESTINATION' && <ChooseDestinationScreen onBack={() => setStep('HOME')} />}
@@ -35,23 +78,22 @@ export const App: React.FC = () => {
         )}
 
         {currentStep === 'SEARCHING' && (
-          <SearchingDriverScreen onCancel={() => cancelActiveRide('Cancelado pelo usuário')} />
+          <SearchingDriverScreen onCancel={() => cancelActiveRide('Cancelado pelo passageiro durante a busca')} />
         )}
 
         {(currentStep === 'DRIVER_EN_ROUTE' || currentStep === 'IN_TRIP') && (
           <DriverEnRouteScreen
             onOpenChat={() => setShowChat(true)}
             onOpenSos={() => setShowSos(true)}
-            onSimulateBoarding={() => setStep('COMPLETED')}
+            onCancel={() => cancelActiveRide('Cancelado pelo passageiro antes do embarque')}
           />
         )}
 
         {currentStep === 'COMPLETED' && <TripCompletedModal onFinish={finishRideEvaluation} />}
       </View>
 
-      {/* Sobreposições */}
-      {showChat && <ChatModal onClose={() => setShowChat(false)} />}
-      {showSos && <SosModal onClose={() => setShowSos(false)} />}
+      {showChat && activeRide && <ChatModal onClose={() => setShowChat(false)} />}
+      {showSos && activeRide && <SosModal onClose={() => setShowSos(false)} />}
     </SafeAreaView>
   );
 };
@@ -59,6 +101,10 @@ export const App: React.FC = () => {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  center: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     flex: 1,

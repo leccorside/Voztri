@@ -1,0 +1,69 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AuthApi, BillingApi, DriverApi, RideApi, VoztriApiClient } from '@voztri/api-client';
+import { isAxiosError } from 'axios';
+import { API_URL } from './config.js';
+
+const TOKEN_KEY = 'voztri.driver.token';
+
+// Cache em memória: o interceptor do cliente lê o token a cada requisição
+let token: string | null = null;
+let unauthorizedHandler: () => void = () => undefined;
+
+export const session = {
+  async load(): Promise<string | null> {
+    token = await AsyncStorage.getItem(TOKEN_KEY);
+    return token;
+  },
+  async save(value: string): Promise<void> {
+    token = value;
+    await AsyncStorage.setItem(TOKEN_KEY, value);
+  },
+  async clear(): Promise<void> {
+    token = null;
+    await AsyncStorage.removeItem(TOKEN_KEY);
+  },
+};
+
+/** Chamado quando a API responde 401 (token expirado ou revogado). */
+export function onUnauthorized(handler: () => void): void {
+  unauthorizedHandler = handler;
+}
+
+const client = new VoztriApiClient({
+  baseURL: API_URL,
+  getToken: () => token,
+  onUnauthorized: () => unauthorizedHandler(),
+});
+
+export const authApi = new AuthApi(client);
+export const driverApi = new DriverApi(client);
+export const rideApi = new RideApi(client);
+export const billingApi = new BillingApi(client);
+
+/** Código de erro da API ("INVALID_PIN", "OFFER_EXPIRED"...), se houver. */
+export function apiErrorCode(err: unknown): string | null {
+  if (isAxiosError(err)) {
+    const data = err.response?.data as { error?: string } | undefined;
+    return data?.error ?? null;
+  }
+  return null;
+}
+
+export function httpStatus(err: unknown): number | null {
+  return isAxiosError(err) ? err.response?.status ?? null : null;
+}
+
+/** Mensagem amigável a partir do erro da API ou da rede. */
+export function errorMessage(err: unknown): string {
+  if (isAxiosError(err)) {
+    if (!err.response) {
+      return `Sem conexão com a API (${API_URL}). Verifique se o backend está no ar.`;
+    }
+    if (err.response.status === 429) {
+      return 'Muitas tentativas seguidas. Aguarde um minuto e tente de novo.';
+    }
+    const data = err.response.data as { message?: string } | undefined;
+    return data?.message ?? `Erro ${err.response.status} ao chamar a API.`;
+  }
+  return err instanceof Error ? err.message : 'Erro inesperado.';
+}
