@@ -4,6 +4,7 @@
   "private": true,
   "description": "VOZTRI - Plataforma Completa de Mobilidade Urbana",
   "workspaces": [
+    "packages/shared-types",
     "packages/*",
     "apps/*"
   ],
