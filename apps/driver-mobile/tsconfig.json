@@ -2,9 +2,14 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "rootDir": "./src",
-    "outDir": "./dist"
+    "noEmit": true,
+    "paths": {
+      "@voztri/api-client": ["../../packages/api-client/src/index.ts"],
+      "@voztri/design-tokens": ["../../packages/design-tokens/src/index.ts"],
+      "@voztri/localization": ["../../packages/localization/src/index.ts"],
+      "@voztri/shared-types": ["../../packages/shared-types/src/index.ts"],
+      "@voztri/validation": ["../../packages/validation/src/index.ts"]
+    }
   },
   "include": ["src/**/*"]
 }
-

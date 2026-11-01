@@ -13,7 +13,6 @@ export const EnRouteNavigationScreen: React.FC<Props> = ({ onOpenPinModal, onFin
   if (!currentRide) return null;
 
   const isEnRoute = currentRide.status === 'DRIVER_EN_ROUTE';
-  const isInProgress = currentRide.status === 'IN_PROGRESS';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', backgroundColor: '#0B1026' }}>

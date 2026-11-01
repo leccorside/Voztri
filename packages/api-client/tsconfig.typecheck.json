@@ -1,0 +1,13 @@
+{
+  // Só para "npm run typecheck": resolve @voztri/shared-types pelo src, sem
+  // exigir o build (dist/) do pacote. O build continua usando tsconfig.json,
+  // cujo rootDir ./src não pode conter arquivos de outros pacotes.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "..",
+    "paths": {
+      "@voztri/shared-types": ["../shared-types/src/index.ts"]
+    }
+  }
+}

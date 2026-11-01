@@ -193,7 +193,9 @@ export const usePassengerStore = create<PassengerState>((set, get) => ({
     }, 3000);
   },
 
-  cancelActiveRide: (reason) => {
+  // O motivo (previsto na interface) será enviado à API quando o cancelamento
+  // deixar de ser simulado; por ora só reseta o estado local.
+  cancelActiveRide: () => {
     set({
       activeRide: null,
       currentStep: 'HOME',

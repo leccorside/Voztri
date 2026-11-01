@@ -1,5 +1,4 @@
 import React from 'react';
-import { usePassengerStore } from '../store/passengerStore.js';
 import { VoztriColors } from '@voztri/design-tokens';
 
 interface Props {
@@ -7,8 +6,6 @@ interface Props {
 }
 
 export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
-  const { origin } = usePassengerStore();
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: VoztriColors.light.surface }}>
       {/* Top Header */}
