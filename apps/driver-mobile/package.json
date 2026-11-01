@@ -1,0 +1,26 @@
+{
+  "name": "@voztri/driver-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.tsx",
+  "scripts": {
+    "start": "react-native start",
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "test": "jest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@voztri/api-client": "*",
+    "@voztri/design-tokens": "*",
+    "@voztri/localization": "*",
+    "@voztri/shared-types": "*",
+    "@voztri/validation": "*",
+    "react": "^18.3.1",
+    "react-native": "^0.74.2",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
