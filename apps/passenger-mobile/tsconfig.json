@@ -3,6 +3,7 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "noEmit": true,
+    "resolveJsonModule": true,
     "paths": {
       "@voztri/api-client": ["../../packages/api-client/src/index.ts"],
       "@voztri/design-tokens": ["../../packages/design-tokens/src/index.ts"],
