@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "surface-variant": "#dde1ff", "primary-container": "#6a00ff", "secondary-fixed": "#eddcff", "on-secondary-container": "#fffbff", "secondary": "#7b22de", "surface-bright": "#fbf8ff", "tertiary-fixed-dim": "#d0bcff", "on-secondary-fixed": "#290055", "surface-container-high": "#e5e7ff", "on-surface": "#151a31", "error-container": "#ffdad6", "secondary-container": "#9546f9", "primary": "#4f00c3", "on-surface-variant": "#494457", "primary-fixed": "#e9ddff", "on-primary-container": "#dacaff", "tertiary": "#4b377a", "surface-tint": "#6e1aff", "background": "#fbf8ff", "outline-variant": "#cbc3da", "tertiary-container": "#634f94", "surface-container-low": "#f3f2ff", "on-tertiary-fixed": "#220950", "surface": "#fbf8ff", "secondary-fixed-dim": "#d8b9ff", "on-error-container": "#93000a", "inverse-surface": "#2a2f47", "surface-container-lowest": "#ffffff", "surface-container-highest": "#dde1ff", "on-secondary": "#ffffff", "surface-container": "#ececff", "on-primary": "#ffffff", "error": "#ba1a1a", "on-primary-fixed-variant": "#5300cc", "surface-dim": "#d4d8f7", "on-background": "#151a31", "on-tertiary-container": "#dbcbff", "on-error": "#ffffff", "outline": "#7b7489", "on-secondary-fixed-variant": "#6200bc", "on-primary-fixed": "#22005d", "tertiary-fixed": "#e9ddff", "on-tertiary": "#ffffff", "inverse-on-surface": "#f0efff", "primary-fixed-dim": "#cfbdff", "inverse-primary": "#cfbdff", "on-tertiary-fixed-variant": "#4f3b7e" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "margin": "1rem", "space-xs": "0.25rem", "space-xl": "2rem", "space-md": "1rem", "space-lg": "1.5rem", "space-sm": "0.5rem", "gutter": "1rem" }, fontFamily: { "headline-xl-mobile": ["Montserrat"], "label-lg": ["Montserrat"], "headline-lg": ["Montserrat"], "body-md": ["Montserrat"], "body-lg": ["Montserrat"], "title-sm": ["Montserrat"], "display-lg": ["Montserrat"], "label-md": ["Montserrat"], "label-xs": ["Montserrat"], "body-sm": ["Montserrat"], "headline-xl": ["Montserrat"], "headline-md": ["Montserrat"] }, fontSize: { "headline-xl-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "label-lg": ["14px", { "lineHeight": "18px", "letterSpacing": "0.03em", "fontWeight": "700" }], "headline-lg": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "400" }], "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }], "title-sm": ["16px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "600" }], "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "800" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600" }], "label-xs": ["10px", { "lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "700" }], "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }], "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-md": ["20px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface font-body-md text-body-md flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-space-sm flex items-center justify-between gap-space-xs"><div class="flex items-center gap-space-xs min-w-0 flex-1"><button aria-label="Voltar" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-high transition-colors" onclick="history.back()" type="button"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><div class="flex items-center gap-space-xs min-w-0"><img alt="logo-fundo-claro.png" class="h-7 w-auto object-contain shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XRT25mGOKbS-BtPSS1xyCgUcF1LlGBPLsoWX9Skxs3V613CW2RSZIheHVdzLXYo7E53W4OXThbishVAcRVwdO_pDHjpINoDLZ7cWFNjG7C487LnqmBpWyR9iP1rAqWrKEUcZZDxH_x1l-EeYNNUxJ9GVZ6tW7euOfJfjlOdYKjN2JhgusasXREyKF7nYI-oh7KzGo1R0U36ubs7mw6JHqnc4q-8YwPRLeCtgN3rV_deYl0nNc"/><h1 class="font-title-sm text-title-sm text-on-surface truncate">Suporte E Ajuda 24H</h1></div></div><div class="flex items-center gap-space-xs shrink-0"><a aria-label="Emergência SOS 24h" class="w-11 h-11 flex items-center justify-center rounded-full bg-error-container text-error hover:opacity-90 transition-opacity" data-path="suporte-urgencia-sos" href="#"><span class="material-symbols-outlined text-[20px]">e911_emergency</span></a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-safe bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Status & Quick Search Header Section -->
+<section class="px-margin pt-space-md pb-space-lg flex flex-col gap-space-sm relative overflow-hidden bg-gradient-to-b from-surface-container-high/40 to-surface">
+<!-- Live Ops Pulse Capsule -->
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-lowest shadow-sm self-start">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+</span>
+<span class="font-label-xs text-label-xs text-on-surface uppercase tracking-wider font-semibold">Central de Operações Online • 24/7</span>
+</div>
+<!-- Personalized Headline -->
+<div class="mt-1">
+<p class="font-body-sm text-body-sm text-on-surface-variant font-medium">Suporte ao Motorista Parceiro</p>
+<h2 class="font-headline-xl-mobile text-headline-xl-mobile text-on-surface tracking-tight">Como podemos te ajudar, Carlos?</h2>
+</div>
+<!-- Smart Search Bar -->
+<div class="relative mt-2">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-primary">
+<span class="material-symbols-outlined text-[22px]">search</span>
+</div>
+<input class="w-full h-13 pl-11 pr-10 rounded-xl bg-surface-container-lowest text-on-surface placeholder:text-on-surface-variant/70 font-body-md text-body-md shadow-sm focus:outline-none focus:shadow-md transition-shadow" id="help-search" placeholder="Busque dúvidas sobre repasses, corridas, conta..." type="text"/>
+<button aria-label="Limpar busca" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-on-surface-variant hidden" id="clear-search-btn" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</section>
+<!-- Emergency & SOS High-Priority Banner (Level 2 Elevation) -->
+<section class="px-margin -mt-2">
+<div class="p-space-md rounded-2xl bg-gradient-to-br from-[#1b0a36] via-[#100326] to-[#0B1026] text-on-secondary shadow-lg relative overflow-hidden">
+<!-- Decorative Glow -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary-container/30 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-start gap-3 relative z-10">
+<div class="w-10 h-10 rounded-xl bg-error/20 flex items-center justify-center shrink-0 text-error-container">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">shield_with_heart</span>
+</div>
+<div class="flex-1">
+<h3 class="font-title-sm text-title-sm text-white font-bold leading-tight">Precisa de apoio urgente em corrida?</h3>
+<p class="font-body-sm text-body-sm text-surface-variant/80 mt-0.5">Equipe tática pronta para intercorrências físicas, acidentes ou riscos à rota.</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-space-sm mt-4 relative z-10">
+<button class="h-12 px-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 text-white font-label-md text-label-md flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-transform" onclick="alert('Conectando ao Centro de Monitoramento e Rastreamento Tático VOZTRI...')" type="button">
+<span class="material-symbols-outlined text-[20px]">e911_emergency</span>
+<span class="font-bold uppercase tracking-wider">SOS Segurança</span>
+</button>
+<a class="h-12 px-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-label-md text-label-md flex items-center justify-center gap-1.5 active:scale-95 transition-transform text-center backdrop-blur-sm" href="tel:08008889090">
+<span class="material-symbols-outlined text-[20px] text-primary-fixed">call</span>
+<span class="font-semibold truncate">0800 Emergência</span>
+</a>
+</div>
+</div>
+</section>
+<!-- Real-time Direct Support Channels -->
+<section class="px-margin mt-space-lg">
+<div class="flex items-center justify-between mb-3">
+<h3 class="font-title-sm text-title-sm text-on-surface font-bold">Canais de Atendimento Direto</h3>
+<span class="font-label-xs text-label-xs text-primary font-semibold">Sem robôs</span>
+</div>
+<div class="grid grid-cols-3 gap-2.5">
+<!-- Channel 1: Real-time Chat -->
+<div class="p-3 rounded-2xl bg-surface-container-lowest shadow-sm flex flex-col justify-between h-44 transition-transform active:scale-[0.98]">
+<div>
+<div class="w-9 h-9 rounded-xl bg-primary-fixed flex items-center justify-center text-primary mb-2">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</div>
+<p class="font-title-sm text-title-sm text-on-surface font-bold leading-tight">Chat ao Vivo</p>
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 mt-1.5 rounded-full bg-secondary-fixed/50">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-xs text-[9px] text-secondary font-bold">Fila: ~1 min</span>
+</div>
+</div>
+<button class="w-full py-2 px-1 rounded-lg bg-primary text-on-primary font-label-xs text-label-xs text-center font-bold shadow-sm" onclick="alert('Iniciando sessão com o operador de plantão...')" type="button">
+          Iniciar Chat
+        </button>
+</div>
+<!-- Channel 2: WhatsApp -->
+<div class="p-3 rounded-2xl bg-surface-container-lowest shadow-sm flex flex-col justify-between h-44 transition-transform active:scale-[0.98]">
+<div>
+<div class="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
+<span class="material-symbols-outlined text-[20px]">forum</span>
+</div>
+<p class="font-title-sm text-title-sm text-on-surface font-bold leading-tight">WhatsApp</p>
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 mt-1.5 rounded-full bg-emerald-50">
+<span class="material-symbols-outlined text-[10px] text-emerald-600">verified</span>
+<span class="font-label-xs text-[9px] text-emerald-800 font-bold truncate">Verificado</span>
+</div>
+</div>
+<button class="w-full py-2 px-1 rounded-lg bg-emerald-600 text-white font-label-xs text-label-xs text-center font-bold shadow-sm" onclick="alert('Abrindo WhatsApp oficial VOZTRI Motoristas...')" type="button">
+          WhatsApp
+        </button>
+</div>
+<!-- Channel 3: Callback Request -->
+<div class="p-3 rounded-2xl bg-surface-container-lowest shadow-sm flex flex-col justify-between h-44 transition-transform active:scale-[0.98]">
+<div>
+<div class="w-9 h-9 rounded-xl bg-surface-container-high flex items-center justify-center text-on-surface mb-2">
+<span class="material-symbols-outlined text-[20px]">phone_in_talk</span>
+</div>
+<p class="font-title-sm text-title-sm text-on-surface font-bold leading-tight">Ligação</p>
+<p class="font-body-sm text-[10px] text-on-surface-variant leading-tight mt-1.5">Retorno em até 5 min</p>
+</div>
+<button class="w-full py-2 px-1 rounded-lg bg-surface-container text-on-surface font-label-xs text-label-xs text-center font-bold hover:bg-surface-container-high" onclick="alert('Ligação agendada. Aguarde o contato no número cadastrado.')" type="button">
+          Me Ligar
+        </button>
+</div>
+</div>
+</section>
+<!-- Interactive Last Ride Fast-Track -->
+<section class="px-margin mt-space-lg">
+<div class="p-space-md rounded-2xl bg-surface-container-lowest shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="font-label-xs text-label-xs uppercase font-bold text-primary tracking-wider">Atalho Inteligente</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Hoje, 14:22</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="min-w-0 pr-2">
+<p class="font-title-sm text-title-sm text-on-surface font-bold truncate">Última corrida: Ana P. (Comfort)</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Av. Paulista, 1200 ➔ Moema</p>
+</div>
+<span class="font-title-sm text-title-sm text-primary font-bold whitespace-nowrap">R$ 38,40</span>
+</div>
+<div class="flex gap-2 mt-3 pt-3 border-t-0">
+<button class="flex-1 py-2 px-2.5 rounded-lg bg-surface-container text-on-surface font-label-xs text-label-xs font-semibold text-center truncate" onclick="alert('Abrindo formulário para declarar item esquecido...')" type="button">
+          Objeto Esquecido
+        </button>
+<button class="flex-1 py-2 px-2.5 rounded-lg bg-surface-container text-on-surface font-label-xs text-label-xs font-semibold text-center truncate" onclick="alert('Solicitando revisão de pedágio/rota...')" type="button">
+          Rever Valor
+        </button>
+<button class="flex-1 py-2 px-2.5 rounded-lg bg-surface-container text-on-surface font-label-xs text-label-xs font-semibold text-center truncate" onclick="alert('Abrindo chamado de avaria/limpeza...')" type="button">
+          Taxa Limpeza
+        </button>
+</div>
+</div>
+</section>
+<!-- Top Support Categories -->
+<section class="px-margin mt-space-lg">
+<div class="flex items-center justify-between mb-3">
+<h3 class="font-title-sm text-title-sm text-on-surface font-bold">Categorias de Dúvidas</h3>
+<span class="font-body-sm text-body-sm text-on-surface-variant">5 tópicos</span>
+</div>
+<div class="flex flex-col gap-2.5" id="categories-container">
+<!-- Item 1: Ganhos & Pix -->
+<details class="group bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden transition-all">
+<summary class="flex items-center justify-between p-3.5 cursor-pointer list-none select-none">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700">
+<span class="material-symbols-outlined text-[22px]">payments</span>
+</div>
+<div>
+<p class="font-title-sm text-title-sm text-on-surface font-bold">Ganhos e Repasses Pix</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Pix instantâneo, taxas dinâmicas e tarifas</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-open:rotate-180 transition-transform">keyboard_arrow_down</span>
+</summary>
+<div class="px-4 pb-3.5 pt-1 flex flex-col gap-2 bg-surface-container-low/40">
+<a class="flex items-center justify-between py-2 text-on-surface hover:text-primary font-body-sm text-body-sm" href="#" onclick="event.preventDefault(); alert('Atraso no Pix: O tempo médio de compensação é de 2 segundos. Se ultrapassar 10 min, seu banco pode estar em manutenção.');">
+<span>Meu repasse via Pix não caiu na conta</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</a>
+<a class="flex items-center justify-between py-2 text-on-surface hover:text-primary font-body-sm text-body-sm" href="#" onclick="event.preventDefault(); alert('Contestação aberta. Seu pedido de revisão de dinamismo entrará em fila prioritária.');">
+<span>Contestação de valor da tarifa dinâmica</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</a>
+<a class="flex items-center justify-between py-2 text-on-surface hover:text-primary font-body-sm text-body-sm" href="#" onclick="event.preventDefault(); alert('Taxa de cancelamento: aplicada se o passageiro cancelar após 2 minutos ou se você aguardar 5 minutos no local.');">
+<span>Conferência de taxas de cancelamento</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</a>
+</div>
+</details>
+<!-- Item 2: Problemas em Corridas -->
+<details class="group bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden transition-all">
+<summary class="flex items-center justify-between p-3.5 cursor-pointer list-none select-none">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[22px]">directions_car</span>
+</div>
+<div>
+<p class="font-title-sm text-title-sm text-on-surface font-bold">Problemas na Última Corrida</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Passageiro ausente, avaria e rotas</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-open:rotate-180 transition-transform">keyboard_arrow_down</span>
+</summary>
+<div class="px-4 pb-3.5 pt-1 flex flex-col gap-2 bg-surface-container-low/40">
+<a class="flex items-center justify-between py-2 text-on-surface hover:text-primary font-body-sm text-body-sm" href="#" onclick="event.preventDefault(); alert('Passageiro não compareceu: após 5 min no ponto, encerre a viagem e selecione Taxa de Espera.');">
+<span>Passageiro não compareceu ao embarque</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</a>
+<a class="flex items-center justify-between py-2 text-on-surface hover:text-primary font-body-sm text-body-sm" href="#" onclick="event.preventDefault(); alert('Avaria ou limpeza: envie até 3 fotos do veículo pelo canal de tickets.');">
+<span>Solicitar taxa de limpeza ou ressarcimento</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</a>
+<a class="flex items-center justify-between py-2 text-on-surface hover:text-primary font-body-sm text-body-sm" href="#" onclick="event.preventDefault(); alert('Desvio de rota: recalculamos a distância real percorrida no nosso servidor.');">
+<span>Ajuste de pedágio ou rota desviada</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</a>
+</div>
+</details>
+<!-- Item 3: Documentos & Conta -->
+<details class="group bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden transition-all">
+<summary class="flex items-center justify-between p-3.5 cursor-pointer list-none select-none">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[22px]">badge</span>
+</div>
+<div>
+<p class="font-title-sm text-title-sm text-on-surface font-bold">Documentos e Conta</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">CNH EAR, cadastro de novo carro e Pix</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-open:rotate-180 transition-transform">keyboard_arrow_down</span>
+</summary>
+<div class="px-4 pb-3.5 pt-1 flex flex-col gap-2 bg-surface-container-low/40">
+<a class="flex items-center justify-between py-2 text-on-surface hover:text-primary font-body-sm text-body-sm" href="#" onclick="event.preventDefault(); alert('Envio de CNH digital: upload liberado na aba Perfil &gt; Documentos.');">
+<span>Renovação da CNH com observação EAR</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</a>
+<a class="flex items-center justify-between py-2 text-on-surface hover:text-primary font-body-sm text-body-sm" href="#" onclick="event.preventDefault(); alert('Adicionar veículo: fotos do CRLV 2024 e laudo de vistoria requeridos.');">
+<span>Cadastrar ou trocar veículo da frota</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</a>
+<a class="flex items-center justify-between py-2 text-on-surface hover:text-primary font-body-sm text-body-sm" href="#" onclick="event.preventDefault(); alert('Chave Pix: Por segurança, alterações exigem confirmação via SMS e biometria facial.');">
+<span>Alterar chave Pix de recebimento diário</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</a>
+</div>
+</details>
+<!-- Item 4: Avaliação & Conduta -->
+<details class="group bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden transition-all">
+<summary class="flex items-center justify-between p-3.5 cursor-pointer list-none select-none">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700">
+<span class="material-symbols-outlined text-[22px]">star</span>
+</div>
+<div>
+<p class="font-title-sm text-title-sm text-on-surface font-bold">Avaliação e Conduta</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Nota 5.0, regras VOZTRI e categoria Black</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-open:rotate-180 transition-transform">keyboard_arrow_down</span>
+</summary>
+<div class="px-4 pb-3.5 pt-1 flex flex-col gap-2 bg-surface-container-low/40">
+<a class="flex items-center justify-between py-2 text-on-surface hover:text-primary font-body-sm text-body-sm" href="#" onclick="event.preventDefault(); alert('Dicas VOZTRI: ar condicionado ajustado, carro higienizado e bom dia cordial elevam a nota para 4.98+.');">
+<span>Como manter sua nota máxima de 5.0 estrelas</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</a>
+<a class="flex items-center justify-between py-2 text-on-surface hover:text-primary font-body-sm text-body-sm" href="#" onclick="event.preventDefault(); alert('Categoria VOZTRI Black: requer veículo ano 2021+ e mínimo de 150 viagens com nota 4.90+.');">
+<span>Critérios para desbloquear categoria Black</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</a>
+</div>
+</details>
+<!-- Item 5: App e GPS -->
+<details class="group bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden transition-all">
+<summary class="flex items-center justify-between p-3.5 cursor-pointer list-none select-none">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-secondary-fixed flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[22px]">navigation</span>
+</div>
+<div>
+<p class="font-title-sm text-title-sm text-on-surface font-bold">App e Navegação GPS</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Sinal de localização, dados e Waze/Maps</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-open:rotate-180 transition-transform">keyboard_arrow_down</span>
+</summary>
+<div class="px-4 pb-3.5 pt-1 flex flex-col gap-2 bg-surface-container-low/40">
+<a class="flex items-center justify-between py-2 text-on-surface hover:text-primary font-body-sm text-body-sm" href="#" onclick="event.preventDefault(); alert('Verifique a calibração de bússola e permissão de localização precisa.');">
+<span>Oscilação no GPS durante corridas</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</a>
+<a class="flex items-center justify-between py-2 text-on-surface hover:text-primary font-body-sm text-body-sm" href="#" onclick="event.preventDefault(); alert('Você pode selecionar Waze, Google Maps ou Navegador Nativo VOZTRI em Configurações &gt; Navegação.');">
+<span>Integrar rota com Waze ou Google Maps</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</a>
+</div>
+</details>
+</div>
+</section>
+<!-- My Recent Tickets Section -->
+<section class="px-margin mt-space-lg">
+<div class="flex items-center justify-between mb-3">
+<h3 class="font-title-sm text-title-sm text-on-surface font-bold">Meus Chamados Recentes</h3>
+<span class="font-label-xs text-label-xs px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-bold">2 ativos</span>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Resolved Ticket -->
+<div class="p-3.5 rounded-2xl bg-surface-container-lowest shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-xs text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">#TK-84920</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-label-xs text-label-xs font-bold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+            Resolvido
+          </span>
+</div>
+<p class="font-title-sm text-title-sm text-on-surface font-semibold">Ajuste de pedágio na Rodovia Imigrantes</p>
+<div class="p-2.5 rounded-xl bg-emerald-50 text-emerald-900 font-body-sm text-body-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-emerald-600">paid</span>
+<span class="font-medium">+R$ 14,20 creditado no seu Pix em 18/10</span>
+</div>
+</div>
+<!-- In Analysis Ticket -->
+<div class="p-3.5 rounded-2xl bg-surface-container-lowest shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-xs text-label-xs font-bold text-on-surface-variant uppercase tracking-wider">#TK-85104</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-fixed text-primary font-label-xs text-label-xs font-bold">
+<span class="material-symbols-outlined text-[14px]">hourglass_top</span>
+            Em análise
+          </span>
+</div>
+<p class="font-title-sm text-title-sm text-on-surface font-semibold">Dúvida sobre bônus semanal de estreia</p>
+<div class="p-2.5 rounded-xl bg-surface-container-high/60 text-on-surface font-body-sm text-body-sm flex items-center justify-between">
+<span class="font-medium">Tempo estimado de retorno:</span>
+<span class="font-bold text-primary">Até 30 min</span>
+</div>
+</div>
+</div>
+<!-- View All Button -->
+<button class="w-full mt-3 py-3 rounded-xl bg-surface-container text-primary font-label-md text-label-md font-bold text-center hover:bg-surface-container-high transition-colors" onclick="alert('Carregando histórico completo de 4 chamados...')" type="button">
+      Ver todos os chamados anteriores (4)
+    </button>
+</section>
+<!-- Driver FAQ Accordion -->
+<section class="px-margin mt-space-lg">
+<div class="flex items-center justify-between mb-3">
+<h3 class="font-title-sm text-title-sm text-on-surface font-bold">Perguntas Frequentes</h3>
+<span class="font-label-xs text-label-xs text-on-surface-variant">Guia rápido</span>
+</div>
+<div class="flex flex-col gap-2">
+<details class="group bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<summary class="flex items-center justify-between p-3.5 cursor-pointer list-none select-none">
+<span class="font-body-md text-body-md text-on-surface font-semibold pr-2">O que fazer se o passageiro esquecer um pertence no carro?</span>
+<span class="material-symbols-outlined text-on-surface-variant group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="px-3.5 pb-3.5 pt-0 text-on-surface-variant font-body-sm text-body-sm leading-relaxed">
+          Guarde o item em local seguro, acesse o histórico da viagem e selecione "Objeto Esquecido". Nossa central intermediará o contato sem expor seu telefone particular. Você recebe uma taxa de devolução de R$ 30,00 pelo deslocamento.
+        </div>
+</details>
+<details class="group bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<summary class="flex items-center justify-between p-3.5 cursor-pointer list-none select-none">
+<span class="font-body-md text-body-md text-on-surface font-semibold pr-2">Como funciona o seguro APP durante as viagens?</span>
+<summary class="hidden"></summary>
+<span class="material-symbols-outlined text-on-surface-variant group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="px-3.5 pb-3.5 pt-0 text-on-surface-variant font-body-sm text-body-sm leading-relaxed">
+          Todo motorista ativo está automaticamente coberto pelo Seguro de Acidentes Pessoais a Passageiros (APP) VOZTRI desde o aceite da chamada até o desembarque completo, cobrindo despesas médicas e hospitalares de até R$ 100.000,00.
+        </div>
+</details>
+<details class="group bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<summary class="flex items-center justify-between p-3.5 cursor-pointer list-none select-none">
+<span class="font-body-md text-body-md text-on-surface font-semibold pr-2">Quando é cobrada a taxa de cancelamento do passageiro?</span>
+<span class="material-symbols-outlined text-on-surface-variant group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="px-3.5 pb-3.5 pt-0 text-on-surface-variant font-body-sm text-body-sm leading-relaxed">
+          A taxa é faturada integralmente a seu favor caso o passageiro cancele após 2 minutos do trajeto iniciado em direção a ele, ou caso você aguarde no ponto de embarque por mais de 5 minutos sem contato.
+        </div>
+</details>
+</div>
+</section>
+<!-- Reliability Trust Seal & Metadata Footer -->
+<footer class="mt-space-xl px-margin pb-space-xl flex flex-col items-center text-center gap-3">
+<!-- Human Support Badge -->
+<div class="w-full p-4 rounded-2xl bg-surface-container-high/40 flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">handshake</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface font-semibold">Atendimento 100% humanizado</p>
+<p class="font-body-sm text-[11px] text-on-surface-variant leading-relaxed max-w-xs">
+        Especialistas em mobilidade urbana alocados em São Paulo e Grande SP prontos para apoiar seu trajeto diário.
+      </p>
+</div>
+<!-- App Version & Driver Identification -->
+<div class="flex flex-col items-center gap-1 mt-2 text-on-surface-variant/70">
+<p class="font-label-xs text-[11px]">VOZTRI Driver • Versão 2.4.0 (Build 942)</p>
+<div class="inline-flex items-center gap-2">
+<span class="font-label-xs text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-surface-container-high text-on-surface">Motorista ID: VZT-8842-SP</span>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span class="font-label-xs text-[10px] text-emerald-700 font-semibold">Status: Verificado</span>
+</div>
+</div>
+</footer>
+</div>
+<script>
+  // Simple client-side search query interaction for real-time quick filter
+  const searchInput = document.getElementById('help-search');
+  const clearBtn = document.getElementById('clear-search-btn');
+  const detailsItems = document.querySelectorAll('#categories-container details');
+
+  if (searchInput && clearBtn) {
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      clearBtn.classList.toggle('hidden', query.length === 0);
+
+      if (detailsItems.length > 0) {
+        detailsItems.forEach((detail) => {
+          const text = detail.textContent.toLowerCase();
+          if (query === '') {
+            detail.style.display = '';
+            detail.open = false;
+          } else if (text.includes(query)) {
+            detail.style.display = '';
+            detail.open = true;
+          } else {
+            detail.style.display = 'none';
+          }
+        });
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      clearBtn.classList.add('hidden');
+      detailsItems.forEach((detail) => {
+        detail.style.display = '';
+        detail.open = false;
+      });
+      searchInput.focus();
+    });
+  }
+</script></main></body></html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#fbf8ff;color:#151a31;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "on-tertiary": "#ffffff", "inverse-primary": "#cfbdff", "on-secondary-fixed-variant": "#6200bc", "error": "#ba1a1a", "surface-container-high": "#e5e7ff", "tertiary-container": "#634f94", "secondary-fixed-dim": "#d8b9ff", "error-container": "#ffdad6", "on-surface": "#151a31", "on-tertiary-fixed-variant": "#4f3b7e", "surface-variant": "#dde1ff", "on-background": "#151a31", "tertiary-fixed-dim": "#d0bcff", "on-primary-fixed-variant": "#5300cc", "on-primary": "#ffffff", "on-error-container": "#93000a", "on-secondary-fixed": "#290055", "secondary": "#7b22de", "primary-fixed": "#e9ddff", "surface-tint": "#6e1aff", "surface-container-low": "#f3f2ff", "background": "#fbf8ff", "inverse-on-surface": "#f0efff", "secondary-fixed": "#eddcff", "surface-bright": "#fbf8ff", "surface-container-highest": "#dde1ff", "secondary-container": "#9546f9", "surface-dim": "#d4d8f7", "on-surface-variant": "#494457", "surface": "#fbf8ff", "tertiary": "#4b377a", "on-secondary": "#ffffff", "outline-variant": "#cbc3da", "on-secondary-container": "#fffbff", "surface-container-lowest": "#ffffff", "outline": "#7b7489", "on-primary-container": "#dacaff", "surface-container": "#ececff", "tertiary-fixed": "#e9ddff", "primary-fixed-dim": "#cfbdff", "on-tertiary-fixed": "#220950", "primary-container": "#6a00ff", "inverse-surface": "#2a2f47", "primary": "#4f00c3", "on-tertiary-container": "#dbcbff", "on-primary-fixed": "#22005d", "on-error": "#ffffff" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "gutter": "1rem", "space-md": "1rem", "space-xs": "0.25rem", "margin": "1rem", "space-sm": "0.5rem", "space-lg": "1.5rem", "space-xl": "2rem" }, fontFamily: { "display-lg": ["Montserrat"], "body-lg": ["Montserrat"], "headline-xl": ["Montserrat"], "headline-xl-mobile": ["Montserrat"], "title-sm": ["Montserrat"], "label-md": ["Montserrat"], "body-md": ["Montserrat"], "headline-md": ["Montserrat"], "label-lg": ["Montserrat"], "headline-lg": ["Montserrat"], "label-xs": ["Montserrat"], "body-sm": ["Montserrat"] }, fontSize: { "display-lg": ["40px", { lineHeight: "48px", letterSpacing: "-0.03em", fontWeight: "800" }], "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }], "headline-xl": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }], "headline-xl-mobile": ["26px", { lineHeight: "32px", letterSpacing: "-0.02em", fontWeight: "700" }], "title-sm": ["16px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }], "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600" }], "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "400" }], "headline-md": ["20px", { lineHeight: "26px", letterSpacing: "-0.01em", fontWeight: "600" }], "label-lg": ["14px", { lineHeight: "18px", letterSpacing: "0.03em", fontWeight: "700" }], "headline-lg": ["24px", { lineHeight: "30px", letterSpacing: "-0.015em", fontWeight: "700" }], "label-xs": ["10px", { lineHeight: "12px", letterSpacing: "0.06em", fontWeight: "700" }], "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "500" }] } } } }</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface antialiased min-h-screen flex flex-col"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex items-center justify-between px-space-md pt-space-xs text-on-surface"><span class="font-label-md text-label-md font-bold tracking-tight">09:41</span><div class="flex items-center gap-space-xs text-on-surface"><span class="material-symbols-outlined text-[16px]">signal_cellular_alt</span><span class="material-symbols-outlined text-[16px]">wifi</span><span class="material-symbols-outlined text-[18px]">battery_full</span></div></div><div class="h-16 px-space-md flex items-center justify-between"><div class="flex items-center gap-space-sm"><button class="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-high transition-colors" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="logo-fundo-claro.png" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XRT25mGOKbS-BtPSS1xyCgUcF1LlGBPLsoWX9Skxs3V613CW2RSZIheHVdzLXYo7E53W4OXThbishVAcRVwdO_pDHjpINoDLZ7cWFNjG7C487LnqmBpWyR9iP1rAqWrKEUcZZDxH_x1l-EeYNNUxJ9GVZ6tW7euOfJfjlOdYKjN2JhgusasXREyKF7nYI-oh7KzGo1R0U36ubs7mw6JHqnc4q-8YwPRLeCtgN3rV_deYl0nNc"/><h1 class="font-headline-md text-headline-md text-on-surface font-bold">Recibo Da Viagem</h1></div><div class="flex items-center gap-space-xs"><button aria-label="Compartilhar recibo" class="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[22px]">share</span></button><button aria-label="Baixar PDF do recibo" class="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[22px]">picture_as_pdf</span></button></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full px-margin pb-space-xl space-y-space-md">
+<!-- Header Card: Resumo & Valor Total -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-md flex flex-col space-y-space-sm relative overflow-hidden">
+<!-- Subtle purple atmospheric glow -->
+<div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 px-2.5 py-1 bg-surface-container rounded-full">
+<span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="font-label-xs text-label-xs text-primary uppercase font-bold tracking-wider">#VZ-8842-BR</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant font-medium">24 Out 2024 • 18:42</span>
+</div>
+<div class="pt-space-xs flex items-baseline justify-between">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant font-medium">Valor Total da Corrida</span>
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-xl-mobile text-headline-xl-mobile text-on-surface font-extrabold tracking-tight">R$ 31,40</span>
+</div>
+</div>
+<div class="flex items-center gap-1 px-3 py-1.5 bg-surface-container-low rounded-full">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-xs text-label-xs text-primary font-bold">Pago via Pix</span>
+</div>
+</div>
+</div>
+<!-- Trajeto Realizado com Visualizador e Métricas -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col">
+<!-- Miniatura estilizada de mapa estático -->
+<div class="relative w-full h-44 bg-surface-container-high overflow-hidden" data-alt="A sophisticated vector-style minimalistic aerial light cartography map of São Paulo showing glowing neon purple transit route connecting Paulista Avenue to Itaim Bibi with glowing purple waypoint markers and elegant clean streets" data-location="Avenida Paulista to Itaim Bibi, Sao Paulo, Brazil" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBKpblq1p5hkiHVXGuC8lQl9KpEjkioBxlriAbHg6FfrUoDcielbBirXcK8tu2yi26d7RjDaDiNyFK1rfC174PxzJ516YmUhoD6w3XO5BMHbG8G9YqBxtjC_39N0E-hkugO6SURYpmekWTI6AQ5cQgAat9trjlCVPvUvjpXgYL0BgtbCnVT5b0ah-1muOZpmFE2r_61FGpri8DydqVliiU2OTrzNUK0UQXvcYQEFEc');">
+<!-- Overlay Gradiente Sutil -->
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-transparent to-transparent"></div>
+<!-- Glassmorphic Route Metrics Badge -->
+<div class="absolute bottom-2.5 inset-x-2.5 bg-surface-container-lowest/90 backdrop-blur-md rounded-lg px-3 py-2 flex items-center justify-around shadow-sm">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">navigation</span>
+<span class="font-label-xs text-label-xs text-on-surface font-bold">6,2 km</span>
+</div>
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">schedule</span>
+<span class="font-label-xs text-label-xs text-on-surface font-bold">18 min</span>
+</div>
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">speed</span>
+<span class="font-label-xs text-label-xs text-on-surface font-bold">24 km/h méd.</span>
+</div>
+</div>
+</div>
+<!-- Ponto A e Ponto B Itinerário -->
+<div class="p-space-md flex flex-col space-y-3">
+<!-- Partida -->
+<div class="flex items-start gap-3">
+<div class="flex flex-col items-center mt-1">
+<div class="w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center">
+<div class="w-1.5 h-1.5 rounded-full bg-on-primary"></div>
+</div>
+<div class="w-0.5 h-6 bg-surface-container-highest my-0.5"></div>
+</div>
+<div class="flex-1 min-w-0">
+<span class="font-label-xs text-label-xs text-on-surface-variant uppercase font-semibold">Embarque • 18:24</span>
+<p class="font-body-md text-body-md text-on-surface font-semibold truncate">Av. Paulista, 1578 - Bela Vista</p>
+</div>
+</div>
+<!-- Chegada -->
+<div class="flex items-start gap-3">
+<div class="flex flex-col items-center mt-0.5">
+<div class="w-3.5 h-3.5 rounded-full bg-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px] text-on-secondary">check</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<span class="font-label-xs text-label-xs text-on-surface-variant uppercase font-semibold">Desembarque • 18:42</span>
+<p class="font-body-md text-body-md text-on-surface font-semibold truncate">R. Joaquim Floriano, 466 - Itaim Bibi</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Detalhes do Motorista & Veículo VOZTRI -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-12 h-12 rounded-full overflow-hidden bg-surface-container flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Warm friendly professional driver Carlos Eduardo smiling inside modern car wearing clean collared shirt with purple lanyard VOZTRI badge, soft city lighting, high quality photography portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnLqs9Oc5xuDJD_ANMksP0u5T6adtX5I-8BdugsKKFAZNp1sXNjjCVzVfRQPMyEoBQkGBYzaUD9lTRkedVNRfK02JT4qwyDeEcxRMfV7Jxwe3U7pF3qTrFwxtdGklHef_YMjcQePcr_Vxgh68wIMHE4EvhxpNnBRvT4na2rx6Yclo4E4seNjwaqjs76JYj1pwUC8e51yJK1aOIjg61O5_Yek4xG_iSwBsL27El4DA"/>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface font-bold truncate">Carlos Eduardo</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md text-on-surface font-bold">4.98</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">(1.420 viagens)</span>
+</div>
+</div>
+</div>
+<div class="px-2.5 py-1 bg-primary-fixed rounded-full text-center">
+<span class="font-label-xs text-label-xs text-primary font-bold">VOZTRI Comfort</span>
+</div>
+</div>
+<!-- Veículo e Tags de Conforto -->
+<div class="pt-space-xs flex flex-wrap items-center justify-between bg-surface-container-low rounded-lg p-2.5 gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary">directions_car</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Toyota Corolla • Preto</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Placa BRA-9X28</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">mode_fan</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Ar Climatizado</span>
+</div>
+</div>
+</div>
+<!-- Discriminação de Valores & Repasse Transparente -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col space-y-space-sm">
+<div class="flex items-center justify-between pb-1">
+<span class="font-title-sm text-title-sm text-on-surface font-bold">Detalhamento do Valor</span>
+<span class="font-label-xs text-label-xs text-on-surface-variant uppercase font-bold tracking-wider">Tarifa Oficial</span>
+</div>
+<!-- Itens discriminados -->
+<div class="space-y-2 font-body-md text-body-md text-on-surface-variant">
+<div class="flex justify-between items-center">
+<span>Tarifa base</span>
+<span class="font-body-md text-on-surface font-medium">R$ 8,00</span>
+</div>
+<div class="flex justify-between items-center">
+<span>Distância (6,2 km)</span>
+<span class="font-body-md text-on-surface font-medium">R$ 12,40</span>
+</div>
+<div class="flex justify-between items-center">
+<span>Tempo de percurso (18 min)</span>
+<span class="font-body-md text-on-surface font-medium">R$ 6,00</span>
+</div>
+<div class="flex justify-between items-center">
+<span>Preço dinâmico (1.0x)</span>
+<span class="font-body-md text-on-surface font-medium">R$ 0,00</span>
+</div>
+<div class="h-px bg-surface-container w-full my-1"></div>
+<div class="flex justify-between items-center">
+<span class="font-semibold text-on-surface">Subtotal</span>
+<span class="font-semibold text-on-surface">R$ 26,40</span>
+</div>
+<!-- Cupom Aplicado -->
+<div class="flex justify-between items-center text-primary font-medium">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">local_offer</span>
+<span>Cupom VEMDEVOZ</span>
+</div>
+<span class="font-semibold">- R$ 5,00</span>
+</div>
+<!-- Gorjeta -->
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">favorite</span>
+<span class="text-on-surface font-medium">Gorjeta voluntária ao motorista</span>
+</div>
+<span class="font-body-md text-on-surface font-semibold">+ R$ 5,00</span>
+</div>
+<div class="h-px bg-surface-container-high w-full my-1"></div>
+<!-- Total Líquido Cobrado -->
+<div class="flex justify-between items-center pt-1">
+<span class="font-title-sm text-title-sm text-on-surface font-bold">Total Cobrado</span>
+<span class="font-headline-md text-headline-md text-primary font-extrabold">R$ 31,40</span>
+</div>
+</div>
+<!-- Transparência VOZTRI: Banner de Repasse Justo -->
+<div class="mt-2 bg-primary/5 rounded-lg p-3 flex items-start gap-2.5">
+<span class="material-symbols-outlined text-primary text-[20px] flex-shrink-0 mt-0.5">handshake</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-primary font-bold">Compromisso VOZTRI com o Parceiro</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-snug pt-0.5">
+          Taxa VOZTRI de apenas 15% retida da tarifa. Carlos recebeu <strong class="text-on-surface font-bold">R$ 27,44 líquidos</strong> de forma imediata (incluindo 100% da sua gorjeta de R$ 5,00).
+        </p>
+</div>
+</div>
+</div>
+<!-- Dados da Transação Pix & Autenticação Fiscal -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col space-y-space-sm">
+<div class="flex items-center justify-between pb-1">
+<span class="font-title-sm text-title-sm text-on-surface font-bold">Comprovante de Liquidação</span>
+<span class="material-symbols-outlined text-primary text-[20px]">account_balance</span>
+</div>
+<div class="space-y-2 text-on-surface-variant font-body-sm">
+<div class="flex flex-col bg-surface-container-low p-2.5 rounded-lg">
+<span class="font-label-xs text-label-xs text-on-surface-variant uppercase font-semibold">Identificador de Liquidação E2E</span>
+<span class="font-label-md text-label-md text-on-surface font-mono break-all pt-0.5 font-bold">E1823612020241024184209x89</span>
+</div>
+<div class="flex justify-between items-center py-1">
+<span>Forma de Liquidação</span>
+<span class="font-semibold text-on-surface">Pix Instantâneo (BACEN)</span>
+</div>
+<div class="flex justify-between items-center">
+<span>Status da Transação</span>
+<span class="font-semibold text-primary">Liquidado em 24/10/2024 às 18:42:15</span>
+</div>
+<div class="flex justify-between items-center">
+<span>Documento Fiscal Vinculado</span>
+<span class="font-semibold text-on-surface">NFS-e Nº 00482910-SP</span>
+</div>
+</div>
+</div>
+<!-- Ações e Botões de Exportação -->
+<div class="flex flex-col space-y-space-sm pt-space-xs">
+<!-- CTA Primário com Gradiente da Marca -->
+<button class="w-full h-14 rounded-full bg-gradient-to-r from-primary to-secondary text-on-primary font-title-sm text-title-sm font-semibold flex items-center justify-center gap-2 shadow-md active:scale-[0.98] transition-transform" id="btn-download-pdf">
+<span class="material-symbols-outlined text-[20px]">download</span>
+<span>Baixar Recibo em PDF (NFS-e)</span>
+</button>
+<!-- CTA Secundário de Envio -->
+<button class="w-full h-12 rounded-full bg-surface-container text-primary font-title-sm text-title-sm font-semibold flex items-center justify-center gap-2 active:bg-surface-container-high transition-colors" id="btn-email-receipt">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+<span class="truncate">Enviar por E-mail (lucas***@email.com)</span>
+</button>
+<!-- Ajuda & Chamado -->
+<div class="pt-2 flex flex-col items-center">
+<button class="flex items-center gap-1.5 text-on-surface-variant hover:text-primary transition-colors py-2 px-3">
+<span class="material-symbols-outlined text-[18px]">help_outline</span>
+<span class="font-body-md text-body-md font-medium">Esqueceu algo no veículo ou tem dúvidas?</span>
+</button>
+<button class="font-label-md text-label-md text-primary font-bold underline decoration-primary/40 hover:decoration-primary">
+        Abrir chamado de suporte para esta corrida
+      </button>
+</div>
+</div>
+<!-- Toast Notificação Interativa -->
+<div class="fixed bottom-6 inset-x-6 z-40 transform translate-y-32 opacity-0 transition-all duration-300 pointer-events-none" id="toast-feedback">
+<div class="bg-inverse-surface text-inverse-on-surface px-4 py-3 rounded-xl shadow-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-inverse-primary text-[22px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md font-medium" id="toast-text">Ação executada com sucesso!</span>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const btnPdf = document.getElementById('btn-download-pdf');
+    const btnEmail = document.getElementById('btn-email-receipt');
+    const toast = document.getElementById('toast-feedback');
+    const toastText = document.getElementById('toast-text');
+    let toastTimer;
+
+    function showToast(message) {
+      if (!toast || !toastText) return;
+      toastText.textContent = message;
+      toast.classList.remove('translate-y-32', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-32', 'opacity-0');
+      }, 3000);
+    }
+
+    if (btnPdf) {
+      btnPdf.addEventListener('click', () => {
+        showToast('Recibo #VZ-8842 baixado com sucesso!');
+      });
+    }
+
+    if (btnEmail) {
+      btnEmail.addEventListener('click', () => {
+        showToast('Comprovante enviado para lucas***@email.com');
+      });
+    }
+  })();
+</script></main></body></html>

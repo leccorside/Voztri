@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "primary": "#4f00c3", "secondary-container": "#9546f9", "outline": "#7b7489", "surface-variant": "#dde1ff", "on-primary-container": "#dacaff", "surface-tint": "#6e1aff", "secondary-fixed": "#eddcff", "secondary": "#7b22de", "on-error": "#ffffff", "primary-container": "#6a00ff", "inverse-on-surface": "#f0efff", "on-surface-variant": "#494457", "surface-bright": "#fbf8ff", "surface-container-lowest": "#ffffff", "on-secondary-fixed-variant": "#6200bc", "on-primary": "#ffffff", "error-container": "#ffdad6", "on-secondary-fixed": "#290055", "tertiary-fixed": "#e9ddff", "on-tertiary-fixed": "#220950", "on-tertiary": "#ffffff", "inverse-primary": "#cfbdff", "on-tertiary-container": "#dbcbff", "on-surface": "#151a31", "on-primary-fixed": "#22005d", "surface-container-high": "#e5e7ff", "on-background": "#151a31", "tertiary": "#4b377a", "on-tertiary-fixed-variant": "#4f3b7e", "tertiary-container": "#634f94", "on-secondary-container": "#fffbff", "secondary-fixed-dim": "#d8b9ff", "primary-fixed-dim": "#cfbdff", "on-error-container": "#93000a", "surface-container": "#ececff", "error": "#ba1a1a", "surface-container-low": "#f3f2ff", "surface": "#fbf8ff", "on-primary-fixed-variant": "#5300cc", "tertiary-fixed-dim": "#d0bcff", "outline-variant": "#cbc3da", "inverse-surface": "#2a2f47", "surface-container-highest": "#dde1ff", "surface-dim": "#d4d8f7", "on-secondary": "#ffffff", "background": "#fbf8ff", "primary-fixed": "#e9ddff" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xl": "2rem", "space-sm": "0.5rem", "space-lg": "1.5rem", "gutter": "1rem", "space-xs": "0.25rem", "margin": "1rem", "space-md": "1rem" }, fontFamily: { "headline-xl": ["Montserrat"], "body-md": ["Montserrat"], "display-lg": ["Montserrat"], "label-lg": ["Montserrat"], "body-lg": ["Montserrat"], "headline-md": ["Montserrat"], "headline-xl-mobile": ["Montserrat"], "label-md": ["Montserrat"], "label-xs": ["Montserrat"], "headline-lg": ["Montserrat"], "body-sm": ["Montserrat"], "title-sm": ["Montserrat"] }, fontSize: { "headline-xl": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }], "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "400" }], "display-lg": ["40px", { lineHeight: "48px", letterSpacing: "-0.03em", fontWeight: "800" }], "label-lg": ["14px", { lineHeight: "18px", letterSpacing: "0.03em", fontWeight: "700" }], "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }], "headline-md": ["20px", { lineHeight: "26px", letterSpacing: "-0.01em", fontWeight: "600" }], "headline-xl-mobile": ["26px", { lineHeight: "32px", letterSpacing: "-0.02em", fontWeight: "700" }], "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600" }], "label-xs": ["10px", { lineHeight: "12px", letterSpacing: "0.06em", fontWeight: "700" }], "headline-lg": ["24px", { lineHeight: "30px", letterSpacing: "-0.015em", fontWeight: "700" }], "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "500" }], "title-sm": ["16px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }] } } } };</script><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#fbf8ff;color:#151a31;font-family:'Montserrat',sans-serif;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-margin flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-xs"><button aria-label="Voltar" class="w-11 h-11 -ml-2 rounded-full flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-95 transition-all" onclick="history.back()" type="button"><span class="material-symbols-outlined text-[24px]">arrow_back_ios_new</span></button><img alt="logo-fundo-claro.png" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XRT25mGOKbS-BtPSS1xyCgUcF1LlGBPLsoWX9Skxs3V613CW2RSZIheHVdzLXYo7E53W4OXThbishVAcRVwdO_pDHjpINoDLZ7cWFNjG7C487LnqmBpWyR9iP1rAqWrKEUcZZDxH_x1l-EeYNNUxJ9GVZ6tW7euOfJfjlOdYKjN2JhgusasXREyKF7nYI-oh7KzGo1R0U36ubs7mw6JHqnc4q-8YwPRLeCtgN3rV_deYl0nNc"/><div class="flex flex-col"><span class="font-label-md text-label-md text-primary font-bold tracking-tight">VOZTRI</span><h1 class="font-title-sm text-title-sm text-on-surface truncate">Solicitacao De Corrida</h1></div></div><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 shadow-[0_2px_6px_rgba(106,0,255,0.2)]"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 w-full pt-16 pb-safe bg-surface flex flex-col relative"><div class="flex flex-col w-full relative select-none">
+<!-- Map Background Simulation -->
+<div class="relative w-full h-72 overflow-hidden">
+<div class="w-full h-full bg-cover bg-center filter brightness-[0.78] contrast-125 scale-105" data-location="Av. Paulista to Av. Brigadeiro Faria Lima, Sao Paulo" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBbl9EBRx-ipwSdx18YoQTJ4O4KDExQ3AqZhEKDCq08YnYYZfd5QP-8R5FhQ9iey3ONTF8BINa8Sv7Ycv4bTuVGAH3VW0Iobdx-BtzlamvAJD2dKHEGtwTpaskrbyMlrWHt1d5MwJPCZN7GF3N_Cjb_sNKnw8ApN4eGK92POsO6DuimCTioWtkDMxokPFg9EW_TVjw9WmDTWkEEKA-SEQWWmXB7f4NeF6kk5H2RELE')"></div>
+<div class="absolute inset-0 bg-gradient-to-b from-on-surface/40 via-transparent to-surface"></div>
+<!-- Floating HUD Badges on Map -->
+<div class="absolute top-3 left-4 right-4 flex items-center justify-between pointer-events-none">
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-lowest/90 backdrop-blur-md shadow-md">
+<span class="w-2.5 h-2.5 rounded-full bg-primary animate-ping"></span>
+<span class="font-label-xs text-label-xs text-on-surface font-bold uppercase tracking-wider">Nova Viagem Próxima</span>
+</div>
+<div class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-on-surface/85 backdrop-blur-md text-surface shadow-md">
+<span class="material-symbols-outlined text-secondary-fixed text-[16px]">radar</span>
+<span class="font-label-xs text-label-xs text-surface-bright font-bold">1,1 km de você</span>
+</div>
+</div>
+<!-- Map Route Route Preview Pill -->
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-surface-container-lowest/95 backdrop-blur-lg shadow-xl flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">near_me</span>
+<span class="font-label-md text-label-md text-on-surface font-bold">Av. Paulista <span class="text-on-surface-variant font-normal">→</span> Itaim Bibi</span>
+</div>
+</div>
+<!-- Interactive Tactical Bottom Sheet Panel -->
+<div class="relative -mt-4 bg-surface rounded-t-3xl shadow-[0_-8px_32px_rgba(11,16,38,0.12)] px-margin pt-3 pb-8 flex flex-col gap-4">
+<!-- Sheet Drag Pill -->
+<div class="w-10 h-1 bg-on-surface/15 rounded-full mx-auto"></div>
+<!-- Circular Progress Countdown + Earnings Header -->
+<div class="flex items-center justify-between gap-3 pt-1">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2 mb-1">
+<span class="px-2.5 py-0.5 rounded-full bg-primary-fixed text-primary font-label-xs text-label-xs font-bold tracking-wide flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">directions_car</span>
+            VOZTRI Comfort
+          </span>
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-xs text-label-xs font-bold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">trending_up</span>
+            1.3x Dinâmico
+          </span>
+</div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-headline-xl-mobile text-headline-xl-mobile text-primary font-extrabold tracking-tight">R$ 28,40</span>
+<span class="font-label-md text-label-md text-secondary font-semibold">(+R$ 6,50 bônus)</span>
+</div>
+</div>
+<!-- Animated Circular Countdown Visualizer -->
+<div class="relative w-16 h-16 flex items-center justify-center flex-shrink-0">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 64 64">
+<circle class="text-surface-container-high" cx="32" cy="32" fill="none" r="28" stroke="currentColor" stroke-width="4.5"></circle>
+<circle class="text-primary-container transition-all duration-1000 ease-linear" cx="32" cy="32" fill="none" id="countdown-circle" r="28" stroke="currentColor" stroke-dasharray="175.9" stroke-dashoffset="0" stroke-linecap="round" stroke-width="4.5"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-title-sm text-title-sm font-extrabold text-on-surface leading-none" id="countdown-number">15</span>
+<span class="font-label-xs text-label-xs text-on-surface-variant scale-90 uppercase">seg</span>
+</div>
+</div>
+</div>
+<!-- Quick Commute Metrics Grid -->
+<div class="grid grid-cols-2 gap-2.5">
+<div class="bg-surface-container-low rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+<div class="w-10 h-10 rounded-xl bg-primary-fixed-dim/40 flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[22px]">timer</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-xs text-label-xs text-on-surface-variant font-medium uppercase">Até o Passageiro</span>
+<span class="font-title-sm text-title-sm font-bold text-on-surface truncate">3 min • 1,1 km</span>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+<div class="w-10 h-10 rounded-xl bg-secondary-fixed/50 flex items-center justify-center text-secondary flex-shrink-0">
+<span class="material-symbols-outlined text-[22px]">route</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-xs text-label-xs text-on-surface-variant font-medium uppercase">Trajeto Total</span>
+<span class="font-title-sm text-title-sm font-bold text-on-surface truncate">22 min • 7,8 km</span>
+</div>
+</div>
+</div>
+<!-- Passenger Profile Card -->
+<div class="bg-surface-container-lowest rounded-2xl p-3.5 shadow-sm flex items-center justify-between gap-3">
+<div class="flex items-center gap-3 min-w-0">
+<div class="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 shadow-inner">
+<img class="w-full h-full object-cover" data-alt="Portrait photo of passenger Mariana Silva, a Brazilian woman smiling warmly with natural soft city lighting, high quality photorealistic aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2Y4nbWW8ezVqrP_kydRQqWPQp7VfW2fGYM1GzKfoNYp1hOCoV33GueNC7-NVw9wvRkS8hKPtjl6Fe6i3z8ak_HYr-u7_Cy86vvePNcsbcvnr79JvPe--yy0FeG8_LwXDGZSSRTAxwhLtE6StX0q7FyWkXoxY0Ftv9QcOM1eDNDBZtoKZh3shbQRICi76Q4gei3EnwqPiQf5tgTAk4b7R5wasBPuN5jGbt09vewT0"/>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<h2 class="font-title-sm text-title-sm font-bold text-on-surface truncate">Mariana Silva</h2>
+<span class="material-symbols-outlined text-primary text-[16px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="flex items-center gap-0.5 font-label-md text-label-md font-bold text-on-surface">
+<span class="material-symbols-outlined text-[15px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+              4.95
+            </span>
+<span class="text-on-surface-variant text-[11px]">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">142 viagens</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-surface-container font-label-xs text-label-xs font-semibold text-primary">
+<span class="material-symbols-outlined text-[16px]">shield</span>
+        VIP
+      </div>
+</div>
+<!-- Route Stepper Timeline -->
+<div class="bg-surface-container-low rounded-2xl p-4 flex flex-col gap-3.5 shadow-sm">
+<!-- Pickup Point -->
+<div class="flex items-start gap-3 relative">
+<div class="flex flex-col items-center mt-0.5">
+<div class="w-4 h-4 rounded-full bg-primary flex items-center justify-center shadow-md">
+<div class="w-1.5 h-1.5 rounded-full bg-on-primary"></div>
+</div>
+<div class="w-0.5 h-7 bg-primary-fixed-dim/80 my-1 rounded-full"></div>
+</div>
+<div class="flex flex-col min-w-0 -mt-0.5">
+<span class="font-label-xs text-label-xs text-primary font-bold uppercase tracking-wider">Local de Embarque</span>
+<p class="font-label-lg text-label-lg font-bold text-on-surface truncate">Av. Paulista, 1842</p>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Bela Vista (em frente ao banco)</span>
+</div>
+</div>
+<!-- Dropoff Point -->
+<div class="flex items-start gap-3">
+<div class="flex flex-col items-center mt-0.5">
+<div class="w-4 h-4 rounded-full bg-secondary-container flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-[10px] text-on-secondary-container" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+</div>
+<div class="flex flex-col min-w-0 -mt-0.5">
+<span class="font-label-xs text-label-xs text-secondary font-bold uppercase tracking-wider">Destino Final</span>
+<p class="font-label-lg text-label-lg font-bold text-on-surface truncate">Av. Brigadeiro Faria Lima, 3477</p>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Itaim Bibi • Edifício Pátio Victor Malzoni</span>
+</div>
+</div>
+</div>
+<!-- Payment Guarantee Pill -->
+<div class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-surface-container text-on-surface">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">payments</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-xs text-label-xs text-on-surface-variant font-medium">Método de Cobrança</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">Pix Instantâneo</span>
+</div>
+</div>
+<span class="font-label-xs text-label-xs font-semibold px-2 py-1 rounded-lg bg-surface-container-lowest text-on-surface-variant shadow-sm">
+        Saldo na hora
+      </span>
+</div>
+<!-- Dual Actions Footer -->
+<div class="flex flex-col gap-2.5 pt-1">
+<!-- Huge Glowing Primary Accept CTA -->
+<button class="relative group w-full h-14 rounded-2xl bg-gradient-to-r from-primary-container via-primary to-secondary text-on-primary font-label-lg text-label-lg font-bold shadow-[0_8px_24px_rgba(106,0,255,0.4)] hover:shadow-[0_12px_28px_rgba(106,0,255,0.55)] active:scale-[0.98] transition-all flex items-center justify-between px-6 overflow-hidden" id="btn-accept" type="button">
+<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out"></div>
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[24px] animate-pulse">check_circle</span>
+          ACEITAR CORRIDA
+        </span>
+<span class="px-3 py-1 rounded-xl bg-on-primary/20 backdrop-blur-sm text-on-primary font-headline-md text-headline-md tracking-tight">
+          R$ 28,40
+        </span>
+</button>
+<!-- Dismiss Button -->
+<button class="w-full h-11 rounded-xl bg-surface-container hover:bg-surface-container-high active:scale-[0.99] text-on-surface-variant font-label-md text-label-md font-semibold transition-all flex items-center justify-center gap-1.5" id="btn-decline" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+        Recusar corrida
+      </button>
+</div>
+</div>
+<!-- Interactive Client Behavior for Countdown and Click Audio Feedback -->
+<script>
+    (function () {
+      let secondsLeft = 15;
+      const totalSeconds = 15;
+      const circumference = 175.9; // 2 * PI * 28
+      const countdownEl = document.getElementById('countdown-number');
+      const circleEl = document.getElementById('countdown-circle');
+      const acceptBtn = document.getElementById('btn-accept');
+      const declineBtn = document.getElementById('btn-decline');
+
+      const timer = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft <= 0) {
+          clearInterval(timer);
+          if (countdownEl) countdownEl.innerText = '0';
+          if (circleEl) circleEl.style.strokeDashoffset = circumference;
+          if (declineBtn) declineBtn.click();
+          return;
+        }
+
+        if (countdownEl) {
+          countdownEl.innerText = secondsLeft;
+          if (secondsLeft <= 5) {
+            countdownEl.classList.add('text-error');
+            circleEl.classList.remove('text-primary-container');
+            circleEl.classList.add('text-error');
+          }
+        }
+
+        if (circleEl) {
+          const offset = circumference - (secondsLeft / totalSeconds) * circumference;
+          circleEl.style.strokeDashoffset = offset;
+        }
+      }, 1000);
+
+      if (acceptBtn) {
+        acceptBtn.addEventListener('click', () => {
+          clearInterval(timer);
+          acceptBtn.innerHTML = `
+            <div class="w-full flex items-center justify-center gap-2 text-on-primary font-bold">
+              <span class="material-symbols-outlined animate-spin text-[22px]">progress_activity</span>
+              <span>CONFIRMANDO ROTA...</span>
+            </div>
+          `;
+          acceptBtn.classList.add('opacity-90');
+        });
+      }
+
+      if (declineBtn) {
+        declineBtn.addEventListener('click', () => {
+          clearInterval(timer);
+          declineBtn.innerText = 'Corrida dispensada';
+          declineBtn.classList.add('opacity-50');
+        });
+      }
+    })();
+  </script>
+</div></main></body></html>

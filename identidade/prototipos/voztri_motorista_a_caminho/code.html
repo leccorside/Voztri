@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#fbf8ff;color:#151a31;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "on-tertiary": "#ffffff", "inverse-primary": "#cfbdff", "on-secondary-fixed-variant": "#6200bc", "error": "#ba1a1a", "surface-container-high": "#e5e7ff", "tertiary-container": "#634f94", "secondary-fixed-dim": "#d8b9ff", "error-container": "#ffdad6", "on-surface": "#151a31", "on-tertiary-fixed-variant": "#4f3b7e", "surface-variant": "#dde1ff", "on-background": "#151a31", "tertiary-fixed-dim": "#d0bcff", "on-primary-fixed-variant": "#5300cc", "on-primary": "#ffffff", "on-error-container": "#93000a", "on-secondary-fixed": "#290055", "secondary": "#7b22de", "primary-fixed": "#e9ddff", "surface-tint": "#6e1aff", "surface-container-low": "#f3f2ff", "background": "#fbf8ff", "inverse-on-surface": "#f0efff", "secondary-fixed": "#eddcff", "surface-bright": "#fbf8ff", "surface-container-highest": "#dde1ff", "secondary-container": "#9546f9", "surface-dim": "#d4d8f7", "on-surface-variant": "#494457", "surface": "#fbf8ff", "tertiary": "#4b377a", "on-secondary": "#ffffff", "outline-variant": "#cbc3da", "on-secondary-container": "#fffbff", "surface-container-lowest": "#ffffff", "outline": "#7b7489", "on-primary-container": "#dacaff", "surface-container": "#ececff", "tertiary-fixed": "#e9ddff", "primary-fixed-dim": "#cfbdff", "on-tertiary-fixed": "#220950", "primary-container": "#6a00ff", "inverse-surface": "#2a2f47", "primary": "#4f00c3", "on-tertiary-container": "#dbcbff", "on-primary-fixed": "#22005d", "on-error": "#ffffff" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "gutter": "1rem", "space-md": "1rem", "space-xs": "0.25rem", "margin": "1rem", "space-sm": "0.5rem", "space-lg": "1.5rem", "space-xl": "2rem" }, fontFamily: { "display-lg": ["Montserrat"], "body-lg": ["Montserrat"], "headline-xl": ["Montserrat"], "headline-xl-mobile": ["Montserrat"], "title-sm": ["Montserrat"], "label-md": ["Montserrat"], "body-md": ["Montserrat"], "headline-md": ["Montserrat"], "label-lg": ["Montserrat"], "headline-lg": ["Montserrat"], "label-xs": ["Montserrat"], "body-sm": ["Montserrat"] }, fontSize: { "display-lg": ["40px", { lineHeight: "48px", letterSpacing: "-0.03em", fontWeight: "800" }], "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }], "headline-xl": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }], "headline-xl-mobile": ["26px", { lineHeight: "32px", letterSpacing: "-0.02em", fontWeight: "700" }], "title-sm": ["16px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }], "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600" }], "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "400" }], "headline-md": ["20px", { lineHeight: "26px", letterSpacing: "-0.01em", fontWeight: "600" }], "label-lg": ["14px", { lineHeight: "18px", letterSpacing: "0.03em", fontWeight: "700" }], "headline-lg": ["24px", { lineHeight: "30px", letterSpacing: "-0.015em", fontWeight: "700" }], "label-xs": ["10px", { lineHeight: "12px", letterSpacing: "0.06em", fontWeight: "700" }], "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "500" }] } } } }</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface antialiased min-h-screen flex flex-col"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex items-center justify-between px-space-md pt-space-xs text-on-surface"><span class="font-label-md text-label-md font-bold tracking-tight">09:41</span><div class="flex items-center gap-space-xs text-on-surface"><span class="material-symbols-outlined text-[16px]">signal_cellular_alt</span><span class="material-symbols-outlined text-[16px]">wifi</span><span class="material-symbols-outlined text-[18px]">battery_full</span></div></div><div class="h-16 px-space-md flex items-center justify-between"><div class="flex items-center gap-space-sm"><button class="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-high transition-colors" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="logo-fundo-claro.png" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XRT25mGOKbS-BtPSS1xyCgUcF1LlGBPLsoWX9Skxs3V613CW2RSZIheHVdzLXYo7E53W4OXThbishVAcRVwdO_pDHjpINoDLZ7cWFNjG7C487LnqmBpWyR9iP1rAqWrKEUcZZDxH_x1l-EeYNNUxJ9GVZ6tW7euOfJfjlOdYKjN2JhgusasXREyKF7nYI-oh7KzGo1R0U36ubs7mw6JHqnc4q-8YwPRLeCtgN3rV_deYl0nNc"/><h1 class="font-headline-md text-headline-md text-on-surface font-bold">Viagem Ativa</h1></div><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full relative">
+<!-- Interactive Live Map Area with Pulse Overlay -->
+<div class="relative w-full h-[459px] overflow-hidden">
+<!-- Map Surface Placeholder using Location Pipeline -->
+<div class="w-full h-full bg-cover bg-center" data-location="Avenida Paulista, 1578, Bela Vista, São Paulo, SP, Brasil" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDLZFLKYQDmLY3zx-RZPAMzeosBsL_eHYfVCmhLqkN9Une-ZY41-Oe5nFwq08oCWkbkmF7H-dU5cnXd7jifz8yvNSWbh_qroXs7gYnv_k1aSB7v3o6Bvp1Cw0RwnT9oisqSaP5WiK5zdd4z2zws3pdEgKQa01gL4psz8J3R3SE2kj_aae8b7rHCql7iO0nzofleQWX9jfrO0pHneEHV9aixFUoIztirL16OvEVogJY')"></div>
+<!-- Map Soft Ambient Gradient Scrims -->
+<div class="absolute inset-0 pointer-events-none bg-gradient-to-b from-surface/80 via-transparent to-surface/90"></div>
+<!-- Top Floating Status Pill -->
+<div class="absolute top-4 inset-x-4 flex justify-center pointer-events-none z-10">
+<div class="pointer-events-auto flex items-center gap-space-sm bg-on-surface/95 backdrop-blur-md px-4 py-2.5 rounded-full shadow-lg">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-container opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-container"></span>
+</span>
+<span class="font-label-lg text-label-lg text-inverse-on-surface tracking-tight">Motorista a caminho</span>
+<span class="text-outline-variant">•</span>
+<span class="font-headline-md text-headline-md text-primary-fixed-dim">4 min</span>
+<span class="font-body-sm text-body-sm text-outline-variant font-medium">(1,2 km)</span>
+</div>
+</div>
+<!-- Simulated Vector Tracking Overlay: Route + Moving Vehicle + Pickup Marker -->
+<div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+<!-- Animated Pulsing Pickup Waypoint -->
+<div class="absolute bottom-16 right-14 flex flex-col items-center">
+<div class="relative flex items-center justify-center">
+<span class="animate-ping absolute w-10 h-10 rounded-full bg-primary-container/30"></span>
+<div class="w-7 h-7 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">person_pin_circle</span>
+</div>
+</div>
+<div class="mt-1 px-2.5 py-0.5 rounded-full bg-surface-container-lowest shadow-md flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span class="font-label-xs text-label-xs text-on-surface font-bold">Av. Paulista, 1578</span>
+</div>
+</div>
+<!-- Driver Car Icon with Dynamic Bearing -->
+<div class="absolute top-20 left-16 flex flex-col items-center transform -rotate-12 transition-all duration-1000 ease-out">
+<div class="relative p-2 rounded-full bg-surface-container-lowest text-primary-container shadow-xl">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">directions_car</span>
+<span class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-secondary-container text-on-secondary rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px]">near_me</span>
+</span>
+</div>
+<div class="mt-1 px-2 py-0.5 rounded-full bg-primary text-on-primary font-label-xs text-label-xs tracking-wider shadow">
+          Carlos • Corolla
+        </div>
+</div>
+</div>
+<!-- Quick Map Interaction Floats (Recenter & Safe Route) -->
+<div class="absolute right-4 bottom-8 flex flex-col gap-2 z-10">
+<button aria-label="Centralizar no veículo" class="w-11 h-11 rounded-full bg-surface-container-lowest text-on-surface shadow-md flex items-center justify-center active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px] text-primary">my_location</span>
+</button>
+<button aria-label="Visualizar trajeto completo" class="w-11 h-11 rounded-full bg-surface-container-lowest text-on-surface shadow-md flex items-center justify-center active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px] text-primary">alt_route</span>
+</button>
+</div>
+</div>
+<!-- Bottom Floating Sheet Area -->
+<div class="relative -mt-6 z-20 px-space-md pb-space-lg flex flex-col gap-3">
+<!-- Main Driver & Vehicle Card -->
+<div class="w-full bg-surface-container-lowest rounded-3xl p-5 shadow-xl flex flex-col gap-4">
+<!-- Sheet Drag Handle -->
+<div class="w-10 h-1 bg-outline-variant/50 rounded-full mx-auto -mt-1"></div>
+<!-- Driver Profile Header & Safety PIN Badge -->
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center gap-3 min-w-0">
+<div class="relative shrink-0">
+<img class="w-14 h-14 rounded-2xl object-cover shadow-sm" data-alt="Portrait of Carlos Eduardo, a friendly professional Brazilian driver smiling warmly, wearing a neat polo shirt in a sunlit modern car interior, authentic and trustworthy demeanor, soft clean studio natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdxY8U9cbKApXGBA_1IkAr-sxW7GzTcDz_iJRxO5GRBRL-uUJsojwTftmSfozz4ypqcw0OZGrC8ObEXlmYig88LIyprbLeGZDsCqZGlrsBYqQSzMKEfIid1s0DOOQyzHvfrXUztVEGG2uAuFcRiV3JyMekjqaNf0kmO5UGafZ1f8KftWYFrfYHSfkVk0Z6PVBN0jE-u5Vfl1PpTVWe-pNCwBFuZ63mS8EEfJLgyok"/>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<h2 class="font-headline-md text-headline-md text-on-surface truncate">Carlos Eduardo</h2>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[15px] text-secondary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-title-sm text-title-sm text-on-surface">4.96</span>
+<span class="text-outline text-label-xs font-medium">(1.420 viagens)</span>
+</div>
+</div>
+</div>
+<!-- Security PIN Code Pill -->
+<div class="flex flex-col items-end shrink-0">
+<div class="bg-primary-container text-on-primary px-3 py-1.5 rounded-xl shadow-md flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">shield</span>
+<div class="flex flex-col leading-tight">
+<span class="font-label-xs text-label-xs uppercase text-on-primary-container font-bold tracking-wider">PIN</span>
+<span class="font-headline-md text-headline-md font-extrabold tracking-widest">7492</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Vehicle Information Badge -->
+<div class="flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-surface-container-low text-on-surface">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-primary text-[22px]">directions_car</span>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface truncate">Toyota Corolla Branco</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Ar-condicionado ativo</span>
+</div>
+</div>
+<div class="bg-surface-container-highest px-2.5 py-1 rounded-lg">
+<span class="font-label-md text-label-md tracking-wider font-extrabold text-on-surface">BRA-9X82</span>
+</div>
+</div>
+<!-- Communication Actions & Quick Preset -->
+<div class="flex flex-col gap-2">
+<div class="grid grid-cols-2 gap-2">
+<!-- Chat Button -->
+<button class="h-12 px-3 rounded-2xl bg-surface-container-high text-primary flex items-center justify-center gap-2 active:scale-[0.98] transition-all" id="btn-chat">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
+<span class="font-title-sm text-title-sm font-semibold truncate">Mensagem</span>
+</button>
+<!-- Safe Call Button -->
+<button class="h-12 px-3 rounded-2xl bg-surface-container-high text-on-surface flex items-center justify-center gap-2 active:scale-[0.98] transition-all" id="btn-call">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">call</span>
+<span class="font-title-sm text-title-sm font-semibold truncate">Ligar Seguro</span>
+</button>
+</div>
+<!-- Quick Pre-crafted Message Pill -->
+<button class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors text-left" id="quick-preset">
+<div class="flex items-center gap-2 truncate">
+<span class="material-symbols-outlined text-[16px] text-primary">send</span>
+<span class="font-body-sm text-body-sm truncate italic">"Estou aguardando na portaria principal"</span>
+</div>
+<span class="font-label-xs text-label-xs text-primary font-bold uppercase tracking-wider shrink-0">Enviar</span>
+</button>
+</div>
+<!-- VOZTRI Shield & Safety Toolkit Strip -->
+<div class="flex items-center justify-between pt-2 border-t-0 bg-surface-container-low px-3 py-2.5 rounded-2xl">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-bold">Central de Segurança</span>
+<span class="font-body-sm text-body-sm text-outline">Monitoramento 24h ativo</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<button class="h-9 px-2.5 rounded-xl bg-surface-container-lowest text-on-surface flex items-center gap-1 text-label-xs font-bold shadow-sm active:scale-95 transition-transform" id="share-trip" title="Compartilhar rota">
+<span class="material-symbols-outlined text-[16px] text-primary">share_location</span>
+<span>Compartilhar</span>
+</button>
+<button class="w-9 h-9 rounded-xl bg-error text-on-error flex items-center justify-center shadow-sm active:scale-95 transition-transform" id="sos-btn" title="Botão SOS">
+<span class="material-symbols-outlined text-[18px]">emergency</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Secondary Ride Modifications -->
+<div class="w-full bg-surface-container-lowest rounded-2xl p-3 shadow-md flex items-center justify-between gap-2">
+<button class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl hover:bg-surface-container text-on-surface transition-colors" id="change-destination">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">edit_location_alt</span>
+<span class="font-label-md text-label-md font-semibold">Alterar Destino</span>
+</button>
+<div class="w-px h-6 bg-outline-variant/40"></div>
+<button class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl hover:bg-error-container/40 text-error transition-colors" id="cancel-ride">
+<span class="material-symbols-outlined text-[18px]">cancel</span>
+<span class="font-label-md text-label-md font-semibold">Cancelar Viagem</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  // Simple micro-interactions for live tracking screen feedback
+  document.getElementById('quick-preset')?.addEventListener('click', function() {
+    this.classList.add('bg-primary-fixed');
+    const label = this.querySelector('span:last-child');
+    if (label) {
+      label.textContent = 'Enviado!';
+      setTimeout(() => {
+        label.textContent = 'Enviar';
+        this.classList.remove('bg-primary-fixed');
+      }, 2000);
+    }
+  });
+
+  document.getElementById('share-trip')?.addEventListener('click', function() {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Acompanhe minha corrida VOZTRI',
+        text: 'Estou com o motorista Carlos Eduardo (Toyota Corolla BRA-9X82).',
+        url: window.location.href,
+      }).catch(() => {});
+    } else {
+      const span = this.querySelector('span:last-child');
+      if (span) {
+        const prev = span.textContent;
+        span.textContent = 'Copiado!';
+        setTimeout(() => { span.textContent = prev; }, 1500);
+      }
+    }
+  });
+
+  document.getElementById('sos-btn')?.addEventListener('click', function() {
+    alert('Central de emergência VOZTRI acionada. Nossa equipe de suporte está pronta para intervir.');
+  });
+</script></main></body></html>

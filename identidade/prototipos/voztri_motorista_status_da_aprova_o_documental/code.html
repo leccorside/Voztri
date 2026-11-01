@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#fbf8ff;}body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-bright": "#fbf8ff", "secondary-fixed": "#eddcff", "secondary-fixed-dim": "#d8b9ff", "on-tertiary-fixed-variant": "#4f3b7e", "primary-container": "#6a00ff", "inverse-primary": "#cfbdff", "surface-tint": "#6e1aff", "on-secondary-fixed": "#290055", "secondary-container": "#9546f9", "background": "#fbf8ff", "tertiary-fixed-dim": "#d0bcff", "tertiary-container": "#634f94", "surface-container-low": "#f3f2ff", "on-tertiary-container": "#dbcbff", "primary-fixed-dim": "#cfbdff", "surface-container-lowest": "#ffffff", "error": "#ba1a1a", "surface-container-highest": "#dde1ff", "on-error-container": "#93000a", "tertiary": "#4b377a", "primary-fixed": "#e9ddff", "outline-variant": "#cbc3da", "surface-container": "#ececff", "on-secondary-fixed-variant": "#6200bc", "surface-container-high": "#e5e7ff", "primary": "#4f00c3", "on-primary-fixed-variant": "#5300cc", "tertiary-fixed": "#e9ddff", "surface": "#fbf8ff", "on-primary": "#ffffff", "outline": "#7b7489", "inverse-surface": "#2a2f47", "inverse-on-surface": "#f0efff", "on-background": "#151a31", "on-primary-container": "#dacaff", "on-surface": "#151a31", "on-primary-fixed": "#22005d", "surface-variant": "#dde1ff", "on-tertiary": "#ffffff", "secondary": "#7b22de", "on-secondary": "#ffffff", "error-container": "#ffdad6", "on-error": "#ffffff", "on-tertiary-fixed": "#220950", "on-secondary-container": "#fffbff", "on-surface-variant": "#494457", "surface-dim": "#d4d8f7" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xl": "2rem", "space-sm": "0.5rem", "gutter": "1rem", "space-lg": "1.5rem", "margin": "1rem", "space-md": "1rem", "space-xs": "0.25rem" }, "fontFamily": { "body-sm": ["Montserrat"], "headline-md": ["Montserrat"], "label-md": ["Montserrat"], "headline-lg": ["Montserrat"], "label-xs": ["Montserrat"], "display-lg": ["Montserrat"], "body-lg": ["Montserrat"], "headline-xl-mobile": ["Montserrat"], "label-lg": ["Montserrat"], "headline-xl": ["Montserrat"], "body-md": ["Montserrat"], "title-sm": ["Montserrat"] }, "fontSize": { "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }], "headline-md": ["20px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600" }], "headline-lg": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "label-xs": ["10px", { "lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "700" }], "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "800" }], "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }], "headline-xl-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "label-lg": ["14px", { "lineHeight": "18px", "letterSpacing": "0.03em", "fontWeight": "700" }], "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "400" }], "title-sm": ["16px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "600" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-xs"><button aria-label="Voltar" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors" onclick="history.back()" type="button"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="logo-fundo-claro.png" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XRT25mGOKbS-BtPSS1xyCgUcF1LlGBPLsoWX9Skxs3V613CW2RSZIheHVdzLXYo7E53W4OXThbishVAcRVwdO_pDHjpINoDLZ7cWFNjG7C487LnqmBpWyR9iP1rAqWrKEUcZZDxH_x1l-EeYNNUxJ9GVZ6tW7euOfJfjlOdYKjN2JhgusasXREyKF7nYI-oh7KzGo1R0U36ubs7mw6JHqnc4q-8YwPRLeCtgN3rV_deYl0nNc"/><span class="font-label-xs text-secondary font-bold tracking-wider ml-1 uppercase">Driver</span></div><div class="flex-1 px-space-xs text-center"><h1 class="font-title-sm text-title-sm text-on-surface font-semibold truncate">Status Do Cadastro</h1></div><div class="flex items-center gap-space-xs"><button aria-label="Ajuda e Suporte" class="w-11 h-11 flex items-center justify-center rounded-full text-primary hover:bg-primary-fixed/30 transition-colors" type="button"><span class="material-symbols-outlined text-[24px]">help</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex flex-col relative w-full pt-16 pb-safe bg-surface min-h-screen"><div class="flex flex-col w-full">
+<div class="px-margin pt-space-md pb-space-xl flex flex-col gap-space-lg">
+<!-- Step Progress Indicator -->
+<div class="flex flex-col gap-space-xs bg-surface-container-lowest p-space-md rounded-2xl shadow-[0_4px_16px_rgba(11,16,38,0.05)]">
+<div class="flex items-center justify-between">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-xs uppercase">Etapa 4 de 4 • Validação Final</span>
+</div>
+<span class="font-label-md text-primary font-bold">95% Concluído</span>
+</div>
+<div class="w-full h-2.5 bg-surface-container rounded-full overflow-hidden mt-1 p-0.5">
+<div class="h-full rounded-full bg-gradient-to-r from-primary via-primary-container to-secondary" style="width: 95%;"></div>
+</div>
+</div>
+<!-- Hero Card: Processing Status -->
+<div class="relative overflow-hidden bg-gradient-to-b from-surface-container-lowest to-surface-container-low rounded-3xl p-space-lg shadow-[0_12px_32px_rgba(106,0,255,0.08)] flex flex-col items-center text-center">
+<!-- Glow ambient backdrop -->
+<div class="absolute -top-12 -right-12 w-40 h-40 bg-primary-fixed rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+<div class="absolute -bottom-10 -left-10 w-36 h-36 bg-secondary-fixed rounded-full blur-2xl opacity-50 pointer-events-none"></div>
+<!-- Tech radar pulse avatar -->
+<div class="relative mb-space-md flex items-center justify-center">
+<div class="absolute w-24 h-24 rounded-full bg-primary/10 animate-ping"></div>
+<div class="absolute w-20 h-20 rounded-full bg-secondary/15 animate-pulse"></div>
+<div class="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-on-primary shadow-[0_8px_20px_rgba(106,0,255,0.35)]">
+<span class="material-symbols-outlined text-[32px] animate-spin" style="animation-duration: 9s;">radar</span>
+</div>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-space-xs font-bold">
+        Documentos em Análise
+      </h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xs mb-space-md">
+        Nossa equipe e sistema de inteligência artificial estão conferindo seus dados. A maioria das ativações ocorre em menos de 2 horas.
+      </p>
+<!-- ETA Badge -->
+<div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-inverse-surface text-inverse-on-surface shadow-md">
+<span class="material-symbols-outlined text-[18px] text-tertiary-fixed-dim" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="font-label-md text-label-md">
+          Previsão: <strong class="text-surface-bright">Hoje até 16:30</strong> (em aprox. 45 min)
+        </span>
+</div>
+</div>
+<!-- Documents Status Breakdown -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between px-1">
+<h3 class="font-title-sm text-title-sm text-on-surface font-bold">
+          Status da Documentação
+        </h3>
+<span class="font-label-xs text-on-surface-variant uppercase tracking-wider">4 Itens Registrados</span>
+</div>
+<!-- Item 1: CNH com EAR -->
+<div class="flex items-start gap-space-md p-space-md bg-surface-container-lowest rounded-2xl shadow-[0_2px_8px_rgba(11,16,38,0.04)]">
+<div class="w-11 h-11 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[24px]">badge</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-2 mb-1">
+<h4 class="font-title-sm text-title-sm text-on-surface font-semibold truncate">
+              CNH com EAR
+            </h4>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-label-xs uppercase">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+              Aprovado
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+            CNH Digital homologada • Categoria B definitiva
+          </p>
+</div>
+</div>
+<!-- Item 2: CRLV do Veículo -->
+<div class="flex items-start gap-space-md p-space-md bg-surface-container-lowest rounded-2xl shadow-[0_2px_8px_rgba(11,16,38,0.04)]">
+<div class="w-11 h-11 rounded-xl bg-primary-fixed flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[24px]">directions_car</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-2 mb-1">
+<h4 class="font-title-sm text-title-sm text-on-surface font-semibold truncate">
+              CRLV do Veículo
+            </h4>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary-fixed text-primary font-label-xs uppercase">
+<span class="material-symbols-outlined text-[14px] animate-spin" style="animation-duration: 3s;">sync</span>
+              Em Análise
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface font-medium truncate">
+            Toyota Corolla 2022/2023 • BRA2E19
+          </p>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-[11px] mt-0.5">
+            Consulta automática em andamento via Senatran/Detran
+          </p>
+</div>
+</div>
+<!-- Item 3: Biometria Facial -->
+<div class="flex items-start gap-space-md p-space-md bg-surface-container-lowest rounded-2xl shadow-[0_2px_8px_rgba(11,16,38,0.04)]">
+<div class="w-11 h-11 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[24px]">face</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-2 mb-1">
+<h4 class="font-title-sm text-title-sm text-on-surface font-semibold truncate">
+              Biometria Facial / Selfie
+            </h4>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-label-xs uppercase">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+              Aprovado
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+            Reconhecimento e prova de vida 100% confirmados
+          </p>
+</div>
+</div>
+<!-- Item 4: Antecedentes Criminais -->
+<div class="flex items-start gap-space-md p-space-md bg-surface-container-lowest rounded-2xl shadow-[0_2px_8px_rgba(11,16,38,0.04)]">
+<div class="w-11 h-11 rounded-xl bg-secondary-fixed flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined text-[24px]">verified_user</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-2 mb-1">
+<h4 class="font-title-sm text-title-sm text-on-surface font-semibold truncate">
+              Antecedentes Criminais
+            </h4>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-fixed text-secondary font-label-xs uppercase">
+<span class="material-symbols-outlined text-[14px] animate-spin" style="animation-duration: 3s;">sync</span>
+              Em Análise
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Verificação preventiva de segurança em processamento
+          </p>
+</div>
+</div>
+</div>
+<!-- Notification Guarantee Box -->
+<div class="bg-surface-container p-space-md rounded-2xl flex flex-col gap-space-sm">
+<div class="flex items-start gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-on-secondary shrink-0">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">notifications_active</span>
+</div>
+<div class="flex-1">
+<h4 class="font-title-sm text-title-sm text-on-surface font-semibold">
+            Fique tranquilo!
+          </h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 leading-relaxed">
+            Avisaremos imediatamente quando sua conta for ativada via notificação push, WhatsApp e SMS.
+          </p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 px-1">
+<span class="font-label-md text-label-md text-on-surface flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+          Notificações ativadas no dispositivo
+        </span>
+<button aria-label="Alternar Notificações" class="w-11 h-6 bg-primary rounded-full relative p-0.5 transition-colors" id="toggleNotification" type="button">
+<span class="block w-5 h-5 bg-on-primary rounded-full shadow-md transform translate-x-5 transition-transform" id="switchKnob"></span>
+</button>
+</div>
+</div>
+<!-- Pro Tips While Waiting -->
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-[0_4px_16px_rgba(11,16,38,0.04)] flex flex-col gap-space-sm">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-[22px]">lightbulb</span>
+<h3 class="font-title-sm text-title-sm text-on-surface font-bold">
+          Enquanto você aguarda:
+        </h3>
+</div>
+<div class="flex flex-col gap-space-xs divide-y divide-transparent">
+<div class="flex items-center gap-3 py-2 px-2 rounded-xl hover:bg-surface-container-low transition-colors">
+<div class="w-8 h-8 rounded-lg bg-primary-fixed flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[18px]">smartphone</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface flex-1">
+            Prepare o suporte veicular para celular e o cabo carregador
+          </p>
+<span class="material-symbols-outlined text-[18px] text-outline">chevron_right</span>
+</div>
+<div class="flex items-center gap-3 py-2 px-2 rounded-xl hover:bg-surface-container-low transition-colors">
+<div class="w-8 h-8 rounded-lg bg-secondary-fixed flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined text-[18px]">trending_up</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface flex-1">
+            Conheça as regiões com maior tarifa dinâmica na sua cidade
+          </p>
+<span class="material-symbols-outlined text-[18px] text-outline">chevron_right</span>
+</div>
+<div class="flex items-center gap-3 py-2 px-2 rounded-xl hover:bg-surface-container-low transition-colors">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[18px]">payments</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface flex-1">
+            Veja como funciona o repasse instantâneo via Pix sem taxas
+          </p>
+<span class="material-symbols-outlined text-[18px] text-outline">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-space-xs mt-space-xs">
+<button class="w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(106,0,255,0.30)] active:scale-[0.98] transition-transform" id="refreshBtn" type="button">
+<span class="material-symbols-outlined text-[20px]" id="refreshIcon">refresh</span>
+<span>Atualizar Status</span>
+</button>
+<button class="w-full h-12 rounded-2xl bg-surface-container text-primary font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-surface-container-high active:scale-[0.98] transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+<span>Precisa de ajuda? Falar com Suporte 24h</span>
+</button>
+</div>
+<!-- Security & Regulation Footer Seal -->
+<div class="flex items-center justify-center gap-1.5 py-space-xs text-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="font-label-xs text-label-xs uppercase tracking-wider font-semibold">
+        VOZTRI Driver • Plataforma 100% segura e regulamentada
+      </span>
+</div>
+</div>
+</div>
+<script>
+  // Simple micro-interactions for haptic visual feedback
+  const refreshBtn = document.getElementById('refreshBtn');
+  const refreshIcon = document.getElementById('refreshIcon');
+  if (refreshBtn && refreshIcon) {
+    refreshBtn.addEventListener('click', () => {
+      refreshIcon.classList.add('animate-spin');
+      setTimeout(() => {
+        refreshIcon.classList.remove('animate-spin');
+      }, 1200);
+    });
+  }
+
+  const toggleNotification = document.getElementById('toggleNotification');
+  const switchKnob = document.getElementById('switchKnob');
+  let isNotifActive = true;
+
+  if (toggleNotification && switchKnob) {
+    toggleNotification.addEventListener('click', () => {
+      isNotifActive = !isNotifActive;
+      if (isNotifActive) {
+        toggleNotification.classList.remove('bg-outline-variant');
+        toggleNotification.classList.add('bg-primary');
+        switchKnob.classList.add('translate-x-5');
+      } else {
+        toggleNotification.classList.remove('bg-primary');
+        toggleNotification.classList.add('bg-outline-variant');
+        switchKnob.classList.remove('translate-x-5');
+      }
+    });
+  }
+</script></main></body></html>

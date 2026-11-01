@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior-y:none;font-family:'Montserrat',sans-serif;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "secondary-fixed-dim": "#d8b9ff", "tertiary-container": "#634f94", "error-container": "#ffdad6", "tertiary-fixed-dim": "#d0bcff", "surface-container": "#ececff", "error": "#ba1a1a", "on-tertiary-fixed-variant": "#4f3b7e", "outline": "#7b7489", "primary-container": "#6a00ff", "on-surface-variant": "#494457", "inverse-surface": "#2a2f47", "tertiary": "#4b377a", "surface-dim": "#d4d8f7", "on-primary-fixed": "#22005d", "tertiary-fixed": "#e9ddff", "on-surface": "#151a31", "on-primary-fixed-variant": "#5300cc", "surface-container-high": "#e5e7ff", "on-secondary-container": "#fffbff", "inverse-primary": "#cfbdff", "primary-fixed-dim": "#cfbdff", "surface-variant": "#dde1ff", "primary-fixed": "#e9ddff", "on-secondary-fixed-variant": "#6200bc", "surface": "#fbf8ff", "surface-container-low": "#f3f2ff", "surface-container-highest": "#dde1ff", "on-primary-container": "#dacaff", "on-error": "#ffffff", "on-tertiary-container": "#dbcbff", "on-background": "#151a31", "inverse-on-surface": "#f0efff", "on-tertiary-fixed": "#220950", "surface-tint": "#6e1aff", "on-tertiary": "#ffffff", "surface-container-lowest": "#ffffff", "primary": "#4f00c3", "on-primary": "#ffffff", "on-secondary": "#ffffff", "background": "#fbf8ff", "surface-bright": "#fbf8ff", "on-secondary-fixed": "#290055", "outline-variant": "#cbc3da", "secondary-container": "#9546f9", "secondary-fixed": "#eddcff", "secondary": "#7b22de", "on-error-container": "#93000a" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-lg": "1.5rem", "space-sm": "0.5rem", "space-xs": "0.25rem", "space-xl": "2rem", "gutter": "1rem", "space-md": "1rem", "margin": "1rem" }, "fontFamily": { "label-md": ["Montserrat"], "body-sm": ["Montserrat"], "headline-md": ["Montserrat"], "title-sm": ["Montserrat"], "headline-xl-mobile": ["Montserrat"], "label-lg": ["Montserrat"], "body-md": ["Montserrat"], "headline-lg": ["Montserrat"], "body-lg": ["Montserrat"], "display-lg": ["Montserrat"], "label-xs": ["Montserrat"], "headline-xl": ["Montserrat"] }, "fontSize": { "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600"}], "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}], "headline-md": ["20px", {"lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600"}], "title-sm": ["16px", {"lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "600"}], "headline-xl-mobile": ["26px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}], "label-lg": ["14px", {"lineHeight": "18px", "letterSpacing": "0.03em", "fontWeight": "700"}], "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "400"}], "headline-lg": ["24px", {"lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "700"}], "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}], "display-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "800"}], "label-xs": ["10px", {"lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "700"}], "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface min-h-screen flex flex-col antialiased selection:bg-primary/20"><header class="fixed top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(11,16,38,0.04)] pt-safe"><div class="h-16 px-gutter flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-xs flex-1 min-w-0"><button aria-label="Voltar" class="w-11 h-11 -ml-2 rounded-full flex items-center justify-center text-on-surface hover:text-primary transition-colors" onclick="window.history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="logo-fundo-escuro.png" class="h-7 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WXOPktJRysaGEV5InSLTd0ppFlnTTWyIigG2PpmJu3YRgOuDEnTt6JOUzI0bi6-bPtAhVIsO_ayFbHXP4MmevQK5eob_uTIhFHhgCzbGlb5YQxjJpV2UzPjDk6ANG1csxvy8ibqlKY7tGpmrWQRjbnyiIuj8geTwPpP9FDEAqXks5LWpI03dOfqlp7C7SMkPkWZa1rtgWInJB6rDBEIPong30VPs080bwQwpVHcimmRSMtyjxteku-1Q"/><h1 class="font-title-sm text-title-sm font-semibold text-on-surface leading-tight truncate ml-1">Envio De Documentos</h1></div><div class="flex items-center gap-space-xs shrink-0"><button aria-label="Suporte ao Motorista" class="w-11 h-11 rounded-full flex items-center justify-center text-primary bg-surface-container-low hover:bg-surface-container transition-colors shadow-[0_2px_8px_rgba(106,0,255,0.08)]"><span class="material-symbols-outlined text-[22px]">support_agent</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-1"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-safe bg-surface"><div class="flex flex-col w-full pb-32">
+<!-- Top Onboarding Context Header -->
+<div class="px-gutter pt-space-md flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-fixed text-primary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+        Etapa 3 de 4
+      </span>
+<span class="font-label-md text-label-md text-primary font-semibold">75% concluído</span>
+</div>
+<h2 class="font-headline-xl-mobile text-headline-xl-mobile text-on-surface mt-1">Envio de Documentos</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+      Precisamos validar seus dados para ativar sua conta e liberar corridas com total segurança.
+    </p>
+<!-- Animated Smooth Progress Bar -->
+<div class="w-full bg-surface-container-high h-2.5 rounded-full overflow-hidden mt-2 p-0.5">
+<div class="h-full rounded-full bg-gradient-to-r from-primary to-secondary-container transition-all duration-700 w-3/4"></div>
+</div>
+</div>
+<!-- Security & Trust Micro-Banner -->
+<div class="px-gutter mt-space-md">
+<div class="p-3.5 rounded-xl bg-surface-container-low shadow-[0_2px_8px_rgba(11,16,38,0.04)] flex items-start gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center shrink-0 text-primary">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-label-md text-label-md text-on-surface font-semibold">Dados 100% Protegidos</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+          Criptografia de ponta a ponta e auditoria acelerada com validação biométrica e IA.
+        </p>
+</div>
+</div>
+</div>
+<!-- Documents Requirement List -->
+<div class="px-gutter mt-space-lg flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<h3 class="font-title-sm text-title-sm text-on-surface">Documentação Obrigatória</h3>
+<span class="font-label-xs text-label-xs uppercase tracking-wider text-on-surface-variant font-bold">1 de 4 validados</span>
+</div>
+<!-- Card 1: CNH com EAR (Enviado / Aprovado) -->
+<div class="relative bg-surface-container-lowest rounded-xl p-space-md shadow-[0_2px_8px_rgba(11,16,38,0.05)] transition-all">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-start gap-3">
+<div class="w-11 h-11 rounded-xl bg-surface-container-low text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">badge</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-title-sm text-title-sm text-on-surface font-semibold leading-snug">CNH com “EAR”</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+              Habilitação definitiva com Exerce Atividade Remunerada.
+            </p>
+</div>
+</div>
+</div>
+<!-- Preview Image / Document Confirmation Strip -->
+<div class="mt-3 p-2.5 rounded-lg bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<div class="w-10 h-8 rounded bg-surface-container overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Close up photographic mockup of an official Brazilian digital driver license card document lying on clean desk, crisp typography and security watermark, modern purple tech ambient light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgZk-QssCskTgk4W36HVCZS0vMITPEXN5FsI5oAeO5uWlZqp6ZCSqQfNjrBhfQVzANocB5G0iEQwbbsdXBdYe5bNDJ8fRc2BENiiSzF4A2sJ8ccG3jKjJQwCFzPCnmL2L7mFNUSGSNAqReUEmaGVcTgN_OcuUD-Igv9ASh5dPrqNCtfZg288kqBiz1dHmqM9SFpTDCNnmOBV9ZLzej_gYRIWzg_lqgfu4gLEpu8cQ"/>
+</div>
+<div class="min-w-0">
+<p class="font-label-xs text-label-xs text-on-surface font-semibold truncate">cnh_digital_assinada.pdf</p>
+<p class="font-label-xs text-label-xs text-outline">Enviado hoje às 14:22</p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-highest text-primary font-label-xs text-label-xs font-bold shrink-0">
+<span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+          Em Análise
+        </span>
+</div>
+<div class="mt-3 flex items-center justify-between pt-1">
+<button class="inline-flex items-center gap-1 text-primary font-label-md text-label-md font-semibold hover:opacity-80 transition-opacity" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+          Visualizar
+        </button>
+<button class="inline-flex items-center gap-1 text-on-surface-variant font-label-md text-label-md font-semibold hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">autorenew</span>
+          Substituir
+        </button>
+</div>
+</div>
+<!-- Card 2: CRLV do Veículo (Pendente com Foco de Ação) -->
+<div class="relative bg-surface-container-lowest rounded-xl p-space-md shadow-[0_8px_24px_rgba(106,0,255,0.08)]">
+<div class="flex items-start gap-3">
+<div class="w-11 h-11 rounded-xl bg-secondary-fixed text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">directions_car</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-1">
+<h4 class="font-title-sm text-title-sm text-on-surface font-semibold leading-snug">CRLV do Veículo</h4>
+<span class="px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-label-xs text-label-xs font-bold">
+              Pendente
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            Licenciamento do veículo atualizado (Exercício 2023/2024).
+          </p>
+</div>
+</div>
+<div class="mt-4 flex flex-col gap-2">
+<button class="w-full h-12 rounded-xl bg-surface-container-low hover:bg-surface-container text-primary font-label-lg text-label-lg flex items-center justify-center gap-2 transition-all" onclick="this.classList.toggle('opacity-75')" type="button">
+<span class="material-symbols-outlined text-[20px]">add_a_photo</span>
+          Tirar Foto ou Anexar PDF
+        </button>
+</div>
+</div>
+<!-- Card 3: Selfie com Documento (Prova de Vida) -->
+<div class="relative bg-surface-container-lowest rounded-xl p-space-md shadow-[0_2px_8px_rgba(11,16,38,0.05)]">
+<div class="flex items-start gap-3">
+<div class="w-11 h-11 rounded-xl bg-surface-container-low text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">face</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-1">
+<h4 class="font-title-sm text-title-sm text-on-surface font-semibold leading-snug">Selfie de Reconhecimento</h4>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-xs text-label-xs font-bold">
+              Aguardando
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            Foto do rosto em ambiente claro, sem óculos escuros ou boné.
+          </p>
+</div>
+</div>
+<div class="mt-4">
+<button class="w-full h-12 rounded-xl bg-surface-container-low hover:bg-surface-container text-primary font-label-lg text-label-lg flex items-center justify-center gap-2 transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">photo_camera_front</span>
+          Capturar Biometria Facial
+        </button>
+</div>
+</div>
+<!-- Card 4: Atestado de Antecedentes Criminais -->
+<div class="relative bg-surface-container-lowest rounded-xl p-space-md shadow-[0_2px_8px_rgba(11,16,38,0.05)]">
+<div class="flex items-start gap-3">
+<div class="w-11 h-11 rounded-xl bg-surface-container-low text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">gavel</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-1">
+<h4 class="font-title-sm text-title-sm text-on-surface font-semibold leading-snug">Certidão de Antecedentes</h4>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-xs text-label-xs font-bold">
+              Aguardando
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            Emitida há menos de 90 dias pela Polícia Federal ou Estadual.
+          </p>
+</div>
+</div>
+<div class="mt-4">
+<button class="w-full h-12 rounded-xl bg-surface-container-low hover:bg-surface-container text-primary font-label-lg text-label-lg flex items-center justify-center gap-2 transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">upload_file</span>
+          Fazer Upload da Certidão
+        </button>
+</div>
+</div>
+</div>
+<!-- Guidelines & Tips Carousel/Card -->
+<div class="px-gutter mt-space-lg">
+<div class="p-space-md rounded-xl bg-gradient-to-br from-surface-container-low via-surface-container-low to-secondary-fixed/20">
+<div class="flex items-center gap-2 text-primary mb-2">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">tips_and_updates</span>
+<h4 class="font-label-lg text-label-lg font-bold">Para aprovação rápida em 2 horas:</h4>
+</div>
+<ul class="flex flex-col gap-2.5 mt-3">
+<li class="flex items-start gap-2.5">
+<span class="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0 text-primary font-label-xs text-label-xs font-bold mt-0.5">1</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Evite reflexos de flash e sombras excessivas sobre os textos dos documentos.</p>
+</li>
+<li class="flex items-start gap-2.5">
+<span class="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0 text-primary font-label-xs text-label-xs font-bold mt-0.5">2</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Os 4 cantos do documento físico ou bordas do PDF devem aparecer completos na foto.</p>
+</li>
+<li class="flex items-start gap-2.5">
+<span class="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0 text-primary font-label-xs text-label-xs font-bold mt-0.5">3</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Confira se a sigla <strong class="text-on-surface font-semibold">“EAR”</strong> está expressa no campo de observações da sua CNH.</p>
+</li>
+</ul>
+</div>
+</div>
+<!-- Human Support Helper -->
+<div class="px-gutter mt-space-md flex items-center justify-center text-center">
+<button class="inline-flex items-center gap-1.5 text-on-surface-variant hover:text-primary transition-colors py-2" type="button">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span class="font-label-md text-label-md">Dúvidas com os documentos? <span class="text-primary font-semibold underline">Fale com o Suporte VOZTRI 24h</span></span>
+</button>
+</div>
+<!-- Persistent Floating Bottom Action Capsule -->
+<div class="fixed bottom-0 inset-x-0 p-gutter bg-gradient-to-t from-surface via-surface/95 to-transparent pb-safe pointer-events-none z-40">
+<div class="pointer-events-auto max-w-md mx-auto flex flex-col gap-2">
+<button class="w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-on-primary font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(106,0,255,0.35)] active:scale-[0.98] transition-transform" type="button">
+<span>Enviar Documentos para Análise</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<div class="flex items-center justify-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+<span class="font-label-xs text-label-xs font-medium">Análise média em menos de 120 minutos</span>
+</div>
+</div>
+</div>
+</div></main></body></html>

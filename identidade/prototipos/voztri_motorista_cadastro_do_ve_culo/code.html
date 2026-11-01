@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "surface-container-lowest": "#ffffff", "on-secondary-container": "#fffbff", "tertiary-fixed": "#e9ddff", "outline": "#7b7489", "on-error-container": "#93000a", "primary-container": "#6a00ff", "on-primary-fixed-variant": "#5300cc", "secondary-fixed-dim": "#d8b9ff", "primary-fixed": "#e9ddff", "secondary-container": "#9546f9", "primary-fixed-dim": "#cfbdff", "on-surface-variant": "#494457", "outline-variant": "#cbc3da", "surface-bright": "#fbf8ff", "surface-container-high": "#e5e7ff", "on-background": "#151a31", "tertiary": "#4b377a", "on-primary": "#ffffff", "on-surface": "#151a31", "on-error": "#ffffff", "on-tertiary-fixed-variant": "#4f3b7e", "on-tertiary-fixed": "#220950", "on-secondary-fixed": "#290055", "error": "#ba1a1a", "surface-container-highest": "#dde1ff", "surface": "#fbf8ff", "background": "#fbf8ff", "on-secondary-fixed-variant": "#6200bc", "inverse-primary": "#cfbdff", "surface-dim": "#d4d8f7", "on-secondary": "#ffffff", "primary": "#4f00c3", "on-tertiary-container": "#dbcbff", "surface-container-low": "#f3f2ff", "surface-variant": "#dde1ff", "inverse-on-surface": "#f0efff", "surface-tint": "#6e1aff", "error-container": "#ffdad6", "secondary-fixed": "#eddcff", "secondary": "#7b22de", "inverse-surface": "#2a2f47", "tertiary-fixed-dim": "#d0bcff", "tertiary-container": "#634f94", "surface-container": "#ececff", "on-primary-container": "#dacaff", "on-primary-fixed": "#22005d", "on-tertiary": "#ffffff" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xl": "2rem", "margin": "1rem", "space-sm": "0.5rem", "space-xs": "0.25rem", "gutter": "1rem", "space-md": "1rem", "space-lg": "1.5rem" }, fontFamily: { "headline-lg": ["Montserrat"], "headline-md": ["Montserrat"], "display-lg": ["Montserrat"], "headline-xl-mobile": ["Montserrat"], "body-sm": ["Montserrat"], "label-xs": ["Montserrat"], "label-lg": ["Montserrat"], "body-md": ["Montserrat"], "title-sm": ["Montserrat"], "headline-xl": ["Montserrat"], "body-lg": ["Montserrat"], "label-md": ["Montserrat"] }, fontSize: { "headline-lg": ["24px", { lineHeight: "30px", letterSpacing: "-0.015em", fontWeight: "700" }], "headline-md": ["20px", { lineHeight: "26px", letterSpacing: "-0.01em", fontWeight: "600" }], "display-lg": ["40px", { lineHeight: "48px", letterSpacing: "-0.03em", fontWeight: "800" }], "headline-xl-mobile": ["26px", { lineHeight: "32px", letterSpacing: "-0.02em", fontWeight: "700" }], "body-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "500" }], "label-xs": ["10px", { lineHeight: "12px", letterSpacing: "0.06em", fontWeight: "700" }], "label-lg": ["14px", { lineHeight: "18px", letterSpacing: "0.03em", fontWeight: "700" }], "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "400" }], "title-sm": ["16px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "600" }], "headline-xl": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }], "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }], "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600" }] } } } };</script><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#fbf8ff;color:#151a31;font-family:'Montserrat',sans-serif;}body{overscroll-behavior-y:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-xs"><button aria-label="Voltar" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-low transition-colors" onclick="history.back()" type="button"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="logo-fundo-claro.png" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XRT25mGOKbS-BtPSS1xyCgUcF1LlGBPLsoWX9Skxs3V613CW2RSZIheHVdzLXYo7E53W4OXThbishVAcRVwdO_pDHjpINoDLZ7cWFNjG7C487LnqmBpWyR9iP1rAqWrKEUcZZDxH_x1l-EeYNNUxJ9GVZ6tW7euOfJfjlOdYKjN2JhgusasXREyKF7nYI-oh7KzGo1R0U36ubs7mw6JHqnc4q-8YwPRLeCtgN3rV_deYl0nNc"/><h1 class="font-title-sm text-title-sm text-on-surface ml-space-xs tracking-tight">Cadastro Do Veículo</h1></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="flex flex-col flex-1 relative w-full pt-16 bg-surface"><div class="flex flex-col w-full">
+<!-- Progress & Stepper Bar -->
+<section class="px-margin pt-4 pb-2">
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-[0_4px_20px_rgba(11,16,38,0.04)]">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-space-xs">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-xs text-label-xs uppercase tracking-wider">
+            Etapa 2 de 4
+          </span>
+<span class="font-label-md text-label-md text-on-surface-variant font-medium">Dados do Veículo</span>
+</div>
+<span class="font-label-xs text-label-xs font-bold text-primary">50% CONCLUÍDO</span>
+</div>
+<div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-secondary-container rounded-full w-1/2 transition-all duration-500"></div>
+</div>
+</div>
+</section>
+<!-- Section Header -->
+<section class="px-margin pt-2 pb-3">
+<div class="flex items-start justify-between">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-extrabold tracking-tight">Qual veículo você vai dirigir?</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-relaxed">
+          Informe os dados do seu automóvel para validar a elegibilidade nas categorias <span class="text-primary font-bold">VOZTRI</span> e potencializar seus ganhos semanais.
+        </p>
+</div>
+</div>
+</section>
+<!-- Interactive Form Container -->
+<section class="px-margin space-y-4 pb-6">
+<!-- Vehicle Type Pill -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-[0_4px_16px_rgba(11,16,38,0.04)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">directions_car</span>
+</div>
+<div>
+<span class="font-label-xs text-label-xs text-on-surface-variant uppercase tracking-wider block">Tipo de Condução</span>
+<h3 class="font-title-sm text-title-sm font-bold text-on-surface">Carro Particular (4 Portas)</h3>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-primary font-label-xs text-label-xs font-semibold">
+<span class="material-symbols-outlined text-[14px]">ac_unit</span>
+          A/C Obrigatório
+        </span>
+</div>
+</div>
+<!-- Model Search & Suggestions -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-[0_4px_16px_rgba(11,16,38,0.04)] space-y-3">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md font-bold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-primary">minor_crash</span>
+          Marca e Modelo
+        </label>
+<span class="font-label-xs text-label-xs text-primary font-semibold">Preenchimento rápido</span>
+</div>
+<div class="relative">
+<input class="w-full h-13 px-4 rounded-xl bg-surface-container-low font-title-sm text-title-sm text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest shadow-inner transition-all" id="input-modelo" placeholder="Ex: Chevrolet Onix Plus" type="text" value="Toyota Corolla 2.0 XEi"/>
+<div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+<span class="w-6 h-6 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</span>
+</div>
+</div>
+<!-- Quick Chips -->
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1">
+<span class="font-label-xs text-label-xs text-on-surface-variant shrink-0">Comuns:</span>
+<button class="model-chip shrink-0 px-3 py-1.5 rounded-full bg-primary text-on-primary font-label-md text-label-md font-medium shadow-sm" onclick="selectModel('Toyota Corolla 2.0 XEi')" type="button">
+          Corolla
+        </button>
+<button class="model-chip shrink-0 px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant font-label-md text-label-md font-medium" onclick="selectModel('Chevrolet Onix Plus 1.0T')" type="button">
+          Onix Plus
+        </button>
+<button class="model-chip shrink-0 px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant font-label-md text-label-md font-medium" onclick="selectModel('Hyundai HB20S Comfort')" type="button">
+          HB20S
+        </button>
+<button class="model-chip shrink-0 px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant font-label-md text-label-md font-medium" onclick="selectModel('Volkswagen Virtus TSI')" type="button">
+          Virtus
+        </button>
+</div>
+</div>
+<!-- Year & Capacity Grid -->
+<div class="grid grid-cols-2 gap-3">
+<!-- Year -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-[0_4px_16px_rgba(11,16,38,0.04)] flex flex-col justify-between">
+<label class="font-label-md text-label-md font-bold text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary">calendar_today</span>
+          Ano Fab./Mod.
+        </label>
+<div class="my-2">
+<input class="w-full bg-surface-container-low rounded-xl px-3 py-2 font-headline-md text-headline-md text-on-surface font-extrabold focus:outline-none" type="text" value="2022 / 2023"/>
+</div>
+<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-secondary-fixed text-on-secondary-fixed font-label-xs text-label-xs font-semibold">
+<span class="material-symbols-outlined text-[12px]">verified</span>
+          Elegível Go &amp; Comfort
+        </div>
+</div>
+<!-- Capacity -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-[0_4px_16px_rgba(11,16,38,0.04)] flex flex-col justify-between">
+<label class="font-label-md text-label-md font-bold text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary">airline_seat_recline_normal</span>
+          Ocupação Total
+        </label>
+<div class="my-2 flex items-baseline gap-1">
+<span class="font-headline-md text-headline-md text-on-surface font-extrabold">4</span>
+<span class="font-body-md text-body-md text-on-surface-variant">passageiros</span>
+</div>
+<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant font-label-xs text-label-xs font-medium">
+          Cintos 3 pontos (100%)
+        </div>
+</div>
+</div>
+<!-- Plate Mercosul Styled Input -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-[0_4px_16px_rgba(11,16,38,0.04)] space-y-3">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md font-bold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-primary">badge</span>
+          Placa do Automóvel
+        </label>
+<span class="font-label-xs text-label-xs text-on-primary-fixed-variant bg-tertiary-fixed px-2 py-0.5 rounded-full font-bold">
+          Padrão Mercosul
+        </span>
+</div>
+<!-- Mercosul Visual Component -->
+<div class="p-1 rounded-xl bg-surface-container-high shadow-inner">
+<div class="rounded-lg overflow-hidden bg-surface-container-lowest shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+<!-- Blue Top Bar of Mercosul Plate -->
+<div class="h-6 bg-primary px-3 flex items-center justify-between text-on-primary">
+<div class="flex items-center gap-1.5">
+<!-- Brazilian Flag Graphic SVG -->
+<svg class="w-4 h-3 rounded-[2px]" fill="none" viewbox="0 0 20 14">
+<rect fill="#009B3A" height="14" width="20"></rect>
+<polygon fill="#FEDF00" points="10,1.5 18.5,7 10,12.5 1.5,7"></polygon>
+<circle cx="10" cy="7" fill="#002776" r="3.2"></circle>
+</svg>
+<span class="font-label-xs text-label-xs tracking-widest font-extrabold uppercase text-on-primary">BRASIL</span>
+</div>
+<div class="flex items-center gap-1 opacity-80">
+<span class="font-label-xs text-[9px] uppercase font-bold tracking-tighter">MERCOSUL</span>
+</div>
+</div>
+<!-- Letters and Numbers -->
+<div class="py-2 px-4 flex items-center justify-between">
+<input class="w-2/3 bg-transparent font-headline-xl text-headline-xl text-on-surface font-extrabold uppercase tracking-widest focus:outline-none" id="input-placa" maxlength="8" type="text" value="BRA2E19"/>
+<div class="flex items-center gap-1 text-primary bg-primary-fixed px-2 py-1 rounded-lg">
+<span class="material-symbols-outlined text-[16px]">task_alt</span>
+<span class="font-label-xs text-label-xs font-bold">Válida</span>
+</div>
+</div>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary">info</span>
+        Consulta instantânea sem custo com a base do Detran / Senatran.
+      </p>
+</div>
+<!-- Vehicle Color Selector -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-[0_4px_16px_rgba(11,16,38,0.04)] space-y-3">
+<label class="font-label-md text-label-md font-bold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-primary">palette</span>
+        Cor Predominante do Veículo
+      </label>
+<div class="grid grid-cols-5 gap-2" id="color-selector">
+<!-- Prata (Active) -->
+<button class="color-btn flex flex-col items-center gap-1.5 p-2 rounded-xl bg-surface-container-high text-primary shadow-sm" onclick="selectColor(this, 'Prata')" type="button">
+<div class="w-7 h-7 rounded-full bg-gradient-to-tr from-slate-400 via-slate-200 to-white shadow-inner flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px] text-on-surface font-bold">check</span>
+</div>
+<span class="font-label-xs text-label-xs font-bold text-on-surface">Prata</span>
+</button>
+<!-- Preto -->
+<button class="color-btn flex flex-col items-center gap-1.5 p-2 rounded-xl bg-surface-container-low text-on-surface-variant" onclick="selectColor(this, 'Preto')" type="button">
+<div class="w-7 h-7 rounded-full bg-gradient-to-tr from-neutral-900 to-neutral-700 shadow-inner"></div>
+<span class="font-label-xs text-label-xs font-medium text-on-surface-variant">Preto</span>
+</button>
+<!-- Branco -->
+<button class="color-btn flex flex-col items-center gap-1.5 p-2 rounded-xl bg-surface-container-low text-on-surface-variant" onclick="selectColor(this, 'Branco')" type="button">
+<div class="w-7 h-7 rounded-full bg-white shadow-inner"></div>
+<span class="font-label-xs text-label-xs font-medium text-on-surface-variant">Branco</span>
+</button>
+<!-- Cinza -->
+<button class="color-btn flex flex-col items-center gap-1.5 p-2 rounded-xl bg-surface-container-low text-on-surface-variant" onclick="selectColor(this, 'Cinza')" type="button">
+<div class="w-7 h-7 rounded-full bg-neutral-500 shadow-inner"></div>
+<span class="font-label-xs text-label-xs font-medium text-on-surface-variant">Cinza</span>
+</button>
+<!-- Outra -->
+<button class="color-btn flex flex-col items-center gap-1.5 p-2 rounded-xl bg-surface-container-low text-on-surface-variant" onclick="selectColor(this, 'Outra')" type="button">
+<div class="w-7 h-7 rounded-full bg-gradient-to-tr from-primary to-secondary-container shadow-inner"></div>
+<span class="font-label-xs text-label-xs font-medium text-on-surface-variant">Outra</span>
+</button>
+</div>
+</div>
+<!-- Category Eligibility Tier Section -->
+<div class="space-y-3 pt-2">
+<div class="flex items-center justify-between px-1">
+<div>
+<h3 class="font-title-sm text-title-sm font-extrabold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[20px]">verified_user</span>
+            Categorias Habilitadas VOZTRI
+          </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Baseado no modelo Corolla 2022/2023</p>
+</div>
+</div>
+<!-- Category 1: VOZTRI Go -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-[0_8px_24px_rgba(106,0,255,0.08)] transition-all">
+<div class="flex items-start justify-between gap-3">
+<div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[26px]">local_taxi</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2">
+<h4 class="font-title-sm text-title-sm font-extrabold text-on-surface">VOZTRI Go</h4>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-primary font-label-xs text-label-xs font-bold">
+                Elegível
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+              Carros a partir de 2014, 4 portas, ar-condicionado. Maior volume de corridas da cidade.
+            </p>
+<div class="mt-2.5 flex items-center gap-2">
+<span class="font-label-xs text-label-xs font-bold text-primary">Alta demanda contínua</span>
+<span class="text-outline-variant">•</span>
+<span class="font-label-xs text-label-xs text-on-surface-variant">Ganhos estáveis</span>
+</div>
+</div>
+<!-- Custom Switch Active -->
+<div class="shrink-0 pt-1">
+<button class="w-12 h-7 rounded-full bg-primary p-0.5 flex items-center justify-end transition-colors shadow-inner" onclick="toggleSwitch(this)" type="button">
+<span class="w-6 h-6 rounded-full bg-on-primary shadow-md block"></span>
+</button>
+</div>
+</div>
+</div>
+<!-- Category 2: VOZTRI Comfort (Recommended) -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-[0_8px_24px_rgba(106,0,255,0.14)] bg-gradient-to-br from-surface-container-lowest via-surface-bright to-surface-container-low transition-all">
+<div class="flex items-start justify-between gap-3">
+<div class="w-12 h-12 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-md">
+<span class="material-symbols-outlined text-[26px]" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<h4 class="font-title-sm text-title-sm font-extrabold text-on-surface">VOZTRI Comfort</h4>
+<span class="px-2 py-0.5 rounded-full bg-secondary text-on-secondary font-label-xs text-label-xs font-extrabold flex items-center gap-0.5 shadow-sm">
+<span class="material-symbols-outlined text-[12px]">star</span>
+                Recomendado
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+              Sedãs e SUVs a partir de 2018 com espaço interno superior. Corridas com valor até <strong class="text-primary font-bold">35% maior</strong>.
+            </p>
+<div class="mt-2.5 flex items-center gap-2">
+<span class="inline-flex items-center gap-1 font-label-xs text-label-xs font-bold text-secondary">
+<span class="material-symbols-outlined text-[13px]">trending_up</span>
+                Tarifa Premium +35%
+              </span>
+</div>
+</div>
+<!-- Switch Active -->
+<div class="shrink-0 pt-1">
+<button class="w-12 h-7 rounded-full bg-primary p-0.5 flex items-center justify-end transition-colors shadow-inner" onclick="toggleSwitch(this)" type="button">
+<span class="w-6 h-6 rounded-full bg-on-primary shadow-md block"></span>
+</button>
+</div>
+</div>
+</div>
+<!-- Category 3: VOZTRI Black (Inactive/Details) -->
+<div class="bg-surface-container-lowest/80 rounded-2xl p-space-md shadow-sm transition-all opacity-90">
+<div class="flex items-start justify-between gap-3">
+<div class="w-12 h-12 rounded-xl bg-inverse-surface text-inverse-on-surface flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[26px]">diamond</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2">
+<h4 class="font-title-sm text-title-sm font-bold text-on-surface">VOZTRI Black</h4>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-xs text-label-xs font-semibold">
+                Cor Prata (Requer Preto/Escuro)
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+              Exclusivo para sedãs executivos pretos/escuros a partir de 2020 (Corolla Altis Preto, Civic, BMW, Audi).
+            </p>
+<div class="mt-2">
+<button class="font-label-xs text-label-xs font-bold text-primary hover:underline flex items-center gap-1" type="button">
+                Ver requisitos da categoria Black
+                <span class="material-symbols-outlined text-[12px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Switch Off -->
+<div class="shrink-0 pt-1">
+<div class="w-12 h-7 rounded-full bg-surface-container-high p-0.5 flex items-center justify-start opacity-70">
+<span class="w-6 h-6 rounded-full bg-surface-container-lowest shadow-sm block"></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Terms & Compliance Checkbox -->
+<div class="bg-surface-container-low rounded-2xl p-space-md shadow-sm">
+<label class="flex items-start gap-3 cursor-pointer">
+<div class="relative flex items-center justify-center shrink-0 mt-0.5">
+<input checked="" class="peer sr-only" id="check-conformidade" type="checkbox"/>
+<div class="w-6 h-6 rounded-lg bg-surface-container-lowest shadow-inner peer-checked:bg-primary flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-on-primary text-[18px]">check</span>
+</div>
+</div>
+<div class="text-left">
+<p class="font-body-sm text-body-sm font-semibold text-on-surface leading-snug">
+            Declaro conformidade dos equipamentos e manutenção
+          </p>
+<p class="font-label-xs text-label-xs text-on-surface-variant mt-1 leading-relaxed">
+            Confirmo que o carro possui ar-condicionado em pleno funcionamento, 4 portas funcionais, cintos de segurança testados e atende às exigências de higiene e segurança da plataforma VOZTRI.
+          </p>
+</div>
+</label>
+</div>
+<!-- Official Driver App Visual Card Banner -->
+<div class="rounded-2xl p-4 bg-gradient-to-r from-primary to-secondary text-on-primary shadow-lg flex items-center justify-between">
+<div class="space-y-1">
+<span class="font-label-xs text-label-xs font-bold uppercase tracking-wider text-on-primary/80">Vantagem Exclusiva</span>
+<h4 class="font-title-sm text-title-sm font-extrabold text-on-primary">Suporte 24h &amp; Ganhos Diários</h4>
+<p class="font-label-xs text-label-xs text-on-primary/90">Sem taxa de adesão ou aluguel de máquina.</p>
+</div>
+<div class="w-12 h-12 rounded-full bg-on-primary/10 backdrop-blur-md flex items-center justify-center shrink-0 text-on-primary">
+<span class="material-symbols-outlined text-[24px]">electric_bolt</span>
+</div>
+</div>
+</section>
+<!-- Bottom Floating CTA Container -->
+<section class="sticky bottom-0 inset-x-0 bg-surface-container-lowest/95 backdrop-blur-xl px-margin py-4 shadow-[0_-8px_24px_rgba(11,16,38,0.06)] space-y-2">
+<button class="w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-on-primary font-title-sm text-title-sm font-bold flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(106,0,255,0.35)] active:scale-[0.98] transition-transform" id="btn-continuar" onclick="handleContinue()" type="button">
+<span>Continuar para Documentos</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<div class="flex items-center justify-center gap-1.5 text-center">
+<span class="material-symbols-outlined text-[14px] text-outline">lock</span>
+<span class="font-label-xs text-label-xs text-on-surface-variant font-medium">
+        Seus dados passam por checagem automática e segura via Denatran/Renavam.
+      </span>
+</div>
+</section>
+<!-- Interactive Scripts for Micro-interactions -->
+<script>
+    function selectModel(modelName) {
+      const input = document.getElementById('input-modelo');
+      if (input) {
+        input.value = modelName;
+        input.classList.add('bg-primary-fixed');
+        setTimeout(() => input.classList.remove('bg-primary-fixed'), 300);
+      }
+    }
+
+    function selectColor(button, colorName) {
+      const container = document.getElementById('color-selector');
+      if (!container) return;
+      
+      const buttons = container.querySelectorAll('.color-btn');
+      buttons.forEach(btn => {
+        btn.classList.remove('bg-surface-container-high', 'text-primary', 'shadow-sm');
+        btn.classList.add('bg-surface-container-low', 'text-on-surface-variant');
+        const icon = btn.querySelector('.material-symbols-outlined');
+        if (icon) icon.remove();
+      });
+
+      button.classList.remove('bg-surface-container-low', 'text-on-surface-variant');
+      button.classList.add('bg-surface-container-high', 'text-primary', 'shadow-sm');
+      
+      const circle = button.querySelector('div');
+      if (circle && !circle.querySelector('.material-symbols-outlined')) {
+        const check = document.createElement('span');
+        check.className = 'material-symbols-outlined text-[16px] text-on-surface font-bold';
+        check.innerText = 'check';
+        circle.appendChild(check);
+      }
+    }
+
+    function toggleSwitch(btn) {
+      const isEnabled = btn.classList.contains('bg-primary');
+      if (isEnabled) {
+        btn.classList.remove('bg-primary', 'justify-end');
+        btn.classList.add('bg-surface-container-high', 'justify-start');
+      } else {
+        btn.classList.remove('bg-surface-container-high', 'justify-start');
+        btn.classList.add('bg-primary', 'justify-end');
+      }
+    }
+
+    function handleContinue() {
+      const btn = document.getElementById('btn-continuar');
+      if (btn) {
+        btn.innerHTML = `
+          <span class="inline-block animate-spin mr-1">
+            <span class="material-symbols-outlined text-[20px]">sync</span>
+          </span>
+          <span>Validando Renavam...</span>
+        `;
+        setTimeout(() => {
+          btn.innerHTML = `
+            <span class="material-symbols-outlined text-[20px]">done</span>
+            <span>Veículo Aprovado! Avançando...</span>
+          `;
+          btn.classList.remove('from-primary', 'to-secondary');
+          btn.classList.add('bg-primary');
+        }, 1200);
+      }
+    }
+  </script>
+</div></main></body></html>

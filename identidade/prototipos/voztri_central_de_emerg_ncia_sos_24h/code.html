@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "on-tertiary-fixed-variant": "#4f3b7e", "surface-container-lowest": "#ffffff", "on-secondary": "#ffffff", "on-secondary-fixed": "#290055", "surface-container-highest": "#dde1ff", "inverse-on-surface": "#f0efff", "tertiary": "#4b377a", "primary-fixed-dim": "#cfbdff", "on-surface": "#151a31", "secondary": "#7b22de", "on-error-container": "#93000a", "secondary-fixed-dim": "#d8b9ff", "tertiary-container": "#634f94", "on-primary-fixed": "#22005d", "error-container": "#ffdad6", "inverse-surface": "#2a2f47", "surface-dim": "#d4d8f7", "on-secondary-fixed-variant": "#6200bc", "error": "#ba1a1a", "secondary-container": "#9546f9", "surface": "#fbf8ff", "on-background": "#151a31", "outline-variant": "#cbc3da", "tertiary-fixed-dim": "#d0bcff", "tertiary-fixed": "#e9ddff", "on-tertiary-fixed": "#220950", "surface-container-low": "#f3f2ff", "on-error": "#ffffff", "primary-container": "#6a00ff", "surface-tint": "#6e1aff", "secondary-fixed": "#eddcff", "on-primary": "#ffffff", "primary-fixed": "#e9ddff", "inverse-primary": "#cfbdff", "surface-container-high": "#e5e7ff", "surface-bright": "#fbf8ff", "on-secondary-container": "#fffbff", "outline": "#7b7489", "on-primary-fixed-variant": "#5300cc", "primary": "#4f00c3", "background": "#fbf8ff", "on-primary-container": "#dacaff", "on-tertiary-container": "#dbcbff", "on-tertiary": "#ffffff", "surface-variant": "#dde1ff", "on-surface-variant": "#494457", "surface-container": "#ececff" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "gutter": "1rem", "space-sm": "0.5rem", "space-lg": "1.5rem", "space-xl": "2rem", "space-md": "1rem", "margin": "1rem", "space-xs": "0.25rem" }, fontFamily: { "body-sm": ["Montserrat"], "headline-xl-mobile": ["Montserrat"], "body-md": ["Montserrat"], "label-lg": ["Montserrat"], "title-sm": ["Montserrat"], "body-lg": ["Montserrat"], "headline-md": ["Montserrat"], "headline-xl": ["Montserrat"], "label-md": ["Montserrat"], "label-xs": ["Montserrat"], "headline-lg": ["Montserrat"], "display-lg": ["Montserrat"] }, fontSize: { "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }], "headline-xl-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "400" }], "label-lg": ["14px", { "lineHeight": "18px", "letterSpacing": "0.03em", "fontWeight": "700" }], "title-sm": ["16px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }], "headline-md": ["20px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600" }], "label-xs": ["10px", { "lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "700" }], "headline-lg": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "800" }] } } } }</script><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#fbf8ff;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><button aria-label="Voltar ou Fechar" class="min-w-[44px] min-h-[44px] -ml-2 rounded-full flex items-center justify-center text-on-surface hover:bg-surface-container transition-colors" onclick="history.back()" type="button"><span class="material-symbols-outlined text-[24px]">close</span></button><img alt="logo-fundo-claro.png" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XRT25mGOKbS-BtPSS1xyCgUcF1LlGBPLsoWX9Skxs3V613CW2RSZIheHVdzLXYo7E53W4OXThbishVAcRVwdO_pDHjpINoDLZ7cWFNjG7C487LnqmBpWyR9iP1rAqWrKEUcZZDxH_x1l-EeYNNUxJ9GVZ6tW7euOfJfjlOdYKjN2JhgusasXREyKF7nYI-oh7KzGo1R0U36ubs7mw6JHqnc4q-8YwPRLeCtgN3rV_deYl0nNc"/><span class="font-title-sm text-title-sm text-on-surface uppercase tracking-wider">VOZTRI</span></div><div class="flex items-center gap-space-xs"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative w-full pt-16 min-h-screen bg-surface flex flex-col pb-safe"><div class="flex flex-col w-full px-margin pb-space-xl gap-space-md">
+<!-- Status Header: Protocolo de Emergência -->
+<div class="relative overflow-hidden rounded-xl bg-inverse-surface text-inverse-on-surface p-space-md shadow-md">
+<div class="absolute -right-6 -bottom-6 w-32 h-32 bg-primary/20 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-center gap-space-sm mb-space-xs">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-error"></span>
+</span>
+<span class="font-label-xs text-label-xs uppercase tracking-wider text-error-container font-semibold">
+        PROTOCOLO DE EMERGÊNCIA ATIVO • MONITORAMENTO 24/7
+      </span>
+</div>
+<h1 class="font-headline-xl-mobile text-headline-xl-mobile text-inverse-on-surface mb-space-xs">
+      Central de Emergência &amp; SOS
+    </h1>
+<p class="font-body-md text-body-md text-surface-container-highest">
+      Sua integridade e segurança são a prioridade absoluta. Escolha uma medida de apoio imediato abaixo.
+    </p>
+</div>
+<!-- Big Action Card: Botões de Emergência Direta -->
+<div class="rounded-xl bg-error-container text-on-error-container p-space-md shadow-xl flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-error text-[28px]" style="font-variation-settings: 'FILL' 1;">e911_emergency</span>
+<span class="font-title-sm text-title-sm text-error uppercase font-bold tracking-tight">Acionamento de Choque</span>
+</div>
+<span class="font-label-md text-label-md bg-error text-on-error px-space-sm py-0.5 rounded-full shadow-sm" id="countdown-badge">
+        Disparo imediato
+      </span>
+</div>
+<!-- Botão Primário: Polícia 190 -->
+<a class="w-full relative overflow-hidden rounded-xl bg-error text-on-error p-space-md shadow-lg flex items-center justify-between active:scale-[0.98] transition-transform" href="tel:190" id="btn-police">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-full bg-surface-container-lowest/20 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[30px]" style="font-variation-settings: 'FILL' 1;">local_police</span>
+</div>
+<div class="flex flex-col text-left">
+<span class="font-label-lg text-label-lg font-bold uppercase tracking-wider">Ligar para Polícia (190)</span>
+<span class="font-body-sm text-body-sm text-on-error/90">Envio automático do pacote de coordenadas GPS</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[24px]">call</span>
+</a>
+<!-- Botão Secundário: Resposta Tática VOZTRI -->
+<a class="w-full rounded-xl bg-primary text-on-primary p-space-md shadow-md flex items-center justify-between active:scale-[0.98] transition-transform" href="tel:08009998877">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-full bg-on-primary/15 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<div class="flex flex-col text-left">
+<span class="font-label-lg text-label-lg font-bold">Central Tática VOZTRI (0800 24h)</span>
+<span class="font-body-sm text-body-sm text-on-primary/90">Agente humano especializado em desvio e ameaça</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[24px]">headset_mic</span>
+</a>
+</div>
+<!-- Telemetria & Localização Atual -->
+<div class="rounded-xl bg-surface-container-lowest text-on-surface p-space-md shadow-md flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">satellite_alt</span>
+<h2 class="font-title-sm text-title-sm text-on-surface">Telemetria da Viagem ao Vivo</h2>
+</div>
+<span class="font-label-xs text-label-xs bg-primary-fixed text-on-primary-fixed px-space-xs py-0.5 rounded-full font-bold">
+        Sincronizado
+      </span>
+</div>
+<!-- Mini Radar / Mapa Representativo -->
+<div class="w-full h-36 rounded-xl bg-cover bg-center shadow-inner relative flex flex-col justify-end p-space-sm" data-location="Avenida Brigadeiro Faria Lima, 3477, Itaim Bibi, São Paulo, Brasil" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuARX7ADjq74g_4c8NhBIIk74c2D9W8UFgxB2aGOHucFdia7OKZJpODE7gUkdDtTZaIfpc5IHP8CF0qRqQ40DDglP45GommvNxHe8pLggfjGs_m16GJj2YIxUY5quhUtstcLa7-nVSttXuqJnYUA67cuagPn9C0AySA8oEp4DCAJPcjoToDl5aMlob3UPwlt3FOyZh81dcDKf48CwkRbC9gbS_vPHU3feAno0XTzRxk')">
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/90 via-inverse-surface/40 to-transparent rounded-xl"></div>
+<div class="relative z-10 flex items-center gap-space-xs text-inverse-on-surface">
+<span class="material-symbols-outlined text-secondary-fixed text-[18px]">near_me</span>
+<span class="font-label-md text-label-md font-semibold truncate">-23.5855° S, -46.6812° O • Precisão 2.4m</span>
+</div>
+</div>
+<!-- Dados da Viagem -->
+<div class="flex flex-col gap-space-xs bg-surface-container-low p-space-sm rounded-xl">
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px] mt-0.5">location_on</span>
+<div>
+<span class="font-label-xs text-label-xs text-on-surface-variant block uppercase font-bold">Endereço Atual</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Av. Brigadeiro Faria Lima, 3477 - Itaim Bibi, São Paulo - SP</span>
+</div>
+</div>
+<div class="flex items-start gap-space-xs mt-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px] mt-0.5">directions_car</span>
+<div>
+<span class="font-label-xs text-label-xs text-on-surface-variant block uppercase font-bold">Veículo &amp; Motorista</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Toyota Corolla Preto • <strong class="text-primary font-bold">BRA2E19</strong> (Carlos Eduardo M.)</span>
+</div>
+</div>
+</div>
+<!-- Compartilhamento Dinâmico -->
+<button class="w-full rounded-xl bg-surface-container-high hover:bg-surface-variant text-primary p-space-sm flex items-center justify-center gap-space-sm transition-colors active:scale-[0.99]" id="btn-share-route">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">share_location</span>
+<span class="font-label-md text-label-md font-bold">Compartilhar Rota em Tempo Real (WhatsApp / SMS)</span>
+</button>
+</div>
+<!-- Recursos Táticos Adicionais -->
+<div class="rounded-xl bg-surface-container-lowest text-on-surface p-space-md shadow-md flex flex-col gap-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[22px]">shield_with_heart</span>
+<h2 class="font-title-sm text-title-sm text-on-surface">Recursos de Proteção Discreta</h2>
+</div>
+<div class="grid grid-cols-1 gap-space-sm">
+<!-- Gravação de Áudio -->
+<div class="flex items-center justify-between p-space-sm bg-surface-container-low rounded-xl">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-error-container text-on-error-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</div>
+<div>
+<span class="font-label-md text-label-md text-on-surface font-bold block">Gravação de Cabine Criptografada</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Backup contínuo direto em nuvem segura</span>
+</div>
+</div>
+<button class="px-space-sm py-1 rounded-full bg-error text-on-error font-label-xs text-label-xs font-bold uppercase transition-all" id="toggle-audio-rec">
+          Ativa
+        </button>
+</div>
+<!-- Alerta Silencioso -->
+<div class="flex items-center justify-between p-space-sm bg-surface-container-low rounded-xl">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">notifications_off</span>
+</div>
+<div>
+<span class="font-label-md text-label-md text-on-surface font-bold block">Alerta Silencioso aos Contatos</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Disparo discreto para Clara (Mãe) e Rodrigo</span>
+</div>
+</div>
+<button class="px-space-sm py-1 rounded-full bg-secondary text-on-secondary font-label-xs text-label-xs font-bold uppercase active:scale-95 transition-all" id="btn-silent-alert">
+          Disparar
+        </button>
+</div>
+<!-- Serviços Médicos & Bombeiros -->
+<div class="grid grid-cols-2 gap-space-sm">
+<a class="p-space-sm bg-surface-container-low rounded-xl flex items-center gap-space-xs text-on-surface hover:bg-surface-container transition-colors" href="tel:192">
+<span class="material-symbols-outlined text-error text-[20px]">ambulance</span>
+<div class="flex flex-col">
+<span class="font-label-xs text-label-xs text-on-surface-variant font-bold">SAMU</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">Ligar 192</span>
+</div>
+</a>
+<a class="p-space-sm bg-surface-container-low rounded-xl flex items-center gap-space-xs text-on-surface hover:bg-surface-container transition-colors" href="tel:193">
+<span class="material-symbols-outlined text-error text-[20px]">fire_truck</span>
+<div class="flex flex-col">
+<span class="font-label-xs text-label-xs text-on-surface-variant font-bold">Bombeiros</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">Ligar 193</span>
+</div>
+</a>
+</div>
+</div>
+</div>
+<!-- Orientações Cruciais de Segurança -->
+<div class="rounded-xl bg-surface-container-high text-on-surface p-space-md shadow-sm">
+<div class="flex items-center gap-space-xs mb-space-sm">
+<span class="material-symbols-outlined text-primary text-[20px]">info</span>
+<h3 class="font-title-sm text-title-sm text-on-surface font-bold">Procedimento Recomendado</h3>
+</div>
+<ul class="flex flex-col gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px] mt-0.5">check_circle</span>
+<span>Mantenha a calma e permaneça afivelado no veículo enquanto estiver em trânsito.</span>
+</li>
+<li class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px] mt-0.5">check_circle</span>
+<span>Se houver desconforto imediato, solicite ao condutor desembarque em local público e bem iluminado.</span>
+</li>
+<li class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[16px] mt-0.5">check_circle</span>
+<span>A central VOZTRI mantém registro e registro sonoro em tempo real até a conclusão da corrida.</span>
+</li>
+</ul>
+</div>
+<!-- Cancelamento / Falso Alarme -->
+<div class="flex flex-col items-center gap-space-xs pt-space-xs">
+<button class="w-full py-space-sm px-space-md rounded-xl bg-surface-container text-on-surface hover:bg-surface-variant font-label-md text-label-md font-semibold transition-colors flex items-center justify-center gap-space-xs" id="btn-cancel-sos" type="button">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+      Cancelar / Foi um engano (Manter corrida)
+    </button>
+<span class="font-label-xs text-label-xs text-on-surface-variant text-center">
+      O encerramento do protocolo exige autenticação rápida no aplicativo.
+    </span>
+</div>
+</div>
+<script>
+  (function() {
+    const btnShare = document.getElementById('btn-share-route');
+    if (btnShare) {
+      btnShare.addEventListener('click', function() {
+        const text = encodeURIComponent('Emergência VOZTRI: Estou compartilhando minha localização em tempo real no trajeto atual. Monitore aqui: https://voztri.app/tracking/live-892401');
+        window.open('https://api.whatsapp.com/send?text=' + text, '_blank');
+      });
+    }
+
+    const toggleAudio = document.getElementById('toggle-audio-rec');
+    if (toggleAudio) {
+      toggleAudio.addEventListener('click', function() {
+        if (toggleAudio.innerText.trim() === 'ATIVA') {
+          toggleAudio.innerText = 'PAUSADA';
+          toggleAudio.classList.remove('bg-error', 'text-on-error');
+          toggleAudio.classList.add('bg-surface-variant', 'text-on-surface-variant');
+        } else {
+          toggleAudio.innerText = 'ATIVA';
+          toggleAudio.classList.remove('bg-surface-variant', 'text-on-surface-variant');
+          toggleAudio.classList.add('bg-error', 'text-on-error');
+        }
+      });
+    }
+
+    const silentAlertBtn = document.getElementById('btn-silent-alert');
+    if (silentAlertBtn) {
+      silentAlertBtn.addEventListener('click', function() {
+        silentAlertBtn.innerText = 'ENVIADO ✓';
+        silentAlertBtn.classList.remove('bg-secondary');
+        silentAlertBtn.classList.add('bg-primary-container', 'text-on-primary-container');
+        setTimeout(() => {
+          silentAlertBtn.innerText = 'DISPARAR';
+          silentAlertBtn.classList.remove('bg-primary-container', 'text-on-primary-container');
+          silentAlertBtn.classList.add('bg-secondary');
+        }, 3500);
+      });
+    }
+
+    const cancelSosBtn = document.getElementById('btn-cancel-sos');
+    if (cancelSosBtn) {
+      cancelSosBtn.addEventListener('click', function() {
+        const confirmed = confirm('Deseja realmente desativar o Protocolo de Emergência e retornar à corrida habitual?');
+        if (confirmed) {
+          history.back();
+        }
+      });
+    }
+  })();
+</script></main></body></html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {"darkMode":"class","theme":{"extend":{"colors":{"on-tertiary-fixed-variant":"#4f3b7e","tertiary":"#4b377a","surface-container":"#ececff","surface-container-low":"#f3f2ff","primary-fixed":"#e9ddff","surface":"#fbf8ff","tertiary-fixed":"#e9ddff","primary-fixed-dim":"#cfbdff","on-tertiary":"#ffffff","surface-tint":"#6e1aff","on-secondary-fixed":"#290055","on-secondary-fixed-variant":"#6200bc","on-primary-container":"#dacaff","on-primary":"#ffffff","error-container":"#ffdad6","on-primary-fixed-variant":"#5300cc","on-background":"#151a31","error":"#ba1a1a","on-surface":"#151a31","primary-container":"#6a00ff","secondary":"#7b22de","on-surface-variant":"#494457","on-secondary":"#ffffff","on-error-container":"#93000a","secondary-fixed-dim":"#d8b9ff","inverse-surface":"#2a2f47","on-primary-fixed":"#22005d","surface-dim":"#d4d8f7","on-error":"#ffffff","background":"#fbf8ff","tertiary-container":"#634f94","outline-variant":"#cbc3da","inverse-primary":"#cfbdff","surface-bright":"#fbf8ff","on-secondary-container":"#fffbff","on-tertiary-container":"#dbcbff","secondary-container":"#9546f9","on-tertiary-fixed":"#220950","surface-container-lowest":"#ffffff","outline":"#7b7489","primary":"#4f00c3","tertiary-fixed-dim":"#d0bcff","secondary-fixed":"#eddcff","surface-variant":"#dde1ff","inverse-on-surface":"#f0efff","surface-container-high":"#e5e7ff","surface-container-highest":"#dde1ff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xl":"2rem","space-lg":"1.5rem","margin":"1rem","space-xs":"0.25rem","gutter":"1rem","space-sm":"0.5rem","space-md":"1rem"},"fontFamily":{"label-md":["Montserrat"],"headline-xl":["Montserrat"],"display-lg":["Montserrat"],"body-md":["Montserrat"],"body-sm":["Montserrat"],"headline-lg":["Montserrat"],"label-xs":["Montserrat"],"title-sm":["Montserrat"],"label-lg":["Montserrat"],"body-lg":["Montserrat"],"headline-md":["Montserrat"],"headline-xl-mobile":["Montserrat"]},"fontSize":{"label-md":["12px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"600"}],"headline-xl":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"700"}],"display-lg":["40px",{"lineHeight":"48px","letterSpacing":"-0.03em","fontWeight":"800"}],"body-md":["14px",{"lineHeight":"20px","letterSpacing":"0.01em","fontWeight":"400"}],"body-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["24px",{"lineHeight":"30px","letterSpacing":"-0.015em","fontWeight":"700"}],"label-xs":["10px",{"lineHeight":"12px","letterSpacing":"0.06em","fontWeight":"700"}],"title-sm":["16px",{"lineHeight":"22px","letterSpacing":"0em","fontWeight":"600"}],"label-lg":["14px",{"lineHeight":"18px","letterSpacing":"0.03em","fontWeight":"700"}],"body-lg":["16px",{"lineHeight":"24px","letterSpacing":"0em","fontWeight":"400"}],"headline-md":["20px",{"lineHeight":"26px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-xl-mobile":["26px",{"lineHeight":"32px","letterSpacing":"-0.02em","fontWeight":"700"}]}}}}</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><button aria-label="Voltar ou Fechar" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container active:scale-95 transition-all" onclick="history.back()" type="button"><span class="material-symbols-outlined text-[24px]">close</span></button><img alt="logo-fundo-claro.png" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XRT25mGOKbS-BtPSS1xyCgUcF1LlGBPLsoWX9Skxs3V613CW2RSZIheHVdzLXYo7E53W4OXThbishVAcRVwdO_pDHjpINoDLZ7cWFNjG7C487LnqmBpWyR9iP1rAqWrKEUcZZDxH_x1l-EeYNNUxJ9GVZ6tW7euOfJfjlOdYKjN2JhgusasXREyKF7nYI-oh7KzGo1R0U36ubs7mw6JHqnc4q-8YwPRLeCtgN3rV_deYl0nNc"/><span class="font-title-sm text-title-sm text-primary font-bold tracking-tight">VOZTRI</span></div><div class="flex items-center gap-space-sm"><span class="font-label-lg text-label-lg text-on-surface truncate max-w-[170px]">Voztri   Relato De Ocorrência Pós Sos</span><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-[0_2px_8px_rgba(106,0,255,0.2)]"><span class="material-symbols-outlined text-on-primary text-[18px]">shield</span></div></div></div></header><main class="flex flex-col relative w-full pt-16 bg-surface min-h-screen pb-safe"><div class="flex flex-col w-full px-margin pb-space-xl space-y-space-md">
+<!-- TOPO: PROTOCOLO & MENSAGEM ACOLHEDORA -->
+<section class="flex flex-col pt-space-sm space-y-space-xs">
+<div class="inline-flex items-center gap-space-xs px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed self-start shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span class="font-label-xs text-label-xs uppercase tracking-wider">PROTOCOLO #SOS-9921 • REGISTRO CONFIDENCIAL</span>
+</div>
+<div class="pt-space-xs">
+<h1 class="font-headline-xl-mobile text-headline-xl-mobile text-on-surface font-bold tracking-tight">
+        Como você está? Conte-nos o que houve
+      </h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-relaxed">
+        Sua segurança e bem-estar vêm sempre em primeiro lugar. Seu relato nos ajuda a apurar a conduta, aprimorar os algoritmos de segurança e adotar providências se necessário.
+      </p>
+</div>
+</section>
+<!-- CARD CONTEXTO DA VIAGEM -->
+<section class="bg-surface-container-low rounded-xl p-space-md shadow-sm space-y-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary">navigation</span> Viagem recente
+      </span>
+<span class="font-label-xs text-label-xs px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold">
+        Hoje, 14:48
+      </span>
+</div>
+<div class="flex items-center gap-space-sm bg-surface-container-lowest p-space-sm rounded-lg shadow-sm">
+<img class="w-12 h-12 rounded-full object-cover shrink-0" data-alt="Foto de perfil em primeiro plano do motorista profissional Carlos Eduardo M., homem de meia idade usando polo escura em iluminação natural suave e expressão amigável, enquadramento circular com alta definição" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBs208RQbvUEWUwP8zPjvGVXVgfGn_gIzWetRC80f3L45QJD-CZmF4TG0OixyW_RtrrNj5S4Bi1UBkNbXkzLRkf1Am_BKq48WbUE0zbebybyPmavK1omFKgPsVeTCtluXhk7lONwxBeEnZJLdvoyKXy6WQKHDLbjX3AtQzQA50boJKw_RjKJ6B-iCL6itGM6922qJxQPm-CA5TUSlliLN5W4NAuZSKn20RgNaltiSM"/>
+<div class="min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<p class="font-title-sm text-title-sm text-on-surface truncate font-semibold">Carlos Eduardo M.</p>
+<span class="font-label-xs text-label-xs bg-surface-container px-2 py-0.5 rounded font-mono text-on-surface">BRA2E19</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Toyota Corolla Sedan • Prata</p>
+</div>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm px-1">
+<span class="material-symbols-outlined text-[18px] text-primary shrink-0">route</span>
+<span class="truncate">Av. Paulista, 1200</span>
+<span class="material-symbols-outlined text-[14px] shrink-0 text-on-surface-variant">arrow_forward</span>
+<span class="truncate">Av. Faria Lima, 3477</span>
+</div>
+<div class="flex items-center gap-space-xs px-space-sm py-1.5 rounded-lg bg-primary-fixed/40 text-on-primary-fixed font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px] text-primary shrink-0" style="font-variation-settings: 'FILL' 1;">mic</span>
+<span class="truncate">Áudio gravado arquivado em cofre seguro com criptografia ponta a ponta</span>
+</div>
+</section>
+<!-- MOTIVO PRINCIPAL DO ACIONAMENTO (CHIPS) -->
+<section class="space-y-space-sm">
+<div class="flex items-center justify-between">
+<label class="font-title-sm text-title-sm text-on-surface font-semibold">Qual foi o motivo principal do SOS?</label>
+<span class="font-label-xs text-label-xs text-primary font-bold">1 SELEÇÃO</span>
+</div>
+<div class="grid grid-cols-1 gap-2" id="motivo-selector">
+<!-- Opção 1 -->
+<button class="motivo-chip w-full flex items-center justify-between p-3 rounded-xl bg-surface-container-lowest text-on-surface shadow-sm transition-all text-left group active:scale-[0.99]" data-selected="false" type="button">
+<div class="flex items-center gap- space-sm min-w-0 pr-2">
+<span class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:text-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">touch_app</span>
+</span>
+<div class="min-w-0">
+<p class="font-label-lg text-label-lg truncate">Acionamento acidental / Bolso</p>
+<span class="font-label-xs text-label-xs text-outline">Falso alarme sem risco</span>
+</div>
+</div>
+<span class="chip-radio w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0">
+<span class="w-2.5 h-2.5 rounded-full bg-transparent"></span>
+</span>
+</button>
+<!-- Opção 2 -->
+<button class="motivo-chip w-full flex items-center justify-between p-3 rounded-xl bg-surface-container-lowest text-on-surface shadow-sm transition-all text-left group active:scale-[0.99]" data-selected="false" type="button">
+<div class="flex items-center gap-space-sm min-w-0 pr-2">
+<span class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:text-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">alt_route</span>
+</span>
+<div class="min-w-0">
+<p class="font-label-lg text-label-lg truncate">Desvio de rota sem consentimento</p>
+<span class="font-label-xs text-label-xs text-outline">Mudança suspeita de trajeto</span>
+</div>
+</div>
+<span class="chip-radio w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0">
+<span class="w-2.5 h-2.5 rounded-full bg-transparent"></span>
+</span>
+</button>
+<!-- Opção 3 -->
+<button class="motivo-chip w-full flex items-center justify-between p-3 rounded-xl bg-surface-container-lowest text-on-surface shadow-sm transition-all text-left group active:scale-[0.99]" data-selected="false" type="button">
+<div class="flex items-center gap-space-sm min-w-0 pr-2">
+<span class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:text-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">speed</span>
+</span>
+<div class="min-w-0">
+<p class="font-label-lg text-label-lg truncate">Direção perigosa ou agressiva</p>
+<span class="font-label-xs text-label-xs text-outline">Excesso de velocidade ou imprudência</span>
+</div>
+</div>
+<span class="chip-radio w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0">
+<span class="w-2.5 h-2.5 rounded-full bg-transparent"></span>
+</span>
+</button>
+<!-- Opção 4 (Pré-selecionado por padrão) -->
+<button class="motivo-chip w-full flex items-center justify-between p-3 rounded-xl bg-primary-fixed/50 text-on-primary-fixed shadow-md transition-all text-left group active:scale-[0.99]" data-selected="true" type="button">
+<div class="flex items-center gap-space-sm min-w-0 pr-2">
+<span class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[20px]">person_alert</span>
+</span>
+<div class="min-w-0">
+<p class="font-label-lg text-label-lg truncate font-bold text-on-surface">Comportamento inadequado do motorista</p>
+<span class="font-label-xs text-label-xs text-primary font-semibold">Abordagem desconfortável ou hostil</span>
+</div>
+</div>
+<span class="chip-radio w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0">
+<span class="w-2.5 h-2.5 rounded-full bg-surface-container-lowest"></span>
+</span>
+</button>
+<!-- Opção 5 -->
+<button class="motivo-chip w-full flex items-center justify-between p-3 rounded-xl bg-surface-container-lowest text-on-surface shadow-sm transition-all text-left group active:scale-[0.99]" data-selected="false" type="button">
+<div class="flex items-center gap-space-sm min-w-0 pr-2">
+<span class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:text-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">pause_circle</span>
+</span>
+<div class="min-w-0">
+<p class="font-label-lg text-label-lg truncate">Parada suspeita ou não combinada</p>
+<span class="font-label-xs text-label-xs text-outline">Interrupção da viagem em local ermo</span>
+</div>
+</div>
+<span class="chip-radio w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0">
+<span class="w-2.5 h-2.5 rounded-full bg-transparent"></span>
+</span>
+</button>
+<!-- Opção 6 -->
+<button class="motivo-chip w-full flex items-center justify-between p-3 rounded-xl bg-surface-container-lowest text-on-surface shadow-sm transition-all text-left group active:scale-[0.99]" data-selected="false" type="button">
+<div class="flex items-center gap-space-sm min-w-0 pr-2">
+<span class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:text-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</span>
+<div class="min-w-0">
+<p class="font-label-lg text-label-lg truncate">Outro motivo</p>
+<span class="font-label-xs text-label-xs text-outline">Situação atípica não listada</span>
+</div>
+</div>
+<span class="chip-radio w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0">
+<span class="w-2.5 h-2.5 rounded-full bg-transparent"></span>
+</span>
+</button>
+</div>
+</section>
+<!-- DETALHAMENTO DO OCORRIDO (TEXTO & GRAVAÇÃO POR VOZ) -->
+<section class="space-y-space-xs">
+<div class="flex items-center justify-between">
+<label class="font-title-sm text-title-sm text-on-surface font-semibold" for="relato-text">Detalhamento do ocorrido</label>
+<span class="font-label-xs text-label-xs text-on-surface-variant font-mono" id="char-counter">184 / 1000</span>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-3 shadow-sm flex flex-col space-y-2">
+<textarea class="w-full bg-transparent resize-none font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none leading-relaxed" id="relato-text" maxlength="1000" placeholder="Descreva com suas palavras o que aconteceu durante a viagem. Fique tranquilo(a), este relato é 100% sigiloso e não é compartilhado com o motorista." rows="4">O motorista fez comentários insistentes sobre a minha rotina e começou a alterar as ruas da navegação sem avisar. Quando percebi o desvio abrupto decidi apertar o SOS para registrar.</textarea>
+<div class="flex items-center justify-between pt-2">
+<!-- BOTÃO DE GRAVAÇÃO DE VOZ EMBUTIDO -->
+<button class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-label-md text-label-md transition-all active:scale-95 shadow-sm" id="btn-audio" type="button">
+<span class="material-symbols-outlined text-[18px] text-secondary">mic</span>
+<span id="audio-label">🎙️ Gravar relato por voz</span>
+</button>
+<span class="font-label-xs text-label-xs text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">lock</span> Privado
+        </span>
+</div>
+</div>
+</section>
+<!-- EVIDÊNCIAS E OPÇÕES DE SUPORTE -->
+<section class="space-y-space-sm">
+<label class="font-title-sm text-title-sm text-on-surface font-semibold">Evidências e Ações Protetivas</label>
+<!-- ANEXAR ARQUIVO / PRINT -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm min-w-0 pr-2">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[22px]">add_photo_alternate</span>
+</div>
+<div class="min-w-0">
+<p class="font-label-lg text-label-lg text-on-surface truncate">Adicionar foto ou print (opcional)</p>
+<p class="font-label-xs text-label-xs text-outline">Capturas de tela do chat ou fotos</p>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container text-primary font-label-md text-label-md shrink-0 active:scale-95 transition-all" type="button">
+        Anexar
+      </button>
+</div>
+<!-- PREFERÊNCIAS DE SUPORTE (CHECKBOXES SELECIONADOS) -->
+<div class="space-y-2">
+<!-- Checkbox 1 -->
+<label class="flex items-start gap-3 p-3 rounded-xl bg-surface-container-lowest shadow-sm cursor-pointer select-none">
+<input checked="" class="mt-0.5 w-5 h-5 rounded accent-primary shrink-0" type="checkbox"/>
+<div class="min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Desejo que um especialista do time tático de segurança me ligue</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Retorno prioritário em até 10 minutos pelo canal criptografado VOZTRI.</p>
+</div>
+</label>
+<!-- Checkbox 2 -->
+<label class="flex items-start gap-3 p-3 rounded-xl bg-surface-container-lowest shadow-sm cursor-pointer select-none">
+<input checked="" class="mt-0.5 w-5 h-5 rounded accent-primary shrink-0" type="checkbox"/>
+<div class="min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Não ser mais pareado(a) com este motorista em corridas futuras</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Bloqueio mútuo e instantâneo no sistema da VOZTRI em todo território nacional.</p>
+</div>
+</label>
+</div>
+</section>
+<!-- GARANTIA DE PRIVACIDADE & LGPD -->
+<section class="bg-surface-container-low rounded-xl p-space-md shadow-sm flex items-start gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center shrink-0 text-primary">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">enhanced_encryption</span>
+</div>
+<div class="space-y-0.5">
+<h3 class="font-label-lg text-label-lg text-on-surface font-bold">Proteção Total de Dados &amp; Sigilo</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+        O motorista não terá acesso à sua identidade, ao motivo apontado ou ao registro deste protocolo. Atendimento pautado integralmente pelo código de conduta e segurança VOZTRI.
+      </p>
+</div>
+</section>
+<!-- AÇÕES DE ENVIO / CTAs -->
+<section class="flex flex-col space-y-3 pt-space-xs">
+<button class="w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-secondary text-on-primary font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-lg shadow-primary/25 active:scale-[0.98] transition-all" type="button">
+<span>Enviar Relato com Segurança</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<button class="w-full h-12 rounded-xl bg-surface-container text-on-surface-variant hover:text-on-surface font-label-md text-label-md flex items-center justify-center transition-all active:scale-[0.98]" onclick="history.back()" type="button">
+      Pular relato e ir para o Mapa
+    </button>
+</section>
+<!-- RODAPÉ INSTITUCIONAL DISCRETO -->
+<footer class="pt-2 pb-space-sm flex flex-col items-center justify-center text-center space-y-1">
+<div class="inline-flex items-center gap-1.5 text-outline font-label-xs text-label-xs">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>VOZTRI Segurança 24h • Atendimento Tático Prioritário</span>
+</div>
+<p class="font-label-xs text-label-xs text-outline/80">Conexão segura TLS 1.3 • Suporte disponível 0800 900 8740</p>
+</footer>
+</div>
+<script>
+  // Interatividade para seleção dos chips de motivo
+  const chips = document.querySelectorAll('.motivo-chip');
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      chips.forEach(c => {
+        c.setAttribute('data-selected', 'false');
+        c.className = 'motivo-chip w-full flex items-center justify-between p-3 rounded-xl bg-surface-container-lowest text-on-surface shadow-sm transition-all text-left group active:scale-[0.99]';
+        const radio = c.querySelector('.chip-radio');
+        if (radio) {
+          radio.className = 'chip-radio w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0';
+          radio.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-transparent"></span>';
+        }
+        const title = c.querySelector('p');
+        if (title) title.className = 'font-label-lg text-label-lg truncate';
+      });
+
+      chip.setAttribute('data-selected', 'true');
+      chip.className = 'motivo-chip w-full flex items-center justify-between p-3 rounded-xl bg-primary-fixed/50 text-on-primary-fixed shadow-md transition-all text-left group active:scale-[0.99]';
+      const activeRadio = chip.querySelector('.chip-radio');
+      if (activeRadio) {
+        activeRadio.className = 'chip-radio w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0';
+        activeRadio.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-surface-container-lowest"></span>';
+      }
+      const activeTitle = chip.querySelector('p');
+      if (activeTitle) activeTitle.className = 'font-label-lg text-label-lg truncate font-bold text-on-surface';
+    });
+  });
+
+  // Contador de caracteres do textarea
+  const textarea = document.getElementById('relato-text');
+  const counter = document.getElementById('char-counter');
+  if (textarea && counter) {
+    textarea.addEventListener('input', () => {
+      counter.textContent = `${textarea.value.length} / 1000`;
+    });
+  }
+
+  // Micro-interação simples para o botão de gravação de áudio
+  const btnAudio = document.getElementById('btn-audio');
+  const audioLabel = document.getElementById('audio-label');
+  let isRecording = false;
+
+  if (btnAudio && audioLabel) {
+    btnAudio.addEventListener('click', () => {
+      isRecording = !isRecording;
+      if (isRecording) {
+        audioLabel.textContent = 'Gravando... Toque p/ parar (00:04)';
+        btnAudio.classList.remove('bg-surface-container');
+        btnAudio.classList.add('bg-error-container', 'text-error');
+      } else {
+        audioLabel.textContent = 'Áudio gravado (00:18) • Regravar';
+        btnAudio.classList.remove('bg-error-container', 'text-error');
+        btnAudio.classList.add('bg-secondary-fixed', 'text-on-secondary-fixed');
+      }
+    });
+  }
+</script></main></body></html>

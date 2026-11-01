@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+  <meta name="shell-type" content="mobile_tab"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#4f00c3",
+            "primary-container": "#6a00ff",
+            "secondary": "#7b22de",
+            "secondary-container": "#9546f9",
+            "surface": "#fbf8ff",
+            "surface-dim": "#d4d8f7",
+            "surface-bright": "#fbf8ff",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#f3f2ff",
+            "surface-container": "#ececff",
+            "surface-container-high": "#e5e7ff",
+            "surface-container-highest": "#dde1ff",
+            "on-surface": "#151a31",
+            "on-surface-variant": "#494457",
+            "on-primary": "#ffffff",
+            "background": "#fbf8ff"
+          },
+          fontFamily: {
+            sans: ["Montserrat", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body { font-family: 'Montserrat', sans-serif; overscroll-behavior: none; }
+    ::-webkit-scrollbar { display: none; }
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
+    .pt-safe { padding-top: env(safe-area-inset-top, 16px); }
+  </style>
+</head>
+<body class="bg-surface text-on-surface flex flex-col min-h-screen antialiased select-none">
+  <!-- Top App Bar -->
+  <header class="fixed top-0 inset-x-0 z-50 bg-surface/90 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+    <div class="h-16 px-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <img alt="VOZTRI" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XRT25mGOKbS-BtPSS1xyCgUcF1LlGBPLsoWX9Skxs3V613CW2RSZIheHVdzLXYo7E53W4OXThbishVAcRVwdO_pDHjpINoDLZ7cWFNjG7C487LnqmBpWyR9iP1rAqWrKEUcZZDxH_x1l-EeYNNUxJ9GVZ6tW7euOfJfjlOdYKjN2JhgusasXREyKF7nYI-oh7KzGo1R0U36ubs7mw6JHqnc4q-8YwPRLeCtgN3rV_deYl0nNc"/>
+        <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-primary-container/10 text-primary-container tracking-wider uppercase">Driver</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="text-[11px] font-bold text-emerald-600">Online</span>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xs shadow-sm">
+          <span class="material-symbols-outlined text-[18px]">person</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col pt-20 pb-28 px-4 gap-4 max-w-md mx-auto w-full">
+    <!-- Period Selector -->
+    <div class="flex items-center justify-between bg-surface-container-lowest px-4 py-2.5 rounded-2xl shadow-sm border border-surface-container-high/60">
+      <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container text-on-surface-variant transition-colors">
+        <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+      </button>
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary-container text-[18px]">calendar_today</span>
+        <span class="text-xs font-bold text-on-surface">21 a 27 de Outubro (Esta semana)</span>
+      </div>
+      <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container text-on-surface-variant opacity-40 cursor-not-allowed">
+        <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+      </button>
+    </div>
+
+    <!-- Hero Card de Saldo e Repasse Pix -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#4f00c3] via-[#6a00ff] to-[#9546f9] p-5 text-white shadow-xl shadow-primary/20">
+      <!-- Glow Decorativo -->
+      <div class="absolute -right-8 -top-8 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+      
+      <div class="flex items-center justify-between mb-1">
+        <div class="flex items-center gap-1.5 text-white/80 text-xs font-medium">
+          <span class="material-symbols-outlined text-[16px]">account_balance_wallet</span>
+          <span>Saldo disponível para repasse</span>
+        </div>
+        <span class="px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 text-[10px] font-bold tracking-wide uppercase border border-emerald-300/30">
+          Pix Gratuito
+        </span>
+      </div>
+
+      <div class="text-3xl font-extrabold tracking-tight mb-3">
+        R$ 1.482,90
+      </div>
+
+      <!-- Chave Pix Cadastrada -->
+      <div class="flex items-center justify-between text-xs text-white/90 bg-white/10 backdrop-blur-md px-3 py-2 rounded-xl border border-white/15 mb-4">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-emerald-300 text-[18px]">bolt</span>
+          <span>Chave CPF: •••.892.418-•• (Nubank)</span>
+        </div>
+        <span class="text-[11px] font-semibold text-emerald-300 underline cursor-pointer">Alterar</span>
+      </div>
+
+      <!-- Botão Primário Pix -->
+      <button class="w-full h-12 bg-white hover:bg-slate-50 active:scale-[0.98] text-[#4f00c3] font-bold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-transform">
+        <span class="material-symbols-outlined text-[20px] text-primary-container">near_me</span>
+        Transferir Saldo via Pix Instantâneo
+      </button>
+    </div>
+
+    <!-- Indicadores Chave da Semana -->
+    <div class="grid grid-cols-3 gap-2.5">
+      <div class="bg-surface-container-lowest p-3 rounded-2xl border border-surface-container-high/60 shadow-sm flex flex-col">
+        <div class="flex items-center gap-1 text-on-surface-variant text-[11px] mb-1">
+          <span class="material-symbols-outlined text-[15px] text-primary-container">timer</span>
+          <span>Conectado</span>
+        </div>
+        <span class="text-base font-extrabold text-on-surface">34h 20m</span>
+        <span class="text-[10px] text-emerald-600 font-semibold mt-0.5">↑ 4h vs anterior</span>
+      </div>
+      <div class="bg-surface-container-lowest p-3 rounded-2xl border border-surface-container-high/60 shadow-sm flex flex-col">
+        <div class="flex items-center gap-1 text-on-surface-variant text-[11px] mb-1">
+          <span class="material-symbols-outlined text-[15px] text-primary-container">local_taxi</span>
+          <span>Viagens</span>
+        </div>
+        <span class="text-base font-extrabold text-on-surface">52</span>
+        <span class="text-[10px] text-emerald-600 font-semibold mt-0.5">100% finalizadas</span>
+      </div>
+      <div class="bg-surface-container-lowest p-3 rounded-2xl border border-surface-container-high/60 shadow-sm flex flex-col">
+        <div class="flex items-center gap-1 text-on-surface-variant text-[11px] mb-1">
+          <span class="material-symbols-outlined text-[15px] text-primary-container">trending_up</span>
+          <span>Média/Hora</span>
+        </div>
+        <span class="text-base font-extrabold text-on-surface">R$ 43,10</span>
+        <span class="text-[10px] text-primary-container font-semibold mt-0.5">+12% meta</span>
+      </div>
+    </div>
+
+    <!-- Gráfico Semanal Interativo de Rendimentos -->
+    <div class="bg-surface-container-lowest p-4 rounded-3xl border border-surface-container-high/60 shadow-sm flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-bold text-on-surface">Rendimento Diário</h2>
+          <p class="text-xs text-on-surface-variant">Melhor dia: Sexta-feira (R$ 342,00)</p>
+        </div>
+        <span class="text-xs font-bold text-primary-container bg-primary-container/10 px-2.5 py-1 rounded-full">
+          Total: R$ 1.482,90
+        </span>
+      </div>
+
+      <!-- Gráfico de Colunas em CSS com valores -->
+      <div class="h-44 w-full flex items-end justify-between gap-2 pt-6 pb-2 px-1 border-b border-surface-container-high">
+        <!-- Seg -->
+        <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+          <span class="text-[9px] font-bold text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">180</span>
+          <div class="w-full bg-primary-container/20 rounded-t-lg transition-all group-hover:bg-primary-container" style="height: 52%;"></div>
+          <span class="text-[10px] font-semibold text-on-surface-variant">Seg</span>
+        </div>
+        <!-- Ter -->
+        <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+          <span class="text-[9px] font-bold text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">210</span>
+          <div class="w-full bg-primary-container/20 rounded-t-lg transition-all group-hover:bg-primary-container" style="height: 61%;"></div>
+          <span class="text-[10px] font-semibold text-on-surface-variant">Ter</span>
+        </div>
+        <!-- Qua -->
+        <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+          <span class="text-[9px] font-bold text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">195</span>
+          <div class="w-full bg-primary-container/20 rounded-t-lg transition-all group-hover:bg-primary-container" style="height: 57%;"></div>
+          <span class="text-[10px] font-semibold text-on-surface-variant">Qua</span>
+        </div>
+        <!-- Qui -->
+        <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+          <span class="text-[9px] font-bold text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">230</span>
+          <div class="w-full bg-primary-container/30 rounded-t-lg transition-all group-hover:bg-primary-container" style="height: 67%;"></div>
+          <span class="text-[10px] font-semibold text-on-surface-variant">Qui</span>
+        </div>
+        <!-- Sex (Destaque Recorde) -->
+        <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end relative">
+          <span class="absolute -top-5 text-[10px] font-extrabold text-white bg-primary-container px-1.5 py-0.5 rounded shadow-sm animate-bounce">
+            R$ 342
+          </span>
+          <div class="w-full bg-gradient-to-t from-primary to-primary-container rounded-t-lg shadow-md" style="height: 100%;"></div>
+          <span class="text-[10px] font-bold text-primary-container">Sex</span>
+        </div>
+        <!-- Sáb -->
+        <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+          <span class="text-[9px] font-bold text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">225</span>
+          <div class="w-full bg-primary-container/30 rounded-t-lg transition-all group-hover:bg-primary-container" style="height: 66%;"></div>
+          <span class="text-[10px] font-semibold text-on-surface-variant">Sáb</span>
+        </div>
+        <!-- Dom -->
+        <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+          <span class="text-[9px] font-bold text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">100</span>
+          <div class="w-full bg-primary-container/20 rounded-t-lg transition-all group-hover:bg-primary-container" style="height: 29%;"></div>
+          <span class="text-[10px] font-semibold text-on-surface-variant">Dom</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Discriminação Detalhada (Breakdown Financeiro) -->
+    <div class="bg-surface-container-lowest p-4 rounded-3xl border border-surface-container-high/60 shadow-sm flex flex-col gap-3">
+      <div class="flex items-center justify-between pb-2 border-b border-surface-container-high">
+        <h3 class="text-sm font-bold text-on-surface">Detalhamento dos Rendimentos</h3>
+        <span class="text-xs text-on-surface-variant">Semana Atual</span>
+      </div>
+
+      <div class="flex flex-col gap-2.5 text-xs">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px] text-primary">route</span>
+            <span class="text-on-surface font-medium">Tarifas Líquidas de Corridas</span>
+          </div>
+          <span class="font-bold text-on-surface">R$ 1.215,40</span>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px] text-amber-500">military_tech</span>
+            <div class="flex flex-col">
+              <span class="text-on-surface font-medium">Bônus & Desafios Turbo</span>
+              <span class="text-[10px] text-primary-container font-semibold">4 metas alcançadas</span>
+            </div>
+          </div>
+          <span class="font-bold text-emerald-600">+ R$ 185,00</span>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px] text-pink-500">volunteer_activism</span>
+            <div class="flex flex-col">
+              <span class="text-on-surface font-medium">Gorjetas de Passageiros</span>
+              <span class="text-[10px] text-emerald-600 font-semibold">100% repassado ao motorista</span>
+            </div>
+          </div>
+          <span class="font-bold text-emerald-600">+ R$ 82,50</span>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px] text-blue-500">toll</span>
+            <span class="text-on-surface font-medium">Reembolso de Pedágios</span>
+          </div>
+          <span class="font-bold text-on-surface">+ R$ 24,00</span>
+        </div>
+
+        <div class="pt-2 border-t border-dashed border-surface-container-high flex items-center justify-between text-[11px] text-on-surface-variant">
+          <span>Taxa de Intermediação VOZTRI (apenas 15%)</span>
+          <span class="font-medium">- R$ 265,20 (Já descontada)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card de Meta e Bônus da Semana -->
+    <div class="bg-gradient-to-r from-primary-container/10 via-secondary-container/15 to-primary-container/5 border border-primary-container/30 rounded-2xl p-4 flex flex-col gap-2">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary-container text-[20px]">stars</span>
+          <span class="text-xs font-bold text-on-surface">Meta Fim de Semana Ativa</span>
+        </div>
+        <span class="text-xs font-extrabold text-primary-container">+ R$ 120,00</span>
+      </div>
+      <p class="text-[11px] text-on-surface-variant">Complete mais 6 corridas até domingo às 23:59 para garantir o super bônus.</p>
+      <div class="w-full bg-surface-container-high h-2.5 rounded-full overflow-hidden mt-1">
+        <div class="bg-gradient-to-r from-primary to-primary-container h-full rounded-full" style="width: 88%;"></div>
+      </div>
+      <div class="flex justify-between text-[10px] font-semibold text-on-surface-variant">
+        <span>44 de 50 viagens</span>
+        <span class="text-primary-container">88% concluído</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-4px_20px_rgba(21,26,49,0.06)] border-t border-surface-container-high/50">
+    <div class="flex justify-around items-center h-20 px-2 max-w-md mx-auto">
+      <a class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+        <span class="material-symbols-outlined text-[24px]">local_taxi</span>
+        <span class="text-[11px] font-medium">Início</span>
+      </a>
+      <a class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-primary-container font-bold transition-colors" href="#">
+        <span class="material-symbols-outlined text-[24px] fill-1">account_balance_wallet</span>
+        <span class="text-[11px]">Ganhos</span>
+      </a>
+      <a class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+        <span class="material-symbols-outlined text-[24px]">history</span>
+        <span class="text-[11px] font-medium">Atividades</span>
+      </a>
+      <a class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+        <span class="material-symbols-outlined text-[24px]">person</span>
+        <span class="text-[11px] font-medium">Perfil</span>
+      </a>
+    </div>
+  </nav>
+</body>
+</html>
