@@ -275,11 +275,24 @@ docker compose up -d --build
 
 ### 4. Inicialize o Laravel
 
+O Laravel recebe as variáveis do `.env` da raiz pelo `env_file` do Compose; não existe `backend/.env`. Por isso o `php artisan key:generate` comum falha com `file_get_contents(/var/www/html/.env)`. Gere a chave com `--show` e grave-a no `.env` da raiz:
+
 ```bash
-docker compose exec app php artisan key:generate
+# 1. Gere a chave e copie a saída (base64:...)
+docker compose exec app php artisan key:generate --show
+
+# 2. Cole o valor em APP_KEY= no .env da raiz e recrie os contêineres PHP
+#    (o env_file só é lido quando o contêiner é criado)
+docker compose up -d --force-recreate app worker reverb
+
+# 3. Rode as migrations e o seed
 docker compose exec app php artisan migrate --seed
-docker compose exec app php artisan config:cache
 ```
+
+> [!WARNING]
+> Não rode `php artisan config:cache` em desenvolvimento. Com a configuração em cache, o `phpunit.xml` deixa de valer, os testes passam a usar o banco `voztri_db` e o `RefreshDatabase` apaga os dados dele. Se já rodou, desfaça com `docker compose exec app php artisan config:clear`. Use `config:cache` só em produção.
+
+<!-- -->
 
 > [!NOTE]
 > Os comandos consideram que o serviço PHP no `docker-compose.yml` se chama `app`. Ajuste o nome caso o Compose do seu ambiente seja diferente. Os dados cartográficos do OSRM podem exigir uma etapa de preparação documentada em `infrastructure/maps/`.

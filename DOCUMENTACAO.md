@@ -66,13 +66,18 @@ cp .env.example .env
 # 3. Suba todos os containers com build automatizado
 docker compose up -d --build
 
-# 4. Execute as migrations com tabelas espaciais e dados de exemplo (Seeds)
-docker compose exec app php artisan migrate --seed
+# 4. Gere a chave de criptografia (o .env fica na raiz, não em backend/,
+#    então use --show e cole o valor em APP_KEY= no .env da raiz)
+docker compose exec app php artisan key:generate --show
 
-# 5. Gere as chaves de criptografia e cache
-docker compose exec app php artisan key:generate
-docker compose exec app php artisan config:cache
+# 5. Recrie os contêineres PHP para lerem a nova APP_KEY
+docker compose up -d --force-recreate app worker reverb
+
+# 6. Execute as migrations com tabelas espaciais e dados de exemplo (Seeds)
+docker compose exec app php artisan migrate --seed
 ```
+
+> **Não use `php artisan config:cache` em desenvolvimento:** com a configuração em cache, os testes ignoram o `phpunit.xml`, rodam no `voztri_db` e o `RefreshDatabase` apaga os dados dele.
 
 ### URLs de Acesso aos Serviços Locais:
 - **API REST**: `http://localhost:8080/api/v1`
