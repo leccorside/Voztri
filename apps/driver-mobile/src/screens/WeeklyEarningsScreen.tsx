@@ -109,3 +109,4 @@ export const WeeklyEarningsScreen: React.FC<Props> = ({ onBack, onOpenPayout }) 
     </div>
   );
 };
+

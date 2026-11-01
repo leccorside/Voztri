@@ -159,3 +159,4 @@ export const SosModal: React.FC<Props> = ({ onClose }) => {
     </div>
   );
 };
+

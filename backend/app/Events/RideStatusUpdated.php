@@ -29,3 +29,4 @@ class RideStatusUpdated implements ShouldBroadcastNow
         return 'RideStatusUpdated';
     }
 }
+

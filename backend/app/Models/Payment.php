@@ -35,3 +35,4 @@ class Payment extends Model
         return $this->belongsTo(Ride::class);
     }
 }
+

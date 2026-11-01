@@ -20,3 +20,4 @@ Broadcast::channel('driver.location.{driverId}', function ($user, $driverId) {
 Broadcast::channel('admin.operations', function ($user) {
     return $user->role === 'admin';
 });
+

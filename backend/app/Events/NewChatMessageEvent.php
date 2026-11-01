@@ -29,3 +29,4 @@ class NewChatMessageEvent implements ShouldBroadcastNow
         return 'NewChatMessage';
     }
 }
+

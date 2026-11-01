@@ -60,3 +60,4 @@ export const VoztriTypography = {
     },
   },
 } as const;
+

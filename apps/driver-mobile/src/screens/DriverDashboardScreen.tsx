@@ -253,3 +253,4 @@ export const DriverDashboardScreen: React.FC<Props> = ({ onSimulateRide, onOpenE
     </div>
   );
 };
+

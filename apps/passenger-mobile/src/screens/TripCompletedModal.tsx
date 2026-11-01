@@ -171,3 +171,4 @@ export const TripCompletedModal: React.FC<Props> = ({ onFinish }) => {
     </div>
   );
 };
+

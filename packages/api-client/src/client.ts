@@ -59,3 +59,4 @@ export class VoztriApiClient {
     return this.instance.delete<T>(url, config);
   }
 }
+

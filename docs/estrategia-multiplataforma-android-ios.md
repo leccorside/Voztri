@@ -21,3 +21,4 @@ apps/driver-mobile/
 ## 2. Preparação iOS
 - **Info.plist**: Contém todas as descrições de permissões exigidas pela Apple App Store (`NSLocationWhenInUseUsageDescription`, `NSLocationAlwaysAndWhenInUseUsageDescription`, `NSCameraUsageDescription`, `NSMicrophoneUsageDescription`).
 - **Nenhuma dependência proprietária Android sem abstração**: Chamadas nativas utilizam adaptadores com fallback para que a compilação no Xcode futuramente ocorra de forma imediata e sem atrito.
+

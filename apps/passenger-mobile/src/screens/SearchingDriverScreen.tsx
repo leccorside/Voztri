@@ -131,3 +131,4 @@ export const SearchingDriverScreen: React.FC<Props> = ({ onCancel }) => {
     </div>
   );
 };
+

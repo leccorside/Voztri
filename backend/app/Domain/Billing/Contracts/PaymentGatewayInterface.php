@@ -39,3 +39,4 @@ interface PaymentGatewayInterface
      */
     public function verifyWebhookSignature(string $payload, string $signature): bool;
 }
+

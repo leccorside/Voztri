@@ -12,3 +12,4 @@
 ## 2. Split e Repasses aos Motoristas
 - O motorista pode solicitar repasse via Pix para sua chave cadastrada (CPF, Telefone ou Chave Aleatória).
 - O backend valida se o saldo disponível cobre o valor solicitado e a taxa de transferência antes de registrar a transação de saque.
+

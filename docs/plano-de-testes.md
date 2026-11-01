@@ -13,3 +13,4 @@
    - Reenvio de requisições de pagamento com o mesmo cabeçalho `Idempotency-Key` (`IdempotencyTest`).
 4. **Carga & Performance**:
    - Script de teste k6 simulando 100 usuários solicitando corridas concorrentes e 50 motoristas transmitindo coordenadas de GPS por WebSocket.
+

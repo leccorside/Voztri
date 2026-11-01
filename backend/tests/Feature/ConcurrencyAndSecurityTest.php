@@ -56,3 +56,4 @@ class ConcurrencyAndSecurityTest extends TestCase
         $this->assertEquals($ride->boarding_pin, $validPinAttempt);
     }
 }
+

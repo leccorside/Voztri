@@ -24,3 +24,4 @@ O rastreamento de motoristas no VOZTRI combina baixa latência, economia de bate
 ## 2. Conformidade LGPD & Otimização de Bateria
 - **Desconexão Obrigatória**: O rastreamento só ocorre se o motorista estiver explicitamente em modo `ONLINE` ou em corrida ativa. Ao ficar `OFFLINE`, o serviço é encerrado imediatamente.
 - **Histórico Condensado**: Coordenadas brutas segundo a segundo são descartadas após 7 dias, mantendo apenas a polilinha sintetizada da viagem para fins legais e fiscais.
+

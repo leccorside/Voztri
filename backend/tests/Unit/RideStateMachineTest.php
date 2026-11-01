@@ -30,3 +30,4 @@ class RideStateMachineTest extends TestCase
         $this->assertEmpty($transitions['CANCELLED']);
     }
 }
+

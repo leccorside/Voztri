@@ -16,3 +16,4 @@ export const SubmitRatingSchema = z.object({
 
 export type RequestPayoutInput = z.infer<typeof RequestPayoutSchema>;
 export type SubmitRatingInput = z.infer<typeof SubmitRatingSchema>;
+

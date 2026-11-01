@@ -127,3 +127,4 @@ export const ValidatePinModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
     </div>
   );
 };
+

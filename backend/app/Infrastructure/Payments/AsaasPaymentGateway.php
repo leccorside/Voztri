@@ -68,3 +68,4 @@ class AsaasPaymentGateway implements PaymentGatewayInterface
         return hash_equals(hash_hmac('sha256', $payload, $secret), $signature);
     }
 }
+

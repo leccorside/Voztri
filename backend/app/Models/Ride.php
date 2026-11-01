@@ -73,3 +73,4 @@ class Ride extends Model
         return $this->hasOne(Payment::class);
     }
 }
+

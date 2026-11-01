@@ -29,3 +29,4 @@ export class AuthApi {
     return res.data;
   }
 }
+

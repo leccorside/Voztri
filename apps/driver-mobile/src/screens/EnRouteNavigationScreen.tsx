@@ -164,3 +164,4 @@ export const EnRouteNavigationScreen: React.FC<Props> = ({ onOpenPinModal, onFin
     </div>
   );
 };
+

@@ -23,3 +23,4 @@ interface GeocodingServiceInterface {
 
 ## 3. Navegação Passo a Passo (Turn-by-Turn)
 O OSRM retorna instruções detalhadas de manobra (`turn left`, `roundabout`, `arrive`), nomes de vias e distâncias parciais. O aplicativo do motorista decodifica a polyline e calcula a aproximação em tempo real com anúncio sonoro/háptico a 100m da manobra.
+

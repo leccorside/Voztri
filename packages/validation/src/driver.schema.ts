@@ -28,3 +28,4 @@ export const DriverLocationUpdateSchema = z.object({
 export type DriverRegistrationInput = z.infer<typeof DriverRegistrationSchema>;
 export type DriverVehicleInput = z.infer<typeof DriverVehicleSchema>;
 export type DriverLocationUpdateInput = z.infer<typeof DriverLocationUpdateSchema>;
+

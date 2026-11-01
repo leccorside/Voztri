@@ -28,3 +28,4 @@ class LedgerServiceTest extends TestCase
         $this->assertEquals(750, $finalPrice);
     }
 }
+

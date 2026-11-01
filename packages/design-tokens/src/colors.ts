@@ -75,3 +75,4 @@ export const VoztriColors = {
     onWarning: '#3D2800',
   },
 } as const;
+

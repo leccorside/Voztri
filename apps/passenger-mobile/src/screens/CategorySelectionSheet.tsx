@@ -142,3 +142,4 @@ export const CategorySelectionSheet: React.FC<Props> = ({ onBack, onConfirm }) =
     </div>
   );
 };
+

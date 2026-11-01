@@ -77,3 +77,4 @@ Route::prefix('v1')->group(function () {
     // Webhooks Externos (Asaas / Mercado Pago com validação de assinatura)
     Route::post('/webhooks/payments', [BillingController::class, 'handleWebhook']);
 });
+

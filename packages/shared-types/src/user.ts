@@ -23,3 +23,4 @@ export interface UserProfile {
   ratingAvg: number;
   totalRatings: number;
 }
+

@@ -230,3 +230,4 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
     </div>
   );
 };
+

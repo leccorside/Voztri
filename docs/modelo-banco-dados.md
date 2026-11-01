@@ -37,3 +37,4 @@ O banco de dados utiliza PostgreSQL 16 com extensão PostGIS 3.4 para cálculos 
 - `CREATE INDEX idx_rides_status_passenger ON rides (passenger_id, status);`
 - `CREATE INDEX idx_rides_status_driver ON rides (driver_id, status);`
 - `CREATE INDEX idx_ledger_account_created ON financial_ledger (account_id, created_at DESC);`
+

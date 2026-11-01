@@ -52,3 +52,4 @@ export class RideApi {
     return res.data;
   }
 }
+

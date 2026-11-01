@@ -8,3 +8,4 @@ Route::get('/', function () {
         'status' => 'online',
     ]);
 });
+

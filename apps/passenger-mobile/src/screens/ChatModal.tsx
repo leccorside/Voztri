@@ -166,3 +166,4 @@ export const ChatModal: React.FC<Props> = ({ onClose }) => {
     </div>
   );
 };
+

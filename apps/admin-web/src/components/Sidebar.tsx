@@ -115,3 +115,4 @@ export const Sidebar: React.FC<Props> = ({ activeScreen, onSelect }) => {
     </aside>
   );
 };
+

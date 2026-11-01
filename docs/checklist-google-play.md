@@ -13,3 +13,4 @@ Este guia detalha todos os requisitos obrigatórios para aprovação e publicaç
 
 ## 3. Conformidade Regulatória (Lei nº 13.640/2018)
 - Verificação documental obrigatória (CNH com EAR e seguro APP de acidentes pessoais a passageiros) antes de habilitar o motorista para corridas.
+

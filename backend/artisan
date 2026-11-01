@@ -13,3 +13,4 @@ $status = (require_once __DIR__.'/bootstrap/app.php')
     ->handleCommand(new Symfony\Component\Console\Input\ArgvInput, new Symfony\Component\Console\Output\ConsoleOutput);
 
 exit($status);
+

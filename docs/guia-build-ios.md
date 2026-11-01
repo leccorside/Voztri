@@ -28,3 +28,4 @@ open VOZTRI.xcworkspace
 - Selecione sua Team Apple Developer ativa.
 - Certifique-se de que os Capabilities `Background Modes (Location updates, Remote notifications)` e `Push Notifications` estão habilitados.
 - Gere o archive para TestFlight com `Product -> Archive`.
+

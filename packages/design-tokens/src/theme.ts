@@ -23,3 +23,4 @@ export const darkTheme = {
 };
 
 export type VoztriTheme = typeof lightTheme;
+

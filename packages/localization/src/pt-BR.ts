@@ -74,3 +74,4 @@ export const ptBR = {
     enterEmergencyPin: 'Digite seu PIN de segurança para desativar o alerta',
   },
 } as const;
+

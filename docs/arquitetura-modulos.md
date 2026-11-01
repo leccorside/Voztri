@@ -53,3 +53,4 @@ backend/app/
 - Módulos se comunicam via interfaces de domínio e Domain Events (`RideRequestedEvent`, `RideAcceptedEvent`, `RideCompletedEvent`).
 - Eventos de domínio são disparados no barramento de eventos do Laravel e processados de forma assíncrona quando não bloqueantes (ex: envio de push notifications, registro em ledger, envio de recibo).
 - Operações de concorrência crítica (despacho e aceite) ocorrem em transação de banco com locks pessimistas (`SELECT ... FOR UPDATE`) e lock distribuído em Redis.
+

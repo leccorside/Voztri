@@ -30,3 +30,4 @@ class EmergencySosTriggeredEvent implements ShouldBroadcastNow
         return 'EmergencySosTriggered';
     }
 }
+

@@ -127,3 +127,4 @@ docker compose exec app php artisan config:cache
 1. **Minimização de Dados**: Coordenadas de GPS dos motoristas são apagadas da memória operacional após a desconexão ou término da corrida, mantendo apenas a polilinha histórica resumida para auditoria fiscal e segurança.
 2. **Lei nº 13.640/2018**: O backend valida seguro APP (Acidentes Pessoais a Passageiros), CNH na categoria EAR (Exerce Atividade Remunerada) e antecedentes criminais antes da ativação do motorista.
 3. **Ledger Imutável**: Nenhuma transação financeira pode ser editada ou deletada. Erros são corrigidos exclusivamente através de lançamentos compensatórios de estorno.
+

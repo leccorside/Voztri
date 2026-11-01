@@ -220,3 +220,4 @@ export const DriverEnRouteScreen: React.FC<Props> = ({ onOpenChat, onOpenSos, on
     </div>
   );
 };
+

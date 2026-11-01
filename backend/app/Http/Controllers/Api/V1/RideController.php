@@ -392,3 +392,4 @@ class RideController extends Controller
         return response()->json($messages);
     }
 }
+

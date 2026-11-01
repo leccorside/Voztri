@@ -74,3 +74,4 @@ export const esES = {
     enterEmergencyPin: 'Ingrese su PIN de seguridad para cancelar la alerta',
   },
 } as const;
+

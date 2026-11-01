@@ -47,3 +47,4 @@ export interface Driver {
   todayEarningsCents: number;
   todayRidesCount: number;
 }
+

@@ -34,3 +34,4 @@ class DriverLocationUpdated implements ShouldBroadcastNow
         return 'DriverLocationUpdated';
     }
 }
+

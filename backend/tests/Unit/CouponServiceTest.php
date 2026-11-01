@@ -37,3 +37,4 @@ class CouponServiceTest extends TestCase
         $this->assertEquals(9200, $res['final_price_cents']);
     }
 }
+

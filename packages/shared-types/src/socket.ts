@@ -31,3 +31,4 @@ export interface NewRideOfferEvent {
   earningsCents: number;
   timeoutSeconds: number;
 }
+

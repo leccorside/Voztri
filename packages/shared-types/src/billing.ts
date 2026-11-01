@@ -37,3 +37,4 @@ export interface DriverEarningsSummary {
   onlineHours: number;
   pixKey?: string;
 }
+

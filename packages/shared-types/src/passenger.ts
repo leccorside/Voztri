@@ -15,3 +15,4 @@ export interface Passenger {
   emergencyPin?: string;
   trustedContacts?: TrustedContact[];
 }
+

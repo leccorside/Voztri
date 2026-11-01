@@ -58,3 +58,4 @@ class Driver extends Model
         return $this->hasMany(Ride::class);
     }
 }
+

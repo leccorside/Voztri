@@ -23,3 +23,4 @@ export const UpdateProfileSchema = z.object({
 export type RequestOtpInput = z.infer<typeof RequestOtpSchema>;
 export type VerifyOtpInput = z.infer<typeof VerifyOtpSchema>;
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
+

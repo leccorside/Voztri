@@ -28,3 +28,4 @@ export interface RouteGeometry {
     southWest: Coordinates;
   };
 }
+

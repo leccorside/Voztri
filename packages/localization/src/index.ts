@@ -27,3 +27,4 @@ export function t(): typeof ptBR {
 }
 
 export { ptBR, enUS, esES };
+

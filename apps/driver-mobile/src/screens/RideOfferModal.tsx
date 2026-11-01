@@ -162,3 +162,4 @@ export const RideOfferModal: React.FC<Props> = ({ offer, onAccept, onReject }) =
     </div>
   );
 };
+

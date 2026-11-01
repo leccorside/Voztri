@@ -41,3 +41,4 @@ export type RideEstimateRequestInput = z.infer<typeof RideEstimateRequestSchema>
 export type RequestRideInput = z.infer<typeof RequestRideSchema>;
 export type ValidateBoardingPinInput = z.infer<typeof ValidateBoardingPinSchema>;
 export type CancelRideInput = z.infer<typeof CancelRideSchema>;
+

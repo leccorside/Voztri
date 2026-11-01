@@ -30,3 +30,4 @@ class Passenger extends Model
         return $this->hasMany(Ride::class);
     }
 }
+

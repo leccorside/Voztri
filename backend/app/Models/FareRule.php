@@ -25,3 +25,4 @@ class FareRule extends Model
         return $this->belongsTo(City::class);
     }
 }
+

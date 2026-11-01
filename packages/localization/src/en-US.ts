@@ -74,3 +74,4 @@ export const enUS = {
     enterEmergencyPin: 'Enter safety PIN to cancel alert',
   },
 } as const;
+

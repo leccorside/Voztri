@@ -27,3 +27,4 @@ export const VoztriElevation = {
   lg: '0 10px 15px -3px rgba(11, 16, 38, 0.1), 0 4px 6px -2px rgba(11, 16, 38, 0.05)',
   kinetic: '0 12px 30px -4px rgba(106, 0, 255, 0.25)',
 } as const;
+

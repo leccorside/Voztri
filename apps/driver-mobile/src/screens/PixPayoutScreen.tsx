@@ -94,3 +94,4 @@ export const PixPayoutScreen: React.FC<Props> = ({ onBack }) => {
     </div>
   );
 };
+

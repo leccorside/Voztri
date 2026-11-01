@@ -22,3 +22,4 @@ docker run -t -i -p 5000:5000 -v "${PWD}:/data" ghcr.io/project-osrm/osrm-backen
 - **MapLibre GL**: Tanto o app móvel quanto o painel web consomem estilos MapLibre no padrão CartoDB / Positron (light) e Dark Matter (dark) ou servidos localmente via Martin Tile Server.
 - Estilo claro: `https://basemaps.cartocdn.com/gl/positron-gl-style/style.json`
 - Estilo escuro (Azul escuro #0B1026): `https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json`
+

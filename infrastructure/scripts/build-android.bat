@@ -23,3 +23,4 @@ echo Build concluido com sucesso!
 echo APK gerado em: apps\driver-mobile\android\app\build\outputs\apk\release\
 echo AAB gerado em: apps\driver-mobile\android\app\build\outputs\bundle\release\
 echo ========================================================
+

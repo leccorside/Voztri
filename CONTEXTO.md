@@ -80,3 +80,4 @@ voztri/
   - Fase 9: Qualidade, Testes Automatizados e Resiliência.
   - Fase 10: Preparação e Build Android (APK/AAB, permissões em segundo plano).
   - Fase 11: Conformidade e Preparação Multiplataforma iOS.
+

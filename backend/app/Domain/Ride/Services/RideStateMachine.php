@@ -62,3 +62,4 @@ class RideStateMachine
         return $ride;
     }
 }
+

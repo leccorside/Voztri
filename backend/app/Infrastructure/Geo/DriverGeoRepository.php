@@ -55,3 +55,4 @@ class DriverGeoRepository
         return $query->get()->all();
     }
 }
+

@@ -50,3 +50,4 @@ export interface Ride {
   cancelledAt?: string | null;
   cancellationReason?: string | null;
 }
+

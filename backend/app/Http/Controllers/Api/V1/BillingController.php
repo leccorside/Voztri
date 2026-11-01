@@ -154,3 +154,4 @@ class BillingController extends Controller
         return response()->json(['received' => true]);
     }
 }
+
