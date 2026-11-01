@@ -156,7 +156,7 @@ A arquitetura documentada combina **domínios de negócio em Laravel**, APIs RES
 
 | Camada | Tecnologias |
 |---|---|
-| **Backend** | PHP 8.3, Laravel 11, Sanctum, Reverb |
+| **Backend** | PHP 8.3, Laravel 12, Sanctum, Reverb |
 | **Banco e geodados** | PostgreSQL 16, PostGIS 3.4 |
 | **Cache e geolocalização** | Redis 7, índices GEO, Pub/Sub |
 | **Apps móveis** | React Native 0.74, TypeScript, Zustand, Zod |
@@ -291,12 +291,14 @@ docker compose exec app php artisan config:cache
 | API REST v1 | `http://localhost:8080/api/v1` | Autenticação e corridas |
 | Admin web | `http://localhost:3000` | Gestão operacional |
 | Laravel Reverb | `ws://localhost:8081` | Eventos por WebSocket |
-| PostgreSQL / PostGIS | `localhost:5432` | Persistência geoespacial |
-| Redis | `localhost:6379` | Cache e posição de motoristas |
-| Mailpit | `http://localhost:8025` | Visualização de e-mails em desenvolvimento |
-| MinIO Console | `http://localhost:9001` | Gestão de objetos e documentos |
+| PostgreSQL / PostGIS | `localhost:5434` | Persistência geoespacial |
+| Redis | `localhost:6380` | Cache e posição de motoristas |
+| Mailpit (SMTP) | `localhost:1026` | Recebimento de e-mails em desenvolvimento |
+| Mailpit (interface) | `http://localhost:8026` | Visualização de e-mails em desenvolvimento |
+| MinIO (API S3) | `http://localhost:9010` | Armazenamento de objetos |
+| MinIO Console | `http://localhost:9011` | Gestão de objetos e documentos |
 
-As portas representam a configuração descrita no projeto e podem variar conforme o arquivo Compose e o `.env`.
+As portas do host saem das variáveis `FORWARD_*` do `.env` e foram escolhidas para não conflitar com outros stacks locais que usam as portas padrão (5432, 6379, 9000/9001, 1025/8025). Entre os contêineres, a comunicação continua pelas portas internas (`postgres:5432`, `redis:6379`, `minio:9000`, `mailpit:1025`).
 
 ---
 
@@ -305,14 +307,23 @@ As portas representam a configuração descrita no projeto e podem variar confor
 ### Testes automatizados
 
 ```bash
+# Suíte completa (Unit + Feature)
+docker compose exec app vendor/bin/phpunit
+
 # Ledger e consistência financeira
-docker compose exec app php artisan test --filter=LedgerServiceTest
+docker compose exec app vendor/bin/phpunit --filter=LedgerServiceTest
 
 # Transições de estados de corrida
-docker compose exec app php artisan test --filter=RideStateMachineTest
+docker compose exec app vendor/bin/phpunit --filter=RideStateMachineTest
 
 # Concorrência e aceite seguro
-docker compose exec app php artisan test --filter=ConcurrencyAndSecurityTest
+docker compose exec app vendor/bin/phpunit --filter=ConcurrencyAndSecurityTest
+```
+
+Os testes de feature usam o banco PostgreSQL **`voztri_test`**, configurado em `backend/phpunit.xml` e isolado do banco de desenvolvimento, com `RefreshDatabase`. Ele é criado automaticamente na primeira subida de um volume novo do Postgres. Se o volume já existia antes, crie-o uma vez:
+
+```bash
+docker compose exec -T postgres psql -U voztri_user -d voztri_db < infrastructure/docker/postgres-init/01-create-test-database.sql
 ```
 
 ### Teste de carga

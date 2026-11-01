@@ -1,0 +1,3 @@
+# Scripts executados dentro dos contêineres Linux precisam de LF
+*.sh text eol=lf
+backend/artisan text eol=lf

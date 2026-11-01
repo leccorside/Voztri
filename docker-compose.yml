@@ -20,9 +20,11 @@ services:
     container_name: voztri_app
     restart: unless-stopped
     working_dir: /var/www/html
+    env_file: .env
     environment:
       - DB_HOST=postgres
       - REDIS_HOST=redis
+      - COMPOSER_INSTALL=true
     volumes:
       - ./backend:/var/www/html
     depends_on:
@@ -37,6 +39,10 @@ services:
     container_name: voztri_reverb
     restart: unless-stopped
     working_dir: /var/www/html
+    env_file: .env
+    environment:
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
     command: php artisan reverb:start --host=0.0.0.0 --port=8081
     ports:
       - "8081:8081"
@@ -54,6 +60,10 @@ services:
     container_name: voztri_worker
     restart: unless-stopped
     working_dir: /var/www/html
+    env_file: .env
+    environment:
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
     command: php artisan queue:work redis --sleep=3 --tries=3
     volumes:
       - ./backend:/var/www/html
@@ -71,9 +81,10 @@ services:
       POSTGRES_USER: voztri_user
       POSTGRES_PASSWORD: voztri_secure_pass
     ports:
-      - "5432:5432"
+      - "${FORWARD_DB_PORT:-5434}:5432"
     volumes:
       - voztri_postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres-init:/docker-entrypoint-initdb.d:ro
 
   # Redis 7 (In-Memory Cache & Geospatial Driver)
   redis:
@@ -81,7 +92,7 @@ services:
     container_name: voztri_redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "${FORWARD_REDIS_PORT:-6380}:6379"
     volumes:
       - voztri_redis_data:/data
 
@@ -95,8 +106,8 @@ services:
       MINIO_ROOT_USER: voztri_admin
       MINIO_ROOT_PASSWORD: voztri_password_safe
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${FORWARD_MINIO_PORT:-9010}:9000"
+      - "${FORWARD_MINIO_CONSOLE_PORT:-9011}:9001"
     volumes:
       - voztri_minio_data:/data
 
@@ -106,8 +117,8 @@ services:
     container_name: voztri_mailpit
     restart: unless-stopped
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - "${FORWARD_MAIL_PORT:-1026}:1025"
+      - "${FORWARD_MAILPIT_UI_PORT:-8026}:8025"
 
 volumes:
   voztri_postgres_data:

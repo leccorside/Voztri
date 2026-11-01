@@ -78,8 +78,12 @@ docker compose exec app php artisan config:cache
 - **API REST**: `http://localhost:8080/api/v1`
 - **Painel Administrativo Web**: `http://localhost:3000`
 - **Servidor WebSocket Reverb**: `ws://localhost:8081`
-- **Mailpit (Caixa postal local para OTPs/Emails)**: `http://localhost:8025`
-- **MinIO Console (Storage S3 local de fotos/documentos)**: `http://localhost:9001` (Usuário: `voztri_admin`, Senha: `voztri_password_safe`)
+- **Mailpit (Caixa postal local para OTPs/Emails)**: `http://localhost:8026`
+- **MinIO Console (Storage S3 local de fotos/documentos)**: `http://localhost:9011` (Usuário: `voztri_admin`, Senha: `voztri_password_safe`)
+- **PostgreSQL / PostGIS (clientes externos, ex.: DBeaver)**: `localhost:5434`
+- **Redis (clientes externos)**: `localhost:6380`
+
+> As portas do host são definidas pelas variáveis `FORWARD_*` do `.env`. Dentro da rede Docker os serviços seguem nas portas internas padrão.
 
 ---
 

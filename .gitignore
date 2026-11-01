@@ -22,6 +22,8 @@ backend/storage/framework/views/*
 backend/storage/logs/*
 backend/bootstrap/cache/*
 backend/.phpunit.result.cache
+backend/.phpunit.cache/
+backend/database/*.sqlite
 
 # Mobile / Android / iOS
 .expo/

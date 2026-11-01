@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class FinancialLedger extends Model
 {
+    use HasUuids;
+
     public $timestamps = false;
     protected $table = 'financial_ledger';
-    protected $keyType = 'string';
-    public $incrementing = false;
 
     protected $fillable = [
         'id',
