@@ -1,0 +1,119 @@
+services:
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: voztri_nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend:/var/www/html
+      - ./infrastructure/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+
+  # Laravel Backend (PHP 8.3-FPM)
+  app:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.php
+    container_name: voztri_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - postgres
+      - redis
+
+  # Laravel Reverb (WebSockets Server)
+  reverb:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.php
+    container_name: voztri_reverb
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan reverb:start --host=0.0.0.0 --port=8081
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - app
+      - redis
+
+  # Laravel Horizon / Queue Worker
+  worker:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.php
+    container_name: voztri_worker
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan queue:work redis --sleep=3 --tries=3
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - app
+      - redis
+
+  # PostgreSQL 16 com PostGIS 3.4
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: voztri_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: voztri_db
+      POSTGRES_USER: voztri_user
+      POSTGRES_PASSWORD: voztri_secure_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - voztri_postgres_data:/var/lib/postgresql/data
+
+  # Redis 7 (In-Memory Cache & Geospatial Driver)
+  redis:
+    image: redis:7-alpine
+    container_name: voztri_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - voztri_redis_data:/data
+
+  # MinIO (S3-compatible Object Storage)
+  minio:
+    image: minio/minio:latest
+    container_name: voztri_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: voztri_admin
+      MINIO_ROOT_PASSWORD: voztri_password_safe
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - voztri_minio_data:/data
+
+  # Mailpit (Local SMTP for OTP/transactional email development)
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: voztri_mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  voztri_postgres_data:
+  voztri_redis_data:
+  voztri_minio_data:
+
+networks:
+  default:
+    name: voztri_network
