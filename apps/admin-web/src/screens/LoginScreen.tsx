@@ -43,7 +43,8 @@ export const LoginScreen: React.FC<Props> = ({ onLogin }) => {
     setBusy(true);
     setError(null);
     try {
-      const res = (await authApi.requestOtp(phone)) as unknown as { debug_otp?: string | null };
+      // Endpoint exclusivo do painel: não cria usuário para telefone desconhecido
+      const res = (await authApi.requestAdminOtp(phone)) as unknown as { debug_otp?: string | null };
       setDebugOtp(res.debug_otp ?? null);
       setStep('code');
     } catch (err) {
@@ -58,7 +59,8 @@ export const LoginScreen: React.FC<Props> = ({ onLogin }) => {
     setBusy(true);
     setError(null);
     try {
-      const { token, user } = await authApi.verifyOtp(phone, code);
+      const { token, user } = await authApi.verifyAdminOtp(phone, code);
+      // Defesa extra: o endpoint já recusa não administradores
       if (user.role !== 'admin') {
         setError('Este telefone não pertence a um administrador. O painel é restrito à equipe VOZTRI.');
         return;
@@ -136,7 +138,7 @@ export const LoginScreen: React.FC<Props> = ({ onLogin }) => {
           <form onSubmit={verifyCode}>
             <h1 style={{ fontSize: 20, fontWeight: 800, color: '#151A31', marginBottom: 6 }}>Digite o código</h1>
             <p style={{ fontSize: 13, color: '#7B7489', marginBottom: 20 }}>
-              Enviamos um código de 6 dígitos para {phone}.
+              Se {phone} for o telefone de um administrador, enviamos um código de 6 dígitos.
               {debugOtp && (
                 <>
                   {' '}

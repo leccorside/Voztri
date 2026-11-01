@@ -22,6 +22,14 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('/request-otp', [AuthController::class, 'requestOtp']);
         Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+
+        // Login do painel administrativo: nunca cria usuário e só autentica
+        // administradores ativos. Limite de 5 tentativas/minuto por IP contra
+        // força bruta do código de 6 dígitos.
+        Route::prefix('admin')->middleware('throttle:5,1')->group(function () {
+            Route::post('/request-otp', [AuthController::class, 'requestAdminOtp']);
+            Route::post('/verify-otp', [AuthController::class, 'verifyAdminOtp']);
+        });
     });
 
     // Rotas Protegidas (Sanctum)

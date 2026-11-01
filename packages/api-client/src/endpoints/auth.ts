@@ -24,6 +24,21 @@ export class AuthApi {
     return res.data;
   }
 
+  /**
+   * Login do painel administrativo: nunca cria usuário e só gera código para
+   * administradores ativos (a resposta é a mesma para qualquer telefone).
+   */
+  async requestAdminOtp(phone: string): Promise<OtpResponse> {
+    const res = await this.client.post<OtpResponse>('/auth/admin/request-otp', { phone });
+    return res.data;
+  }
+
+  /** Só emite token para administradores; os demais recebem 422 INVALID_OTP. */
+  async verifyAdminOtp(phone: string, code: string): Promise<AuthResponse> {
+    const res = await this.client.post<AuthResponse>('/auth/admin/verify-otp', { phone, code });
+    return res.data;
+  }
+
   async getMe(): Promise<User> {
     const res = await this.client.get<User>('/auth/me');
     return res.data;

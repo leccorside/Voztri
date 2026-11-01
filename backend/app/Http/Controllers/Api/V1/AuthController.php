@@ -14,6 +14,8 @@ use Carbon\Carbon;
 
 class AuthController extends Controller
 {
+    private const OTP_TTL_MINUTES = 10;
+
     /**
      * Solicita código OTP via SMS
      */
@@ -26,12 +28,8 @@ class AuthController extends Controller
             'role' => 'nullable|string|in:passenger,driver',
         ]);
 
-        $phone = preg_replace('/\D/', '', $validated['phone']);
+        $phone = $this->normalizePhone($validated['phone']);
         $requestedRole = $validated['role'] ?? 'passenger';
-
-        // Em desenvolvimento/demonstração fixa o OTP ou gera aleatório
-        $otpCode = '123456';
-        $expiresAt = Carbon::now()->addMinutes(10);
 
         $user = User::firstOrCreate(
             ['phone' => $phone],
@@ -46,9 +44,7 @@ class AuthController extends Controller
         // motorista já existente não ganha registro de passageiro ao logar.
         $role = $user->role;
 
-        $user->otp_code = $otpCode;
-        $user->otp_expires_at = $expiresAt;
-        $user->save();
+        $otpCode = $this->issueOtp($user);
 
         // Cria perfil e registro de passageiro/motorista se não existir
         if (!$user->profile) {
@@ -78,7 +74,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Código de verificação enviado com sucesso.',
-            'expires_in_seconds' => 600,
+            'expires_in_seconds' => self::OTP_TTL_MINUTES * 60,
             'debug_otp' => config('app.debug') ? $otpCode : null,
         ]);
     }
@@ -93,10 +89,86 @@ class AuthController extends Controller
             'code' => 'required|string|size:6',
         ]);
 
-        $phone = preg_replace('/\D/', '', $validated['phone']);
-        $user = User::where('phone', $phone)->first();
+        $user = User::where('phone', $this->normalizePhone($validated['phone']))->first();
 
-        if (!$user || $user->otp_code !== $validated['code']) {
+        return $this->completeOtpLogin($user, $validated['code']);
+    }
+
+    /**
+     * Solicita OTP para o painel administrativo.
+     *
+     * Diferente do fluxo público, nunca cria usuário: só gera código para um
+     * administrador ativo já existente. A resposta é a mesma em todos os casos,
+     * para não revelar quais telefones pertencem a administradores.
+     */
+    public function requestAdminOtp(Request $request)
+    {
+        $validated = $request->validate([
+            'phone' => 'required|string|min:10|max:20',
+        ]);
+
+        $admin = User::where('phone', $this->normalizePhone($validated['phone']))
+            ->where('role', 'admin')
+            ->where('status', 'active')
+            ->first();
+
+        $otpCode = $admin ? $this->issueOtp($admin) : null;
+
+        return response()->json([
+            'message' => 'Se o telefone pertencer a um administrador, o código de verificação foi enviado.',
+            'expires_in_seconds' => self::OTP_TTL_MINUTES * 60,
+            // Só em desenvolvimento (APP_DEBUG). Aqui ele revela se o telefone é
+            // de um admin, o que é aceitável fora de produção.
+            'debug_otp' => config('app.debug') ? $otpCode : null,
+        ]);
+    }
+
+    /**
+     * Valida o OTP do painel administrativo. Só emite token para administradores
+     * ativos; qualquer outro usuário recebe o mesmo erro de código inválido,
+     * mesmo que tenha um OTP válido emitido pelo fluxo público.
+     */
+    public function verifyAdminOtp(Request $request)
+    {
+        $validated = $request->validate([
+            'phone' => 'required|string',
+            'code' => 'required|string|size:6',
+        ]);
+
+        $admin = User::where('phone', $this->normalizePhone($validated['phone']))
+            ->where('role', 'admin')
+            ->where('status', 'active')
+            ->first();
+
+        return $this->completeOtpLogin($admin, $validated['code']);
+    }
+
+    private function normalizePhone(string $phone): string
+    {
+        return preg_replace('/\D/', '', $phone);
+    }
+
+    /**
+     * Gera e grava o OTP do usuário. Em desenvolvimento/demonstração o código é
+     * fixo; a troca por um código aleatório + envio por SMS fica centralizada aqui.
+     */
+    private function issueOtp(User $user): string
+    {
+        $otpCode = '123456';
+
+        $user->otp_code = $otpCode;
+        $user->otp_expires_at = Carbon::now()->addMinutes(self::OTP_TTL_MINUTES);
+        $user->save();
+
+        return $otpCode;
+    }
+
+    /**
+     * Confere o OTP, invalida o código usado e emite o token Sanctum.
+     */
+    private function completeOtpLogin(?User $user, string $code)
+    {
+        if (!$user || $user->otp_code === null || !hash_equals($user->otp_code, $code)) {
             return response()->json([
                 'message' => 'Código de verificação inválido ou expirado.',
                 'error' => 'INVALID_OTP',

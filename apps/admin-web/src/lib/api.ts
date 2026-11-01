@@ -31,6 +31,9 @@ export function errorMessage(err: unknown): string {
     if (!err.response) {
       return 'Não foi possível conectar à API. Verifique se o backend está no ar em localhost:8080.';
     }
+    if (err.response.status === 429) {
+      return 'Muitas tentativas seguidas. Aguarde um minuto e tente de novo.';
+    }
     const data = err.response.data as { message?: string } | undefined;
     return data?.message || `Erro ${err.response.status} ao chamar a API.`;
   }

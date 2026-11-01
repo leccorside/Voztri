@@ -107,6 +107,9 @@ docker compose exec app php artisan migrate --seed
 ### Autenticação & Usuários
 - `POST /api/v1/auth/request-otp`: Envia código OTP de 6 dígitos para o número informado.
 - `POST /api/v1/auth/verify-otp`: Valida o OTP e retorna token Bearer Sanctum.
+- `POST /api/v1/auth/admin/request-otp`: Login do painel administrativo. Só gera código para administradores ativos já existentes e **nunca cria usuário**. A resposta é sempre a mesma (`"Se o telefone pertencer a um administrador..."`), para não revelar quais telefones são de admins. Body: `{ "phone": "11999990000" }`.
+- `POST /api/v1/auth/admin/verify-otp`: Valida o OTP do painel e só emite token para administradores ativos; qualquer outro usuário recebe `422 INVALID_OTP`, mesmo com código válido do fluxo público. Body: `{ "phone": "...", "code": "123456" }`.
+  - As duas rotas `/auth/admin/*` têm limite de **5 requisições por minuto por IP, somadas** (`throttle:5,1`); acima disso respondem `429`.
 - `GET /api/v1/auth/me`: Retorna perfil do usuário logado e suas permissões.
 
 ### Motorista
