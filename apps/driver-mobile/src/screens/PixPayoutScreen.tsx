@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
+import { Button, shadow } from '../ui/kit.js';
 
 interface Props {
   onBack: () => void;
@@ -9,89 +11,142 @@ export const PixPayoutScreen: React.FC<Props> = ({ onBack }) => {
   const [transferred, setTransferred] = useState(false);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#FBF8FF' }}>
-      <div style={{
-        height: 60,
-        padding: '0 16px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#FFFFFF',
-        borderBottom: '1px solid #ECECFF',
-      }}>
-        <button onClick={onBack} style={{ border: 'none', background: 'none', fontSize: 18, cursor: 'pointer', fontWeight: 700 }}>
-          ← Voltar
-        </button>
-        <span style={{ fontSize: 16, fontWeight: 800, color: '#151A31' }}>Repasse Instantâneo Pix</span>
-        <div style={{ width: 40 }} />
-      </div>
+    <View style={styles.screen}>
+      <View style={styles.header}>
+        <Button label="← Voltar" onPress={onBack} textStyle={styles.back} />
+        <Text style={styles.headerTitle} accessibilityRole="header">
+          Repasse Instantâneo Pix
+        </Text>
+        <View style={styles.headerSpacer} />
+      </View>
 
-      <div style={{ padding: 20, flex: 1, overflowY: 'auto' }}>
-        {/* Available Balance Box */}
-        <div style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: 20,
-          padding: 24,
-          marginBottom: 16,
-          boxShadow: '0 8px 24px rgba(106, 0, 255, 0.06)',
-          textAlign: 'center',
-        }}>
-          <span style={{ fontSize: 13, color: '#7B7489', fontWeight: 600 }}>Saldo Disponível para Saque</span>
-          <div style={{ fontSize: 36, fontWeight: 800, color: '#151A31', margin: '8px 0' }}>
-            {transferred ? 'R$ 0,00' : 'R$ 642,50'}
-          </div>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            backgroundColor: '#F3F2FF',
-            padding: '6px 14px',
-            borderRadius: 999,
-            color: VoztriColors.brand.primary,
-            fontWeight: 700,
-            fontSize: 12,
-          }}>
-            <span>Chave Pix:</span> carlos.motorista@voztri.com.br
-          </div>
-        </div>
+      <ScrollView contentContainerStyle={styles.content}>
+        {/* Saldo disponível */}
+        <View style={styles.balanceCard}>
+          <Text style={styles.balanceLabel}>Saldo Disponível para Saque</Text>
+          <Text style={styles.balance}>{transferred ? 'R$ 0,00' : 'R$ 642,50'}</Text>
+          <View style={styles.pixKey}>
+            <Text style={[styles.pixKeyText, { color: VoztriColors.brand.primary }]}>
+              Chave Pix: carlos.motorista@voztri.com.br
+            </Text>
+          </View>
+        </View>
 
         {transferred ? (
-          <div style={{
-            backgroundColor: '#E8F5E9',
-            borderRadius: 16,
-            padding: 20,
-            textAlign: 'center',
-            border: '1px solid #A5D6A7',
-          }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>✓</div>
-            <h4 style={{ margin: '0 0 6px', color: '#1B5E20', fontSize: 16, fontWeight: 800 }}>
-              Transferência Pix Enviada!
-            </h4>
-            <p style={{ margin: 0, fontSize: 13, color: '#2E7D32' }}>
+          <View style={styles.success} accessibilityLiveRegion="polite">
+            <Text style={styles.successIcon}>✓</Text>
+            <Text style={styles.successTitle}>Transferência Pix Enviada!</Text>
+            <Text style={styles.successText}>
               O valor de R$ 642,50 foi transferido para sua conta bancária sem taxas.
-            </p>
-          </div>
+            </Text>
+          </View>
         ) : (
-          <button
-            onClick={() => setTransferred(true)}
-            style={{
-              width: '100%',
-              padding: '16px',
-              borderRadius: 14,
-              backgroundColor: '#00C853',
-              color: '#FFFFFF',
-              border: 'none',
-              fontWeight: 800,
-              fontSize: 16,
-              cursor: 'pointer',
-              boxShadow: '0 6px 20px rgba(0, 200, 83, 0.35)',
-            }}
-          >
-            TRANSFERIR AGORA VIA PIX
-          </button>
+          <Button
+            label="TRANSFERIR AGORA VIA PIX"
+            onPress={() => setTransferred(true)}
+            style={styles.transferButton}
+            textStyle={styles.transferText}
+          />
         )}
-      </div>
-    </div>
+      </ScrollView>
+    </View>
   );
 };
 
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#FBF8FF',
+  },
+  header: {
+    height: 60,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECECFF',
+  },
+  back: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#151A31',
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#151A31',
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  content: {
+    padding: 20,
+  },
+  balanceCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 16,
+    alignItems: 'center',
+    ...shadow(0.06, 24, 8, 3, '#6A00FF'),
+  },
+  balanceLabel: {
+    fontSize: 13,
+    color: '#7B7489',
+    fontWeight: '600',
+  },
+  balance: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#151A31',
+    marginVertical: 8,
+  },
+  pixKey: {
+    backgroundColor: '#F3F2FF',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+  },
+  pixKeyText: {
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  success: {
+    backgroundColor: '#E8F5E9',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#A5D6A7',
+  },
+  successIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+    color: '#1B5E20',
+  },
+  successTitle: {
+    marginBottom: 6,
+    color: '#1B5E20',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  successText: {
+    fontSize: 13,
+    color: '#2E7D32',
+    textAlign: 'center',
+  },
+  transferButton: {
+    width: '100%',
+    padding: 16,
+    borderRadius: 14,
+    backgroundColor: '#00C853',
+    ...shadow(0.35, 20, 6, 8, '#00C853'),
+  },
+  transferText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 16,
+  },
+});

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { usePassengerStore } from '../store/passengerStore.js';
+import { Button, shadow } from '../ui/kit.js';
 
 interface Props {
   onClose: () => void;
@@ -19,144 +21,200 @@ export const SosModal: React.FC<Props> = ({ onClose }) => {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      backgroundColor: 'rgba(11, 16, 38, 0.85)',
-      backdropFilter: 'blur(8px)',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-end',
-      zIndex: 1000,
-    }}>
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        padding: '24px 20px',
-        boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.3)',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 36,
-              height: 36,
-              borderRadius: 8,
-              backgroundColor: '#FFDAD6',
-              color: '#BA1A1A',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 800,
-              fontSize: 18,
-            }}>
-              🚨
-            </div>
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: '#BA1A1A', margin: 0 }}>
-              Central de Emergência SOS 24h
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            style={{ border: 'none', background: 'none', color: '#7B7489', fontSize: 18, cursor: 'pointer', fontWeight: 700 }}
-          >
-            ✕
-          </button>
-        </div>
+    <Modal transparent visible animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+      <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={styles.sheet}>
+          <View style={styles.header}>
+            <View style={styles.titleRow}>
+              <View style={styles.alertIcon}>
+                <Text style={styles.alertEmoji}>🚨</Text>
+              </View>
+              <Text style={styles.title} accessibilityRole="header">
+                Central de Emergência SOS 24h
+              </Text>
+            </View>
+            <Button label="✕" onPress={onClose} accessibilityLabel="Fechar" textStyle={styles.close} />
+          </View>
 
-        {!isSosActive ? (
-          <div>
-            <p style={{ fontSize: 13, color: '#494457', lineHeight: 1.5, marginBottom: 20 }}>
-              Ao acionar o SOS, nossa central operacional 24h receberá imediatamente seus dados, o áudio ambiente da corrida e a localização GPS em tempo real, alertando também seus contatos de confiança cadastrados.
-            </p>
+          {!isSosActive ? (
+            <View>
+              <Text style={styles.description}>
+                Ao acionar o SOS, nossa central operacional 24h receberá imediatamente seus dados, o áudio ambiente da
+                corrida e a localização GPS em tempo real, alertando também seus contatos de confiança cadastrados.
+              </Text>
 
-            <button
-              onClick={triggerSos}
-              style={{
-                width: '100%',
-                padding: '16px',
-                borderRadius: 14,
-                backgroundColor: '#BA1A1A',
-                color: '#FFFFFF',
-                border: 'none',
-                fontWeight: 800,
-                fontSize: 16,
-                cursor: 'pointer',
-                boxShadow: '0 6px 20px rgba(186, 26, 26, 0.4)',
-                marginBottom: 10,
-              }}
-            >
-              ACIONAR SOS IMEDIATAMENTE
-            </button>
-          </div>
-        ) : (
-          <div>
-            <div style={{
-              backgroundColor: '#FFDAD6',
-              borderRadius: 14,
-              padding: '12px 16px',
-              color: '#93000A',
-              fontSize: 13,
-              fontWeight: 700,
-              marginBottom: 16,
-              textAlign: 'center',
-            }}>
-              ⚠️ O ALERTA SOS ESTÁ ATIVO! Nossa equipe está monitorando esta corrida.
-            </div>
+              <Button
+                label="ACIONAR SOS IMEDIATAMENTE"
+                onPress={triggerSos}
+                style={styles.trigger}
+                textStyle={styles.triggerText}
+              />
+            </View>
+          ) : (
+            <View>
+              <Text style={styles.activeBanner} accessibilityLiveRegion="assertive">
+                ⚠️ O ALERTA SOS ESTÁ ATIVO! Nossa equipe está monitorando esta corrida.
+              </Text>
 
-            <p style={{ fontSize: 13, color: '#494457', marginBottom: 12 }}>
-              Para desativar o alerta, digite seu PIN de emergência (Padrão: 1234):
-            </p>
+              <Text style={styles.pinPrompt}>
+                Para desativar o alerta, digite seu PIN de emergência (Padrão: 1234):
+              </Text>
 
-            <input
-              type="password"
-              maxLength={4}
-              placeholder="Digite o PIN (1234)"
-              value={pin}
-              onChange={(e) => {
-                setPin(e.target.value);
-                setError(false);
-              }}
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '14px',
-                borderRadius: 12,
-                border: error ? '2px solid #BA1A1A' : '1px solid #ECECFF',
-                fontSize: 18,
-                textAlign: 'center',
-                letterSpacing: '0.2em',
-                marginBottom: 14,
-                outline: 'none',
-              }}
-            />
+              <TextInput
+                secureTextEntry
+                keyboardType="number-pad"
+                maxLength={4}
+                placeholder="Digite o PIN (1234)"
+                placeholderTextColor="#7B7489"
+                value={pin}
+                onChangeText={(text) => {
+                  setPin(text);
+                  setError(false);
+                }}
+                onSubmitEditing={handleCancelSos}
+                accessibilityLabel="PIN de emergência"
+                style={[styles.pinInput, error ? styles.pinInputError : styles.pinInputNormal]}
+              />
 
-            {error && (
-              <span style={{ display: 'block', color: '#BA1A1A', fontSize: 12, fontWeight: 700, textAlign: 'center', marginBottom: 10 }}>
-                PIN incorreto! Verifique e tente novamente.
-              </span>
-            )}
+              {error && (
+                <Text style={styles.error} accessibilityLiveRegion="assertive">
+                  PIN incorreto! Verifique e tente novamente.
+                </Text>
+              )}
 
-            <button
-              onClick={handleCancelSos}
-              style={{
-                width: '100%',
-                padding: '14px',
-                borderRadius: 14,
-                backgroundColor: '#151A31',
-                color: '#FFFFFF',
-                border: 'none',
-                fontWeight: 800,
-                fontSize: 15,
-                cursor: 'pointer',
-              }}
-            >
-              Desativar Alerta com PIN
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+              <Button
+                label="Desativar Alerta com PIN"
+                onPress={handleCancelSos}
+                style={styles.deactivate}
+                textStyle={styles.deactivateText}
+              />
+            </View>
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 };
 
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(11, 16, 38, 0.85)',
+  },
+  sheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    ...shadow(0.3, 40, -10, 16, '#000000'),
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  titleRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  alertIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#FFDAD6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  alertEmoji: {
+    fontSize: 18,
+  },
+  title: {
+    flexShrink: 1,
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#BA1A1A',
+  },
+  close: {
+    color: '#7B7489',
+    fontSize: 18,
+    fontWeight: '700',
+    paddingHorizontal: 4,
+  },
+  description: {
+    fontSize: 13,
+    color: '#494457',
+    lineHeight: 19.5,
+    marginBottom: 20,
+  },
+  trigger: {
+    width: '100%',
+    padding: 16,
+    borderRadius: 14,
+    backgroundColor: '#BA1A1A',
+    marginBottom: 10,
+    ...shadow(0.4, 20, 6, 8, '#BA1A1A'),
+  },
+  triggerText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 16,
+  },
+  activeBanner: {
+    backgroundColor: '#FFDAD6',
+    borderRadius: 14,
+    overflow: 'hidden',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    color: '#93000A',
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  pinPrompt: {
+    fontSize: 13,
+    color: '#494457',
+    marginBottom: 12,
+  },
+  pinInput: {
+    width: '100%',
+    padding: 14,
+    borderRadius: 12,
+    fontSize: 18,
+    textAlign: 'center',
+    letterSpacing: 3.6,
+    color: '#151A31',
+    marginBottom: 14,
+  },
+  pinInputNormal: {
+    borderWidth: 1,
+    borderColor: '#ECECFF',
+  },
+  pinInputError: {
+    borderWidth: 2,
+    borderColor: '#BA1A1A',
+  },
+  error: {
+    color: '#BA1A1A',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  deactivate: {
+    width: '100%',
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: '#151A31',
+  },
+  deactivateText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 15,
+  },
+});

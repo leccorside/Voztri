@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { useDriverStore } from './store/driverStore.js';
 import { DriverDashboardScreen } from './screens/DriverDashboardScreen.js';
 import { RideOfferModal } from './screens/RideOfferModal.js';
@@ -25,29 +26,38 @@ export const App: React.FC = () => {
     });
   };
 
-  return (
-    <div style={{ maxWidth: 430, margin: '0 auto', height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 0 40px rgba(0,0,0,0.1)' }}>
-      {/* Active Screen Flow */}
-      {currentRide ? (
-        <EnRouteNavigationScreen
-          onOpenPinModal={() => setShowPinModal(true)}
-          onFinishRide={completeCurrentRide}
-        />
-      ) : activeTab === 'earnings' ? (
-        <WeeklyEarningsScreen
-          onBack={() => setActiveTab('home')}
-          onOpenPayout={() => setActiveTab('payout')}
-        />
-      ) : activeTab === 'payout' ? (
-        <PixPayoutScreen onBack={() => setActiveTab('earnings')} />
-      ) : (
-        <DriverDashboardScreen
-          onSimulateRide={handleSimulateRide}
-          onOpenEarnings={() => setActiveTab('earnings')}
-        />
-      )}
+  // A navegação em rota usa o tema escuro; as demais telas, o claro
+  const darkScreen = !!currentRide;
 
-      {/* Floating Incoming Ride Offer Modal */}
+  return (
+    <SafeAreaView style={[styles.root, { backgroundColor: darkScreen ? '#0B1026' : '#FFFFFF' }]}>
+      <StatusBar
+        barStyle={darkScreen ? 'light-content' : 'dark-content'}
+        backgroundColor={darkScreen ? '#0B1026' : '#FFFFFF'}
+      />
+      <View style={styles.content}>
+        {/* Fluxo de telas */}
+        {currentRide ? (
+          <EnRouteNavigationScreen
+            onOpenPinModal={() => setShowPinModal(true)}
+            onFinishRide={completeCurrentRide}
+          />
+        ) : activeTab === 'earnings' ? (
+          <WeeklyEarningsScreen
+            onBack={() => setActiveTab('home')}
+            onOpenPayout={() => setActiveTab('payout')}
+          />
+        ) : activeTab === 'payout' ? (
+          <PixPayoutScreen onBack={() => setActiveTab('earnings')} />
+        ) : (
+          <DriverDashboardScreen
+            onSimulateRide={handleSimulateRide}
+            onOpenEarnings={() => setActiveTab('earnings')}
+          />
+        )}
+      </View>
+
+      {/* Oferta de corrida recebida */}
       {incomingOffer && (
         <RideOfferModal
           offer={incomingOffer}
@@ -56,7 +66,7 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Boarding PIN Modal */}
+      {/* Validação do PIN de embarque */}
       {showPinModal && (
         <ValidatePinModal
           onSuccess={() => {
@@ -66,7 +76,15 @@ export const App: React.FC = () => {
           onCancel={() => setShowPinModal(false)}
         />
       )}
-    </div>
+    </SafeAreaView>
   );
 };
 
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+  },
+});

@@ -1,5 +1,7 @@
 import React from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
+import { shadow } from '../ui/kit.js';
 
 interface Props {
   onOpenSearch: () => void;
@@ -7,224 +9,277 @@ interface Props {
 
 export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: VoztriColors.light.surface }}>
-      {/* Top Header */}
-      <header style={{
-        height: 64,
-        padding: '0 16px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#FFFFFF',
-        boxShadow: '0 2px 8px rgba(11, 16, 38, 0.04)',
-        zIndex: 10,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            background: 'linear-gradient(135deg, #6A00FF 0%, #9B4DFF 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#FFFFFF',
-            fontWeight: 800,
-            fontSize: 20,
-          }}>
-            V
-          </div>
-          <div>
-            <span style={{ fontSize: 11, fontWeight: 800, color: VoztriColors.brand.primary, letterSpacing: '0.05em' }}>VOZTRI</span>
-            <h1 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: '#151A31' }}>Início</h1>
-          </div>
-        </div>
+    <View style={[styles.screen, { backgroundColor: VoztriColors.light.surface }]}>
+      {/* Cabeçalho */}
+      <View style={styles.header}>
+        <View style={styles.row}>
+          <View style={styles.logo}>
+            <Text style={styles.logoText}>V</Text>
+          </View>
+          <View>
+            <Text style={[styles.brand, { color: VoztriColors.brand.primary }]}>VOZTRI</Text>
+            <Text style={styles.title} accessibilityRole="header">
+              Início
+            </Text>
+          </View>
+        </View>
 
-        <div style={{
-          width: 38,
-          height: 38,
-          borderRadius: 999,
-          backgroundColor: '#F3F2FF',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: VoztriColors.brand.primary,
-          fontWeight: 700,
-        }}>
-          BL
-        </div>
-      </header>
+        <View style={styles.avatar} accessibilityLabel="Perfil de Beatriz Lima">
+          <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>BL</Text>
+        </View>
+      </View>
 
-      {/* Map Simulation Canvas */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        <div style={{
-          width: '100%',
-          height: '100%',
-          backgroundColor: '#EAEFF8',
-          backgroundImage: 'radial-gradient(#D3DCEE 1.5px, transparent 1.5px)',
-          backgroundSize: '24px 24px',
-          position: 'relative',
-        }}>
-          {/* Passenger Node */}
-          <div style={{
-            position: 'absolute',
-            top: '42%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}>
-            <div style={{
-              width: 48,
-              height: 48,
-              borderRadius: 999,
-              backgroundColor: 'rgba(106, 0, 255, 0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <div style={{
-                width: 20,
-                height: 20,
-                borderRadius: 999,
-                backgroundColor: VoztriColors.brand.primary,
-                border: '3px solid #FFFFFF',
-                boxShadow: '0 4px 10px rgba(106, 0, 255, 0.4)',
-              }} />
-            </div>
-            <span style={{
-              marginTop: 4,
-              backgroundColor: '#0B1026',
-              color: '#FFFFFF',
-              fontSize: 11,
-              fontWeight: 700,
-              padding: '2px 8px',
-              borderRadius: 6,
-            }}>
-              Você está aqui
-            </span>
-          </div>
+      {/* Simulação de mapa */}
+      <View style={styles.map}>
+        {/* Posição do passageiro */}
+        <View style={styles.youLayer} pointerEvents="none">
+          <View style={styles.youHalo}>
+            <View style={[styles.youDot, { backgroundColor: VoztriColors.brand.primary }]} />
+          </View>
+          <Text style={styles.youLabel}>Você está aqui</Text>
+        </View>
 
-          {/* Nearby Vehicle 1 (Car - 2 min) */}
-          <div style={{ position: 'absolute', top: '30%', left: '28%', textAlign: 'center' }}>
-            <div style={{
-              width: 34,
-              height: 34,
-              borderRadius: 999,
-              backgroundColor: '#FFFFFF',
-              boxShadow: '0 4px 10px rgba(11, 16, 38, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 16,
-            }}>
-              🚗
-            </div>
-            <span style={{ fontSize: 10, fontWeight: 800, color: '#22005D', backgroundColor: '#E9DDFF', padding: '1px 5px', borderRadius: 4 }}>
-              2 min
-            </span>
-          </div>
+        {/* Veículo próximo 1 (carro, 2 min) */}
+        <View style={[styles.vehicle, { top: '30%', left: '28%' }]} pointerEvents="none">
+          <View style={styles.vehicleIcon}>
+            <Text style={styles.vehicleEmoji}>🚗</Text>
+          </View>
+          <Text style={styles.vehicleEta}>2 min</Text>
+        </View>
 
-          {/* Nearby Vehicle 2 (Moto - 1 min) */}
-          <div style={{ position: 'absolute', top: '34%', right: '24%', textAlign: 'center' }}>
-            <div style={{
-              width: 34,
-              height: 34,
-              borderRadius: 999,
-              backgroundColor: '#FFFFFF',
-              boxShadow: '0 4px 10px rgba(11, 16, 38, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 16,
-            }}>
-              🛵
-            </div>
-            <span style={{ fontSize: 10, fontWeight: 800, color: '#22005D', backgroundColor: '#E9DDFF', padding: '1px 5px', borderRadius: 4 }}>
-              1 min
-            </span>
-          </div>
-        </div>
+        {/* Veículo próximo 2 (moto, 1 min) */}
+        <View style={[styles.vehicle, { top: '34%', right: '24%' }]} pointerEvents="none">
+          <View style={styles.vehicleIcon}>
+            <Text style={styles.vehicleEmoji}>🛵</Text>
+          </View>
+          <Text style={styles.vehicleEta}>1 min</Text>
+        </View>
 
-        {/* Floating Search Prompt Card */}
-        <div style={{
-          position: 'absolute',
-          bottom: 20,
-          left: 16,
-          right: 16,
-          backgroundColor: '#FFFFFF',
-          borderRadius: 24,
-          padding: 20,
-          boxShadow: '0 16px 40px rgba(11, 16, 38, 0.12)',
-        }}>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: '#151A31', margin: '0 0 14px' }}>
-            Para onde vamos hoje?
-          </h2>
+        {/* Card de busca */}
+        <View style={styles.searchCard}>
+          <Text style={styles.searchTitle}>Para onde vamos hoje?</Text>
 
-          <div
-            onClick={onOpenSearch}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              backgroundColor: '#F4F6FA',
-              borderRadius: 14,
-              padding: '14px 16px',
-              cursor: 'pointer',
-              border: '1px solid #ECECFF',
-            }}
+          <Pressable
+            onPress={onOpenSearch}
+            accessibilityRole="search"
+            accessibilityLabel="Buscar endereço de destino"
+            style={({ pressed }) => [styles.searchField, pressed && styles.pressed]}
           >
-            <span style={{ fontSize: 18 }}>🔍</span>
-            <span style={{ fontSize: 15, color: '#7B7489', fontWeight: 500 }}>
-              Buscar endereço de destino...
-            </span>
-          </div>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <Text style={styles.searchPlaceholder}>Buscar endereço de destino...</Text>
+          </Pressable>
 
-          {/* Fast Shortcuts */}
-          <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-            <div
-              onClick={onOpenSearch}
-              style={{
-                flex: 1,
-                padding: '10px 12px',
-                borderRadius: 12,
-                backgroundColor: '#F8F9FE',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                cursor: 'pointer',
-              }}
-            >
-              <span style={{ fontSize: 16 }}>🏠</span>
-              <div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#151A31', display: 'block' }}>Casa</span>
-                <span style={{ fontSize: 10, color: '#7B7489' }}>Pinheiros</span>
-              </div>
-            </div>
-            <div
-              onClick={onOpenSearch}
-              style={{
-                flex: 1,
-                padding: '10px 12px',
-                borderRadius: 12,
-                backgroundColor: '#F8F9FE',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                cursor: 'pointer',
-              }}
-            >
-              <span style={{ fontSize: 16 }}>💼</span>
-              <div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#151A31', display: 'block' }}>Trabalho</span>
-                <span style={{ fontSize: 10, color: '#7B7489' }}>Itaim Bibi</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+          {/* Atalhos */}
+          <View style={styles.shortcuts}>
+            <Shortcut icon="🏠" title="Casa" subtitle="Pinheiros" onPress={onOpenSearch} />
+            <Shortcut icon="💼" title="Trabalho" subtitle="Itaim Bibi" onPress={onOpenSearch} />
+          </View>
+        </View>
+      </View>
+    </View>
   );
 };
 
+const Shortcut: React.FC<{ icon: string; title: string; subtitle: string; onPress: () => void }> = ({
+  icon,
+  title,
+  subtitle,
+  onPress,
+}) => (
+  <Pressable
+    onPress={onPress}
+    accessibilityRole="button"
+    accessibilityLabel={`${title}, ${subtitle}`}
+    style={({ pressed }) => [styles.shortcut, pressed && styles.pressed]}
+  >
+    <Text style={styles.shortcutIcon}>{icon}</Text>
+    <View>
+      <Text style={styles.shortcutTitle}>{title}</Text>
+      <Text style={styles.shortcutSubtitle}>{subtitle}</Text>
+    </View>
+  </Pressable>
+);
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  pressed: {
+    opacity: 0.7,
+  },
+  header: {
+    height: 64,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    zIndex: 10,
+    ...shadow(0.04, 8, 2, 3),
+  },
+  logo: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#6A00FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 20,
+  },
+  brand: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.55,
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#151A31',
+  },
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    backgroundColor: '#F3F2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontWeight: '700',
+  },
+  map: {
+    flex: 1,
+    overflow: 'hidden',
+    backgroundColor: '#EAEFF8',
+  },
+  youLayer: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: '16%', // a versão web posicionava o marcador a 42% da altura
+  },
+  youHalo: {
+    width: 48,
+    height: 48,
+    borderRadius: 999,
+    backgroundColor: 'rgba(106, 0, 255, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  youDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 999,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    ...shadow(0.4, 10, 4, 4, '#6A00FF'),
+  },
+  youLabel: {
+    marginTop: 4,
+    backgroundColor: '#0B1026',
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  vehicle: {
+    position: 'absolute',
+    alignItems: 'center',
+  },
+  vehicleIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadow(0.1, 10, 4, 3),
+  },
+  vehicleEmoji: {
+    fontSize: 16,
+  },
+  vehicleEta: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#22005D',
+    backgroundColor: '#E9DDFF',
+    paddingVertical: 1,
+    paddingHorizontal: 5,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  searchCard: {
+    position: 'absolute',
+    bottom: 20,
+    left: 16,
+    right: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 20,
+    ...shadow(0.12, 40, 16, 10),
+  },
+  searchTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#151A31',
+    marginBottom: 14,
+  },
+  searchField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#F4F6FA',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#ECECFF',
+  },
+  searchIcon: {
+    fontSize: 18,
+  },
+  searchPlaceholder: {
+    fontSize: 15,
+    color: '#7B7489',
+    fontWeight: '500',
+  },
+  shortcuts: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 14,
+  },
+  shortcut: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: '#F8F9FE',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  shortcutIcon: {
+    fontSize: 16,
+  },
+  shortcutTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#151A31',
+  },
+  shortcutSubtitle: {
+    fontSize: 10,
+    color: '#7B7489',
+  },
+});

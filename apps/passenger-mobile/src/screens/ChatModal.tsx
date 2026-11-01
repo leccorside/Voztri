@@ -1,16 +1,28 @@
-import React, { useState } from 'react';
-import { usePassengerStore } from '../store/passengerStore.js';
+import React, { useRef, useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
+import { usePassengerStore } from '../store/passengerStore.js';
+import { Button, shadow } from '../ui/kit.js';
 
 interface Props {
   onClose: () => void;
 }
 
+const QUICK_REPLIES = ['Estou no portão', 'Estou descendo', 'OK, obrigado!'];
+
 export const ChatModal: React.FC<Props> = ({ onClose }) => {
   const { chatMessages, sendChat } = usePassengerStore();
   const [input, setInput] = useState('');
-
-  const quickReplies = ['Estou no portão', 'Estou descendo', 'OK, obrigado!'];
+  const scrollRef = useRef<ScrollView>(null);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -19,151 +31,215 @@ export const ChatModal: React.FC<Props> = ({ onClose }) => {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      backgroundColor: 'rgba(11, 16, 38, 0.75)',
-      backdropFilter: 'blur(8px)',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-end',
-      zIndex: 1000,
-    }}>
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        height: '75%',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.25)',
-      }}>
-        {/* Chat Header */}
-        <div style={{
-          padding: '16px 20px',
-          borderBottom: '1px solid #ECECFF',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: 999,
-              backgroundColor: '#ECECFF',
-              color: VoztriColors.brand.primary,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 800,
-            }}>
-              CS
-            </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#151A31' }}>Carlos Eduardo Silva</div>
-              <span style={{ fontSize: 11, color: '#00C853', fontWeight: 700 }}>● Online agora</span>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            style={{ border: 'none', background: 'none', fontSize: 18, color: '#7B7489', cursor: 'pointer', fontWeight: 700 }}
+    <Modal transparent visible animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+      {/* No iOS o teclado empurra o painel; no Android o adjustResize da Activity já faz isso */}
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={styles.sheet}>
+          {/* Cabeçalho */}
+          <View style={styles.header}>
+            <View style={styles.row}>
+              <View style={styles.avatar}>
+                <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>CS</Text>
+              </View>
+              <View>
+                <Text style={styles.name}>Carlos Eduardo Silva</Text>
+                <Text style={styles.status}>● Online agora</Text>
+              </View>
+            </View>
+            <Button label="✕" onPress={onClose} accessibilityLabel="Fechar chat" textStyle={styles.close} />
+          </View>
+
+          {/* Mensagens */}
+          <ScrollView
+            ref={scrollRef}
+            style={styles.flex}
+            contentContainerStyle={styles.messages}
+            onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+            keyboardShouldPersistTaps="handled"
           >
-            ✕
-          </button>
-        </div>
+            {chatMessages.map((msg) => {
+              const isMe = msg.senderRole === 'passenger';
+              return (
+                <View
+                  key={msg.id}
+                  style={[
+                    styles.bubble,
+                    isMe
+                      ? { alignSelf: 'flex-end', backgroundColor: VoztriColors.brand.primary, borderBottomRightRadius: 4 }
+                      : { alignSelf: 'flex-start', backgroundColor: '#F3F2FF', borderBottomLeftRadius: 4 },
+                  ]}
+                >
+                  <Text style={[styles.bubbleText, { color: isMe ? '#FFFFFF' : '#151A31' }]}>{msg.text}</Text>
+                </View>
+              );
+            })}
+          </ScrollView>
 
-        {/* Messages Stream */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {chatMessages.map((msg) => {
-            const isMe = msg.senderRole === 'passenger';
-            return (
-              <div
-                key={msg.id}
-                style={{
-                  alignSelf: isMe ? 'flex-end' : 'flex-start',
-                  maxWidth: '80%',
-                  backgroundColor: isMe ? VoztriColors.brand.primary : '#F3F2FF',
-                  color: isMe ? '#FFFFFF' : '#151A31',
-                  padding: '10px 14px',
-                  borderRadius: 16,
-                  borderBottomRightRadius: isMe ? 4 : 16,
-                  borderBottomLeftRadius: isMe ? 16 : 4,
-                  fontSize: 14,
-                  fontWeight: 500,
-                  boxShadow: '0 2px 6px rgba(11, 16, 38, 0.04)',
-                }}
-              >
-                {msg.text}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Quick Replies Chips */}
-        <div style={{ padding: '8px 16px', display: 'flex', gap: 8, overflowX: 'auto', backgroundColor: '#FBF8FF' }}>
-          {quickReplies.map((reply, i) => (
-            <button
-              key={i}
-              onClick={() => sendChat(reply)}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 999,
-                border: '1px solid #ECECFF',
-                backgroundColor: '#FFFFFF',
-                color: '#151A31',
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {reply}
-            </button>
-          ))}
-        </div>
-
-        {/* Chat Input Bar */}
-        <div style={{
-          padding: '12px 16px',
-          borderTop: '1px solid #ECECFF',
-          display: 'flex',
-          gap: 10,
-          backgroundColor: '#FFFFFF',
-        }}>
-          <input
-            type="text"
-            placeholder="Digite sua mensagem para o motorista..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            style={{
-              flex: 1,
-              padding: '12px 14px',
-              borderRadius: 12,
-              border: '1px solid #ECECFF',
-              fontSize: 14,
-              outline: 'none',
-              backgroundColor: '#F8F9FE',
-            }}
-          />
-          <button
-            onClick={handleSend}
-            style={{
-              padding: '0 18px',
-              borderRadius: 12,
-              border: 'none',
-              backgroundColor: VoztriColors.brand.primary,
-              color: '#FFFFFF',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
+          {/* Respostas rápidas */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.quickBar}
+            contentContainerStyle={styles.quickReplies}
+            keyboardShouldPersistTaps="handled"
           >
-            Enviar
-          </button>
-        </div>
-      </div>
-    </div>
+            {QUICK_REPLIES.map((reply) => (
+              <Button key={reply} label={reply} onPress={() => sendChat(reply)} style={styles.chip} textStyle={styles.chipText} />
+            ))}
+          </ScrollView>
+
+          {/* Campo de mensagem */}
+          <View style={styles.inputBar}>
+            <TextInput
+              placeholder="Digite sua mensagem para o motorista..."
+              placeholderTextColor="#7B7489"
+              value={input}
+              onChangeText={setInput}
+              onSubmitEditing={handleSend}
+              returnKeyType="send"
+              blurOnSubmit={false}
+              accessibilityLabel="Mensagem para o motorista"
+              style={styles.input}
+            />
+            <Button
+              label="Enviar"
+              onPress={handleSend}
+              disabled={!input.trim()}
+              style={[styles.send, { backgroundColor: VoztriColors.brand.primary }]}
+              textStyle={styles.sendText}
+            />
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 };
 
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(11, 16, 38, 0.75)',
+  },
+  flex: {
+    flex: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  sheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    height: '75%',
+    overflow: 'hidden',
+    ...shadow(0.25, 40, -10, 16, '#000000'),
+  },
+  header: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECECFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    backgroundColor: '#ECECFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontWeight: '800',
+  },
+  name: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#151A31',
+  },
+  status: {
+    fontSize: 11,
+    color: '#00C853',
+    fontWeight: '700',
+  },
+  close: {
+    fontSize: 18,
+    color: '#7B7489',
+    fontWeight: '700',
+    paddingHorizontal: 4,
+  },
+  messages: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  bubble: {
+    maxWidth: '80%',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    ...shadow(0.04, 6, 2, 1),
+  },
+  bubbleText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  quickBar: {
+    flexGrow: 0,
+    backgroundColor: '#FBF8FF',
+  },
+  quickReplies: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  chip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#ECECFF',
+    backgroundColor: '#FFFFFF',
+  },
+  chipText: {
+    color: '#151A31',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  inputBar: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#ECECFF',
+    flexDirection: 'row',
+    gap: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ECECFF',
+    fontSize: 14,
+    color: '#151A31',
+    backgroundColor: '#F8F9FE',
+  },
+  send: {
+    paddingHorizontal: 18,
+    borderRadius: 12,
+  },
+  sendText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+});

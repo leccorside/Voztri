@@ -1,112 +1,177 @@
 import React from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
+import { Button, shadow } from '../ui/kit.js';
 
 interface Props {
   onBack: () => void;
   onOpenPayout: () => void;
 }
 
+const DAYS = [
+  { day: 'Seg', amount: 180, height: 60 },
+  { day: 'Ter', amount: 220, height: 75 },
+  { day: 'Qua', amount: 195, height: 65 },
+  { day: 'Qui', amount: 310, height: 100 },
+  { day: 'Sex', amount: 280, height: 90 },
+  { day: 'Sáb', amount: 340, height: 110 },
+  { day: 'Dom', amount: 248, height: 80, isToday: true },
+];
+
 export const WeeklyEarningsScreen: React.FC<Props> = ({ onBack, onOpenPayout }) => {
-  const days = [
-    { day: 'Seg', amount: 180, height: 60 },
-    { day: 'Ter', amount: 220, height: 75 },
-    { day: 'Qua', amount: 195, height: 65 },
-    { day: 'Qui', amount: 310, height: 100 },
-    { day: 'Sex', amount: 280, height: 90 },
-    { day: 'Sáb', amount: 340, height: 110 },
-    { day: 'Dom', amount: 248, height: 80, isToday: true },
-  ];
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#FBF8FF' }}>
-      {/* Header */}
-      <div style={{
-        height: 60,
-        padding: '0 16px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#FFFFFF',
-        borderBottom: '1px solid #ECECFF',
-      }}>
-        <button onClick={onBack} style={{ border: 'none', background: 'none', fontSize: 18, cursor: 'pointer', fontWeight: 700 }}>
-          ← Voltar
-        </button>
-        <span style={{ fontSize: 16, fontWeight: 800, color: '#151A31' }}>Ganhos da Semana</span>
-        <div style={{ width: 40 }} />
-      </div>
+    <View style={styles.screen}>
+      {/* Cabeçalho */}
+      <View style={styles.header}>
+        <Button label="← Voltar" onPress={onBack} textStyle={styles.back} />
+        <Text style={styles.headerTitle} accessibilityRole="header">
+          Ganhos da Semana
+        </Text>
+        <View style={styles.headerSpacer} />
+      </View>
 
-      <div style={{ padding: 20, flex: 1, overflowY: 'auto' }}>
-        {/* Total Weekly Card */}
-        <div style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: 20,
-          padding: 20,
-          marginBottom: 16,
-          boxShadow: '0 8px 24px rgba(106, 0, 255, 0.06)',
-          textAlign: 'center',
-        }}>
-          <span style={{ fontSize: 12, color: '#7B7489', fontWeight: 700, textTransform: 'uppercase' }}>
-            Semana Atual (27 Out - 02 Nov)
-          </span>
-          <div style={{ fontSize: 36, fontWeight: 800, color: VoztriColors.brand.primary, margin: '6px 0' }}>
-            R$ 1.773,00
-          </div>
-          <span style={{ fontSize: 13, color: '#00C853', fontWeight: 700 }}>
-            ▲ 14% a mais que a semana anterior
-          </span>
+      <ScrollView contentContainerStyle={styles.content}>
+        {/* Total da semana */}
+        <View style={[styles.card, styles.center]}>
+          <Text style={styles.overline}>Semana Atual (27 Out - 02 Nov)</Text>
+          <Text style={[styles.total, { color: VoztriColors.brand.primary }]}>R$ 1.773,00</Text>
+          <Text style={styles.growth}>▲ 14% a mais que a semana anterior</Text>
 
-          <div style={{ marginTop: 16 }}>
-            <button
-              onClick={onOpenPayout}
-              style={{
-                width: '100%',
-                padding: '14px',
-                borderRadius: 14,
-                backgroundColor: VoztriColors.brand.primary,
-                color: '#FFFFFF',
-                border: 'none',
-                fontWeight: 800,
-                fontSize: 15,
-                cursor: 'pointer',
-                boxShadow: '0 6px 18px rgba(106, 0, 255, 0.3)',
-              }}
-            >
-              Transferir Saldo via Pix
-            </button>
-          </div>
-        </div>
+          <Button
+            label="Transferir Saldo via Pix"
+            onPress={onOpenPayout}
+            style={[styles.payoutButton, { backgroundColor: VoztriColors.brand.primary }]}
+            textStyle={styles.payoutText}
+          />
+        </View>
 
-        {/* Weekly Bar Chart */}
-        <div style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: 20,
-          padding: 20,
-          marginBottom: 16,
-          boxShadow: '0 8px 24px rgba(106, 0, 255, 0.06)',
-        }}>
-          <h3 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 20px', color: '#151A31' }}>Ganhos Diários</h3>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: 140, paddingBottom: 10 }}>
-            {days.map((d, i) => (
-              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: d.isToday ? VoztriColors.brand.primary : '#7B7489' }}>
+        {/* Gráfico de barras semanal */}
+        <View style={styles.card}>
+          <Text style={styles.chartTitle}>Ganhos Diários</Text>
+          <View style={styles.chart}>
+            {DAYS.map((d) => (
+              <View key={d.day} style={styles.bar}>
+                <Text style={[styles.barValue, { color: d.isToday ? VoztriColors.brand.primary : '#7B7489' }]}>
                   {d.amount}
-                </span>
-                <div style={{
-                  width: 28,
-                  height: d.height,
-                  borderRadius: 6,
-                  backgroundColor: d.isToday ? VoztriColors.brand.primary : '#E5E7FF',
-                }} />
-                <span style={{ fontSize: 11, fontWeight: d.isToday ? 800 : 600, color: d.isToday ? '#151A31' : '#7B7489' }}>
+                </Text>
+                <View
+                  style={[
+                    styles.barFill,
+                    { height: d.height, backgroundColor: d.isToday ? VoztriColors.brand.primary : '#E5E7FF' },
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.barDay,
+                    { fontWeight: d.isToday ? '800' : '600', color: d.isToday ? '#151A31' : '#7B7489' },
+                  ]}
+                >
                   {d.day}
-                </span>
-              </div>
+                </Text>
+              </View>
             ))}
-          </div>
-        </div>
-      </div>
-    </div>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#FBF8FF',
+  },
+  header: {
+    height: 60,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECECFF',
+  },
+  back: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#151A31',
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#151A31',
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  content: {
+    padding: 20,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    ...shadow(0.06, 24, 8, 3, '#6A00FF'),
+  },
+  center: {
+    alignItems: 'center',
+  },
+  overline: {
+    fontSize: 12,
+    color: '#7B7489',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  total: {
+    fontSize: 36,
+    fontWeight: '800',
+    marginVertical: 6,
+  },
+  growth: {
+    fontSize: 13,
+    color: '#00C853',
+    fontWeight: '700',
+  },
+  payoutButton: {
+    marginTop: 16,
+    width: '100%',
+    padding: 14,
+    borderRadius: 14,
+    ...shadow(0.3, 18, 6, 6, '#6A00FF'),
+  },
+  payoutText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 15,
+  },
+  chartTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 20,
+    color: '#151A31',
+  },
+  chart: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    height: 170,
+    paddingBottom: 10,
+  },
+  bar: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  barValue: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  barFill: {
+    width: 28,
+    borderRadius: 6,
+  },
+  barDay: {
+    fontSize: 11,
+  },
+});

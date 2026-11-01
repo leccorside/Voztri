@@ -1,6 +1,8 @@
 import React from 'react';
-import { useDriverStore } from '../store/driverStore.js';
+import { StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
+import { useDriverStore } from '../store/driverStore.js';
+import { Button, shadow } from '../ui/kit.js';
 
 interface Props {
   onOpenPinModal: () => void;
@@ -15,152 +17,218 @@ export const EnRouteNavigationScreen: React.FC<Props> = ({ onOpenPinModal, onFin
   const isEnRoute = currentRide.status === 'DRIVER_EN_ROUTE';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', backgroundColor: '#0B1026' }}>
-      {/* Top Turn-by-Turn Instruction Banner */}
-      <div style={{
-        backgroundColor: '#0B1026',
-        color: '#FFFFFF',
-        padding: '16px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 16,
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
-        zIndex: 20,
-      }}>
-        <div style={{
-          width: 48,
-          height: 48,
-          borderRadius: 12,
-          backgroundColor: VoztriColors.brand.primary,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 24,
-          fontWeight: 800,
-        }}>
-          ➔
-        </div>
-        <div>
-          <span style={{ fontSize: 13, color: '#C9B2FF', fontWeight: 600 }}>Em 250 metros</span>
-          <div style={{ fontSize: 17, fontWeight: 700 }}>
+    <View style={styles.screen}>
+      {/* Faixa de instrução de navegação */}
+      <View style={styles.instruction}>
+        <View style={[styles.turnIcon, { backgroundColor: VoztriColors.brand.primary }]}>
+          <Text style={styles.turnArrow}>➔</Text>
+        </View>
+        <View style={styles.flex}>
+          <Text style={styles.distance}>Em 250 metros</Text>
+          <Text style={styles.instructionText}>
             {isEnRoute ? 'Chegando ao ponto de embarque' : 'Vire à direita na Av. Brigadeiro Faria Lima'}
-          </div>
-        </div>
-      </div>
+          </Text>
+        </View>
+      </View>
 
-      {/* Map Simulation with HUD */}
-      <div style={{ flex: 1, position: 'relative', backgroundColor: '#131A3B' }}>
-        {/* Speedometer Widget */}
-        <div style={{
-          position: 'absolute',
-          top: 20,
-          left: 20,
-          backgroundColor: '#0B1026',
-          border: '2px solid #6A00FF',
-          borderRadius: 14,
-          padding: '8px 14px',
-          textAlign: 'center',
-          color: '#FFFFFF',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-        }}>
-          <span style={{ fontSize: 24, fontWeight: 800, display: 'block' }}>48</span>
-          <span style={{ fontSize: 10, color: '#C9B2FF', fontWeight: 600 }}>km/h</span>
-        </div>
+      {/* Simulação de mapa com HUD */}
+      <View style={styles.map}>
+        {/* Velocímetro */}
+        <View style={styles.speedometer}>
+          <Text style={styles.speed}>48</Text>
+          <Text style={styles.speedUnit}>km/h</Text>
+        </View>
 
-        {/* Floating Route Overview Pill */}
-        <div style={{
-          position: 'absolute',
-          top: 20,
-          right: 20,
-          backgroundColor: '#0B1026',
-          borderRadius: 999,
-          padding: '8px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          color: '#FFFFFF',
-          border: '1px solid #202A5B',
-        }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#00C853' }}>6 min</span>
-          <span style={{ fontSize: 12, color: '#7B7489' }}>•</span>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>2.1 km</span>
-        </div>
-      </div>
+        {/* Resumo da rota */}
+        <View style={styles.routePill}>
+          <Text style={styles.eta}>6 min</Text>
+          <Text style={styles.dot}>•</Text>
+          <Text style={styles.km}>2.1 km</Text>
+        </View>
+      </View>
 
-      {/* Bottom Controls Sheet */}
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        padding: 20,
-        boxShadow: '0 -8px 30px rgba(0,0,0,0.2)',
-      }}>
-        {/* Passenger Profile Summary */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{
-              width: 44,
-              height: 44,
-              borderRadius: 999,
-              backgroundColor: '#ECECFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-              color: VoztriColors.brand.primary,
-            }}>
-              BL
-            </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#151A31' }}>Beatriz Lima</div>
-              <span style={{ fontSize: 12, color: '#7B7489' }}>★ 4.95 • Pagamento via Pix</span>
-            </div>
-          </div>
-          <span style={{ fontSize: 18, fontWeight: 800, color: VoztriColors.brand.primary }}>
-            R$ 24,50
-          </span>
-        </div>
+      {/* Painel inferior */}
+      <View style={styles.sheet}>
+        {/* Resumo do passageiro */}
+        <View style={styles.passengerRow}>
+          <View style={styles.passenger}>
+            <View style={styles.avatar}>
+              <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>BL</Text>
+            </View>
+            <View>
+              <Text style={styles.passengerName}>Beatriz Lima</Text>
+              <Text style={styles.passengerMeta}>★ 4.95 • Pagamento via Pix</Text>
+            </View>
+          </View>
+          <Text style={[styles.fare, { color: VoztriColors.brand.primary }]}>R$ 24,50</Text>
+        </View>
 
-        {/* Action Button depending on state */}
+        {/* Ação conforme o estado da corrida */}
         {isEnRoute ? (
-          <button
-            onClick={onOpenPinModal}
-            style={{
-              width: '100%',
-              padding: 16,
-              borderRadius: 14,
-              backgroundColor: VoztriColors.brand.primary,
-              color: '#FFFFFF',
-              border: 'none',
-              fontWeight: 800,
-              fontSize: 16,
-              cursor: 'pointer',
-              boxShadow: '0 6px 20px rgba(106, 0, 255, 0.35)',
-            }}
-          >
-            VALIDAR PIN DE EMBARQUE (1234)
-          </button>
+          <Button
+            label="VALIDAR PIN DE EMBARQUE (1234)"
+            onPress={onOpenPinModal}
+            style={[styles.action, { backgroundColor: VoztriColors.brand.primary }, shadow(0.35, 20, 6, 8, '#6A00FF')]}
+            textStyle={styles.actionText}
+          />
         ) : (
-          <button
-            onClick={onFinishRide}
-            style={{
-              width: '100%',
-              padding: 16,
-              borderRadius: 14,
-              backgroundColor: '#00C853',
-              color: '#FFFFFF',
-              border: 'none',
-              fontWeight: 800,
-              fontSize: 16,
-              cursor: 'pointer',
-              boxShadow: '0 6px 20px rgba(0, 200, 83, 0.35)',
-            }}
-          >
-            FINALIZAR CORRIDA
-          </button>
+          <Button
+            label="FINALIZAR CORRIDA"
+            onPress={onFinishRide}
+            style={[styles.action, { backgroundColor: '#00C853' }, shadow(0.35, 20, 6, 8, '#00C853')]}
+            textStyle={styles.actionText}
+          />
         )}
-      </div>
-    </div>
+      </View>
+    </View>
   );
 };
 
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#0B1026',
+  },
+  flex: {
+    flex: 1,
+  },
+  instruction: {
+    backgroundColor: '#0B1026',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    zIndex: 20,
+    ...shadow(0.4, 20, 4, 8, '#000000'),
+  },
+  turnIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  turnArrow: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  distance: {
+    fontSize: 13,
+    color: '#C9B2FF',
+    fontWeight: '600',
+  },
+  instructionText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  map: {
+    flex: 1,
+    backgroundColor: '#131A3B',
+  },
+  speedometer: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    backgroundColor: '#0B1026',
+    borderWidth: 2,
+    borderColor: '#6A00FF',
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    ...shadow(0.5, 12, 4, 6, '#000000'),
+  },
+  speed: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  speedUnit: {
+    fontSize: 10,
+    color: '#C9B2FF',
+    fontWeight: '600',
+  },
+  routePill: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: '#0B1026',
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#202A5B',
+  },
+  eta: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#00C853',
+  },
+  dot: {
+    fontSize: 12,
+    color: '#7B7489',
+  },
+  km: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  sheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    ...shadow(0.2, 30, -8, 12, '#000000'),
+  },
+  passengerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  passenger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    backgroundColor: '#ECECFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontWeight: '700',
+  },
+  passengerName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#151A31',
+  },
+  passengerMeta: {
+    fontSize: 12,
+    color: '#7B7489',
+  },
+  fare: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  action: {
+    width: '100%',
+    padding: 16,
+    borderRadius: 14,
+  },
+  actionText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 16,
+  },
+});

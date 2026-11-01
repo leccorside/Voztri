@@ -1,174 +1,270 @@
 import React, { useState } from 'react';
-import { usePassengerStore } from '../store/passengerStore.js';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
+import { usePassengerStore } from '../store/passengerStore.js';
+import { Button, shadow } from '../ui/kit.js';
 
 interface Props {
   onFinish: () => void;
 }
+
+const TIPS = [2, 5, 10];
+const TAGS = ['Direção Segura', 'Carro Limpo', 'Ótima Conversa', 'Música Boa'];
 
 export const TripCompletedModal: React.FC<Props> = ({ onFinish }) => {
   const { activeRide } = usePassengerStore();
   const [rating, setRating] = useState(5);
   const [selectedTip, setSelectedTip] = useState<number | null>(null);
 
-  const tips = [2, 5, 10];
-  const tags = ['Direção Segura', 'Carro Limpo', 'Ótima Conversa', 'Música Boa'];
-
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      backgroundColor: 'rgba(11, 16, 38, 0.85)',
-      backdropFilter: 'blur(8px)',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-end',
-      zIndex: 1000,
-    }}>
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        padding: '24px 20px',
-        maxHeight: '90%',
-        overflowY: 'auto',
-        boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.3)',
-      }}>
-        {/* Top Success Badge */}
-        <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <div style={{
-            width: 56,
-            height: 56,
-            borderRadius: 999,
-            backgroundColor: '#E8F5E9',
-            color: '#00C853',
-            fontSize: 28,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 8,
-          }}>
-            ✓
-          </div>
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: '#151A31', margin: '0 0 4px' }}>
-            Você chegou ao seu destino!
-          </h2>
-          <span style={{ fontSize: 13, color: '#7B7489' }}>
-            Esperamos que tenha tido uma excelente viagem.
-          </span>
-        </div>
+    // Fechar pelo "voltar" do Android equivale a concluir sem alterar a avaliação
+    <Modal transparent visible animationType="slide" onRequestClose={onFinish} statusBarTranslucent>
+      <View style={styles.overlay}>
+        <View style={styles.sheet}>
+          <ScrollView contentContainerStyle={styles.content}>
+            {/* Confirmação de chegada */}
+            <View style={styles.success}>
+              <View style={styles.successIcon}>
+                <Text style={styles.successCheck}>✓</Text>
+              </View>
+              <Text style={styles.title} accessibilityRole="header">
+                Você chegou ao seu destino!
+              </Text>
+              <Text style={styles.subtitle}>Esperamos que tenha tido uma excelente viagem.</Text>
+            </View>
 
-        {/* Receipt Box */}
-        <div style={{
-          backgroundColor: '#F8F9FE',
-          borderRadius: 16,
-          padding: 16,
-          marginBottom: 20,
-          border: '1px solid #ECECFF',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 14, color: '#7B7489' }}>Valor da Corrida</span>
-            <span style={{ fontSize: 20, fontWeight: 800, color: '#151A31' }}>R$ 24,50</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 12, color: '#7B7489' }}>Forma de Pagamento</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#00C853' }}>Pix Confirmado ✓</span>
-          </div>
-        </div>
+            {/* Recibo */}
+            <View style={styles.receipt}>
+              <View style={[styles.rowBetween, { marginBottom: 8 }]}>
+                <Text style={styles.receiptLabel}>Valor da Corrida</Text>
+                <Text style={styles.receiptValue}>R$ 24,50</Text>
+              </View>
+              <View style={styles.rowBetween}>
+                <Text style={styles.paymentLabel}>Forma de Pagamento</Text>
+                <Text style={styles.paymentValue}>Pix Confirmado ✓</Text>
+              </View>
+            </View>
 
-        {/* Driver Star Rating */}
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: '#151A31', display: 'block', marginBottom: 8 }}>
-            Como foi a viagem com {activeRide?.driver?.user?.name || 'Carlos'}?
-          </span>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <span
-                key={star}
-                onClick={() => setRating(star)}
-                style={{
-                  fontSize: 34,
-                  cursor: 'pointer',
-                  color: star <= rating ? '#FFAB00' : '#DDE1FF',
-                  transition: 'transform 0.1s',
-                }}
-              >
-                ★
-              </span>
-            ))}
-          </div>
-        </div>
+            {/* Avaliação por estrelas */}
+            <View style={styles.ratingBlock}>
+              <Text style={styles.question}>Como foi a viagem com {activeRide?.driver?.user?.name || 'Carlos'}?</Text>
+              <View style={styles.stars}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Pressable
+                    key={star}
+                    onPress={() => setRating(star)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${star} ${star === 1 ? 'estrela' : 'estrelas'}`}
+                    accessibilityState={{ selected: star <= rating }}
+                    hitSlop={4}
+                  >
+                    {({ pressed }) => (
+                      <Text
+                        style={[
+                          styles.star,
+                          { color: star <= rating ? '#FFAB00' : '#DDE1FF' },
+                          pressed && { transform: [{ scale: 1.15 }] },
+                        ]}
+                      >
+                        ★
+                      </Text>
+                    )}
+                  </Pressable>
+                ))}
+              </View>
+            </View>
 
-        {/* Tip Selector */}
-        <div style={{ marginBottom: 20 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#151A31', display: 'block', marginBottom: 8 }}>
-            Adicionar gorjeta para o motorista (opcional):
-          </span>
-          <div style={{ display: 'flex', gap: 10 }}>
-            {tips.map((amount) => {
-              const isSelected = selectedTip === amount;
-              return (
-                <button
-                  key={amount}
-                  onClick={() => setSelectedTip(isSelected ? null : amount)}
-                  style={{
-                    flex: 1,
-                    padding: '10px 0',
-                    borderRadius: 12,
-                    border: isSelected ? `2px solid ${VoztriColors.brand.primary}` : '1px solid #ECECFF',
-                    backgroundColor: isSelected ? '#F3F2FF' : '#FFFFFF',
-                    color: isSelected ? VoztriColors.brand.primary : '#151A31',
-                    fontWeight: 800,
-                    fontSize: 14,
-                    cursor: 'pointer',
-                  }}
-                >
-                  + R$ {amount},00
-                </button>
-              );
-            })}
-          </div>
-        </div>
+            {/* Gorjeta */}
+            <View style={styles.tipBlock}>
+              <Text style={styles.tipTitle}>Adicionar gorjeta para o motorista (opcional):</Text>
+              <View style={styles.tips}>
+                {TIPS.map((amount) => {
+                  const isSelected = selectedTip === amount;
+                  return (
+                    <Button
+                      key={amount}
+                      label={`+ R$ ${amount},00`}
+                      onPress={() => setSelectedTip(isSelected ? null : amount)}
+                      style={[
+                        styles.tip,
+                        isSelected
+                          ? { borderWidth: 2, borderColor: VoztriColors.brand.primary, backgroundColor: '#F3F2FF' }
+                          : { borderWidth: 1, borderColor: '#ECECFF', backgroundColor: '#FFFFFF' },
+                      ]}
+                      textStyle={[styles.tipText, { color: isSelected ? VoztriColors.brand.primary : '#151A31' }]}
+                    />
+                  );
+                })}
+              </View>
+            </View>
 
-        {/* Compliment Tags */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
-          {tags.map((tag, i) => (
-            <span
-              key={i}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 999,
-                backgroundColor: '#F4F6FA',
-                fontSize: 12,
-                fontWeight: 600,
-                color: '#494457',
-              }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+            {/* Elogios */}
+            <View style={styles.tags}>
+              {TAGS.map((tag) => (
+                <Text key={tag} style={styles.tag}>
+                  {tag}
+                </Text>
+              ))}
+            </View>
 
-        {/* Submit Button */}
-        <button
-          onClick={onFinish}
-          style={{
-            width: '100%',
-            padding: '16px',
-            borderRadius: 14,
-            backgroundColor: VoztriColors.brand.primary,
-            color: '#FFFFFF',
-            border: 'none',
-            fontWeight: 800,
-            fontSize: 16,
-            cursor: 'pointer',
-            boxShadow: '0 8px 24px rgba(106, 0, 255, 0.4)',
-          }}
-        >
-          CONCLUIR AVALIAÇÃO
-        </button>
-      </div>
-    </div>
+            {/* Concluir */}
+            <Button
+              label="CONCLUIR AVALIAÇÃO"
+              onPress={onFinish}
+              style={[styles.submit, { backgroundColor: VoztriColors.brand.primary }]}
+              textStyle={styles.submitText}
+            />
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
   );
 };
 
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(11, 16, 38, 0.85)',
+  },
+  sheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: '90%',
+    overflow: 'hidden',
+    ...shadow(0.3, 40, -10, 16, '#000000'),
+  },
+  content: {
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+  },
+  rowBetween: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  success: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  successIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 999,
+    backgroundColor: '#E8F5E9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  successCheck: {
+    color: '#00C853',
+    fontSize: 28,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#151A31',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#7B7489',
+    textAlign: 'center',
+  },
+  receipt: {
+    backgroundColor: '#F8F9FE',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#ECECFF',
+  },
+  receiptLabel: {
+    fontSize: 14,
+    color: '#7B7489',
+  },
+  receiptValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#151A31',
+  },
+  paymentLabel: {
+    fontSize: 12,
+    color: '#7B7489',
+  },
+  paymentValue: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#00C853',
+  },
+  ratingBlock: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  question: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#151A31',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  stars: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  star: {
+    fontSize: 34,
+  },
+  tipBlock: {
+    marginBottom: 20,
+  },
+  tipTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#151A31',
+    marginBottom: 8,
+  },
+  tips: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  tip: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  tipText: {
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  tags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 24,
+  },
+  tag: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    overflow: 'hidden',
+    backgroundColor: '#F4F6FA',
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#494457',
+  },
+  submit: {
+    width: '100%',
+    padding: 16,
+    borderRadius: 14,
+    ...shadow(0.4, 24, 8, 8, '#6A00FF'),
+  },
+  submitText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 16,
+  },
+});

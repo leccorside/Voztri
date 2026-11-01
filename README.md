@@ -346,8 +346,14 @@ cd ios && bundle exec pod install && cd ..
 npx react-native run-ios
 ```
 
-> [!WARNING]
-> As telas dos dois apps ainda usam elementos de web (`<div>`, `<button>`) no lugar dos componentes do React Native (`View`, `Text`, `Pressable`). O app instala e inicia, mas a tela inicial quebra até as telas serem portadas.
+**Testes das telas** (Jest com o preset `react-native`, sem precisar de emulador):
+
+```bash
+npm test -w @voztri/driver-mobile
+npm test -w @voztri/passenger-mobile
+```
+
+Os testes percorrem o fluxo completo de cada app (oferta, PIN e finalização no motorista; destino, categoria, pagamento, busca, chat, SOS e avaliação no passageiro) e, a cada passo, falham se algum texto estiver fora de um `<Text>`, erro que derruba o app no dispositivo. Os dados das telas ainda são simulados nos stores (`zustand`); a integração com a API é um passo futuro.
 
 ## 🌐 Serviços locais
 
