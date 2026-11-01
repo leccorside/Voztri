@@ -9,8 +9,7 @@
     "paths": {
       "@voztri/api-client": ["../../packages/api-client/src/index.ts"],
       "@voztri/design-tokens": ["../../packages/design-tokens/src/index.ts"],
-      "@voztri/shared-types": ["../../packages/shared-types/src/index.ts"],
-      "axios": ["./node_modules/axios"]
+      "@voztri/shared-types": ["../../packages/shared-types/src/index.ts"]
     }
   },
   "include": ["src/**/*", "vite.config.ts"]

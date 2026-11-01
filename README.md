@@ -304,18 +304,17 @@ docker compose exec app php artisan migrate:fresh --seed
 
 ### 5. Suba o painel administrativo (admin-web)
 
-O painel roda fora do Docker, com Node 20+:
+O painel roda fora do Docker, com Node 20+. Instale as dependências do monorepo na raiz e suba o workspace do painel:
 
 ```bash
-cd apps/admin-web
-npm install --workspaces=false
-npm run dev
+npm install
+npm run dev -w @voztri/admin-web
 ```
 
 Acesse `http://localhost:3010` e entre com o administrador do seed: telefone **(11) 99999-0000**, código **123456** (o OTP é fixo em desenvolvimento). O painel chama `/api/v1` na própria origem, e o proxy do Vite encaminha as chamadas para a API em `http://localhost:8080`, então não depende de CORS. A porta e o destino ficam configuráveis em `apps/admin-web/.env` (veja o `.env.example`).
 
-> [!IMPORTANT]
-> Use `--workspaces=false`. Sem isso, o npm resolve o monorepo inteiro e falha num conflito de peer dependency dos apps mobile (`react-native@0.74` exige `react@18.2.0`, mas eles declaram `^18.3.1`). Os pacotes `@voztri/*` entram no painel pelo código-fonte, via aliases no `vite.config.ts` e no `tsconfig.json`.
+> [!NOTE]
+> Todos os apps usam `react@18.2.0`, a versão exata exigida pelo `react-native@0.74`. Não suba o React de um app isoladamente: o `npm install` voltaria a falhar com `ERESOLVE`. Os pacotes `@voztri/*` entram no painel pelo código-fonte, via aliases no `vite.config.ts` e no `tsconfig.json`.
 
 ## 🌐 Serviços locais
 

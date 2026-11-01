@@ -16,7 +16,7 @@
     "@voztri/localization": "*",
     "@voztri/shared-types": "*",
     "@voztri/validation": "*",
-    "react": "^18.3.1",
+    "react": "18.2.0",
     "react-native": "^0.74.2",
     "zustand": "^4.5.2"
   },

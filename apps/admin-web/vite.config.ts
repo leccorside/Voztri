@@ -22,9 +22,8 @@ export default defineConfig(({ mode }) => {
         '@voztri/design-tokens': pkg('design-tokens'),
         '@voztri/shared-types': pkg('shared-types'),
       },
-      // O admin-web é instalado isolado (sem workspaces, ver CONTEXTO.md); estas
-      // dependências importadas pelos pacotes em ../../packages são resolvidas
-      // a partir do node_modules do próprio admin-web.
+      // Garante uma única instância destas dependências, mesmo quando importadas
+      // pelos pacotes em ../../packages (resolvidas a partir do admin-web).
       dedupe: ['axios', 'react', 'react-dom'],
     },
     server: {
