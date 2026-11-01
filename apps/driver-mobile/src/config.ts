@@ -13,3 +13,10 @@ export const API_URL: string =
 
 /** Intervalo do polling de ofertas e da corrida em andamento. */
 export const POLL_INTERVAL_MS = 3000;
+
+/** Envio da posição para /driver/location: no máximo uma vez por intervalo... */
+export const LOCATION_SEND_INTERVAL_MS = 10_000;
+/** ...a não ser que o motorista tenha andado mais do que isto desde o último envio. */
+export const LOCATION_SEND_DISTANCE_M = 200;
+/** O GPS só avisa mudanças de posição maiores que isto. */
+export const LOCATION_DISTANCE_FILTER_M = 25;

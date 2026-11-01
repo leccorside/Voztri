@@ -20,6 +20,9 @@ class RideDispatcher
 {
     public const OFFER_TIMEOUT_SECONDS = 15;
 
+    /** Posição mais antiga que isto é tratada como desconhecida no despacho. */
+    public const LOCATION_MAX_AGE_MINUTES = 10;
+
     /** Status em que o motorista está ocupado com uma corrida. */
     public const DRIVER_BUSY_STATUSES = ['ACCEPTED', 'DRIVER_EN_ROUTE', 'DRIVER_ARRIVED', 'IN_PROGRESS'];
 
@@ -75,15 +78,22 @@ class RideDispatcher
 
         [$pickupLat, $pickupLng] = $this->pickupCoordinates($ride);
 
-        // Mais próximo primeiro; motoristas sem localização conhecida vão para o fim
-        $best = $candidates->sortBy(function (Driver $d) use ($pickupLat, $pickupLng) {
-            if ($d->current_latitude === null || $d->current_longitude === null || $pickupLat === null) {
+        // Mais próximo primeiro; sem posição recente (o app envia a cada ~10 s
+        // enquanto online), o motorista vai para o fim da fila
+        $freshSince = Carbon::now()->subMinutes(self::LOCATION_MAX_AGE_MINUTES);
+        $hasFreshLocation = fn (Driver $d) => $d->current_latitude !== null
+            && $d->current_longitude !== null
+            && $d->last_location_at !== null
+            && $d->last_location_at->greaterThanOrEqualTo($freshSince);
+
+        $best = $candidates->sortBy(function (Driver $d) use ($pickupLat, $pickupLng, $hasFreshLocation) {
+            if ($pickupLat === null || !$hasFreshLocation($d)) {
                 return PHP_FLOAT_MAX;
             }
             return $this->distanceKm($pickupLat, $pickupLng, $d->current_latitude, $d->current_longitude);
         })->first();
 
-        $distance = ($pickupLat !== null && $best->current_latitude !== null)
+        $distance = ($pickupLat !== null && $hasFreshLocation($best))
             ? $this->distanceKm($pickupLat, $pickupLng, $best->current_latitude, $best->current_longitude)
             : 0;
 

@@ -9,7 +9,16 @@ interface Props {
 }
 
 export const DriverDashboardScreen: React.FC<Props> = ({ onOpenEarnings }) => {
-  const { isOnline, toggleOnline, earnings, busy, logout } = useDriverStore();
+  const { isOnline, toggleOnline, earnings, busy, logout, locationStatus, lastPosition } = useDriverStore();
+
+  const gpsText =
+    locationStatus === 'tracking' && lastPosition
+      ? `📍 GPS ativo • precisão ±${Math.round(lastPosition.accuracy)} m`
+      : locationStatus === 'denied'
+        ? '📍 Localização sem permissão'
+        : locationStatus === 'unavailable'
+          ? '📍 GPS indisponível'
+          : '📍 Obtendo localização…';
 
   const todayEarnings = earnings ? formatBRL(earnings.todayCents) : '—';
   const ridesCount = earnings ? String(earnings.ridesCount) : '—';
@@ -110,6 +119,14 @@ export const DriverDashboardScreen: React.FC<Props> = ({ onOpenEarnings }) => {
               {isOnline ? 'Procurando corridas próximas…' : 'Fique online para receber corridas'}
             </Text>
           </View>
+          {isOnline && (
+            <Text
+              style={[styles.gps, locationStatus !== 'tracking' && locationStatus !== 'off' && { color: '#BA1A1A' }]}
+              accessibilityLiveRegion="polite"
+            >
+              {gpsText}
+            </Text>
+          )}
         </View>
       </View>
     </View>
@@ -315,6 +332,17 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 14,
     ...shadow(0.25, 24, 8, 8, '#6A00FF'),
+  },
+  gps: {
+    alignSelf: 'center',
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#494457',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    overflow: 'hidden',
   },
   statusOffline: {
     backgroundColor: '#FFFFFF',

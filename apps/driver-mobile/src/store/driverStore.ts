@@ -1,8 +1,25 @@
 import { create } from 'zustand';
 import type { DriverEarningsSummary, DriverRideOffer, Ride, User } from '@voztri/shared-types';
 import { apiErrorCode, authApi, billingApi, driverApi, errorMessage, onUnauthorized, rideApi, session } from '../api.js';
+import { LOCATION_SEND_DISTANCE_M, LOCATION_SEND_INTERVAL_MS } from '../config.js';
+import {
+  DevicePosition,
+  distanceMeters,
+  getCurrentPosition,
+  LocationError,
+  LocationPermission,
+  requestLocationPermission,
+} from '../location.js';
 
 export type SessionStatus = 'checking' | 'anonymous' | 'authenticated';
+
+/** off: offline; tracking: GPS acompanhando; denied/unavailable: sem localização. */
+export type LocationStatus = 'off' | 'tracking' | 'denied' | 'unavailable';
+
+const PERMISSION_MESSAGE: Record<Exclude<LocationPermission, 'granted'>, string> = {
+  denied: 'Permita o acesso à localização para ficar online e receber corridas próximas.',
+  blocked: 'A localização está bloqueada para o VOZTRI Driver. Libere nas configurações do aparelho para ficar online.',
+};
 
 export interface DriverState {
   sessionStatus: SessionStatus;
@@ -20,6 +37,14 @@ export interface DriverState {
   /** Falha do polling (some sozinha quando a conexão volta). */
   connectionError: string | null;
 
+  locationStatus: LocationStatus;
+  /** Última posição lida do GPS. */
+  lastPosition: DevicePosition | null;
+  /** Aviso sobre a localização (permissão negada, GPS desligado). */
+  locationWarning: string | null;
+  /** Último envio a /driver/location (controla o intervalo mínimo). */
+  lastSentLocation: { at: number; position: DevicePosition } | null;
+
   bootstrap: () => Promise<void>;
   requestCode: (phone: string) => Promise<string | null>;
   login: (phone: string, code: string) => Promise<boolean>;
@@ -34,6 +59,12 @@ export interface DriverState {
   completeRide: () => Promise<boolean>;
   requestPayout: () => Promise<number | null>;
   dismissError: () => void;
+
+  /** Recebe uma posição do GPS e envia à API respeitando o intervalo mínimo. */
+  reportPosition: (position: DevicePosition, force?: boolean) => Promise<void>;
+  setLocationStatus: (status: LocationStatus, warning?: string | null) => void;
+  onLocationError: (error: LocationError) => void;
+  onLocationPermission: (permission: LocationPermission) => void;
 }
 
 const signedOut = {
@@ -46,7 +77,12 @@ const signedOut = {
   busy: false,
   error: null,
   connectionError: null,
+  locationStatus: 'off' as LocationStatus,
+  lastPosition: null,
+  locationWarning: null,
+  lastSentLocation: null,
 };
+
 
 export const useDriverStore = create<DriverState>((set, get) => {
   /** Executa uma ação do usuário com indicador de carregamento e tratamento de erro. */
@@ -141,10 +177,73 @@ export const useDriverStore = create<DriverState>((set, get) => {
     },
 
     toggleOnline: async () => {
-      const res = await run(() => driverApi.setOnlineStatus(!get().isOnline));
-      if (res) {
-        set({ isOnline: res.isOnline, offer: res.isOnline ? get().offer : null });
+      const goingOnline = !get().isOnline;
+
+      if (goingOnline) {
+        // Sem localização a API não consegue ofertar corridas próximas
+        const permission = await requestLocationPermission();
+        if (permission !== 'granted') {
+          get().onLocationPermission(permission);
+          return;
+        }
       }
+
+      const res = await run(() => driverApi.setOnlineStatus(goingOnline));
+      if (!res) return;
+      set({ isOnline: res.isOnline, offer: res.isOnline ? get().offer : null });
+
+      if (res.isOnline) {
+        // Posição imediata, para já entrar no despacho com a localização certa
+        try {
+          await get().reportPosition(await getCurrentPosition(), true);
+        } catch (err) {
+          if (err instanceof LocationError) get().onLocationError(err);
+        }
+      } else {
+        set({ locationStatus: 'off', locationWarning: null, lastSentLocation: null });
+      }
+    },
+
+    reportPosition: async (position, force = false) => {
+      set({ lastPosition: position, locationStatus: 'tracking', locationWarning: null });
+      if (!get().isOnline || get().sessionStatus !== 'authenticated') return;
+
+      const now = Date.now();
+      const lastSent = get().lastSentLocation;
+      const due =
+        force ||
+        !lastSent ||
+        now - lastSent.at >= LOCATION_SEND_INTERVAL_MS ||
+        distanceMeters(lastSent.position, position) >= LOCATION_SEND_DISTANCE_M;
+      if (!due) return;
+
+      set({ lastSentLocation: { at: now, position } });
+      try {
+        await driverApi.updateLocation({
+          latitude: position.latitude,
+          longitude: position.longitude,
+          ...(position.heading != null ? { heading: position.heading } : {}),
+          ...(position.speed != null ? { speed: position.speed } : {}),
+        });
+      } catch (err) {
+        set({ lastSentLocation: null }); // tenta de novo na próxima leitura
+        set({ connectionError: errorMessage(err) });
+      }
+    },
+
+    setLocationStatus: (status, warning = null) => set({ locationStatus: status, locationWarning: warning }),
+
+    onLocationError: (error) => {
+      if (error.code === 'denied') {
+        set({ locationStatus: 'denied', locationWarning: PERMISSION_MESSAGE.denied });
+      } else {
+        set({ locationStatus: 'unavailable', locationWarning: `${error.message} Sem ela você não recebe corridas próximas.` });
+      }
+    },
+
+    onLocationPermission: (permission) => {
+      if (permission === 'granted') return;
+      set({ locationStatus: 'denied', locationWarning: PERMISSION_MESSAGE[permission] });
     },
 
     acceptOffer: async () => {

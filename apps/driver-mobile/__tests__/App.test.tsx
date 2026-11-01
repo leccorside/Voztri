@@ -5,6 +5,8 @@ import type { DriverCurrentState, DriverEarningsSummary, DriverRideOffer, Ride }
 import { App } from '../src/App';
 import { useDriverStore } from '../src/store/driverStore';
 import * as api from '../src/api';
+import * as location from '../src/location';
+import type { DevicePosition } from '../src/location';
 import {
   advanceAsync,
   expectNoStrayText,
@@ -29,6 +31,7 @@ jest.mock('../src/api', () => ({
     setOnlineStatus: jest.fn(),
     acceptOffer: jest.fn(),
     rejectOffer: jest.fn(),
+    updateLocation: jest.fn(),
   },
   rideApi: { validatePin: jest.fn(), completeRide: jest.fn() },
   billingApi: { requestPayout: jest.fn() },
@@ -36,13 +39,49 @@ jest.mock('../src/api', () => ({
   errorMessage: (err: { message?: string }) => err?.message ?? 'Erro',
 }));
 
+// GPS e permissões simulados: o teste controla a permissão e emite posições
+jest.mock('../src/location', () => {
+  class LocationError extends Error {
+    readonly code: string;
+    constructor(message: string, errorCode: string) {
+      super(message);
+      this.code = errorCode;
+    }
+  }
+  const actual = jest.requireActual('../src/geo');
+  return {
+    LocationError,
+    distanceMeters: actual.distanceMeters,
+    requestLocationPermission: jest.fn(),
+    getCurrentPosition: jest.fn(),
+    watchPosition: jest.fn(),
+  };
+});
+
 const m = api as unknown as {
   session: Record<'load' | 'save' | 'clear', jest.Mock>;
   authApi: Record<'requestOtp' | 'verifyOtp' | 'getMe', jest.Mock>;
-  driverApi: Record<'getCurrent' | 'getEarnings' | 'setOnlineStatus' | 'acceptOffer' | 'rejectOffer', jest.Mock>;
+  driverApi: Record<
+    'getCurrent' | 'getEarnings' | 'setOnlineStatus' | 'acceptOffer' | 'rejectOffer' | 'updateLocation',
+    jest.Mock
+  >;
   rideApi: Record<'validatePin' | 'completeRide', jest.Mock>;
   billingApi: Record<'requestPayout', jest.Mock>;
 };
+const loc = location as unknown as Record<'requestLocationPermission' | 'getCurrentPosition' | 'watchPosition', jest.Mock>;
+
+const position = (latitude: number, longitude: number, over: Partial<DevicePosition> = {}): DevicePosition => ({
+  latitude,
+  longitude,
+  accuracy: 8,
+  heading: 90,
+  speed: null,
+  timestamp: 0,
+  ...over,
+});
+
+/** Callbacks do watchPosition em andamento (o "GPS" do teste). */
+let gps: { emit: (p: DevicePosition) => void; stop: jest.Mock } | null;
 
 const DRIVER = { id: 'u-carlos', name: 'Carlos Eduardo Silva', role: 'driver', status: 'active', phone: '11999992222' };
 
@@ -135,6 +174,18 @@ beforeEach(() => {
     return { isOnline, message: '' };
   });
   m.driverApi.rejectOffer.mockResolvedValue({ success: true });
+  m.driverApi.updateLocation.mockResolvedValue(undefined);
+
+  gps = null;
+  loc.requestLocationPermission.mockResolvedValue('granted');
+  loc.getCurrentPosition.mockResolvedValue(position(-23.5615, -46.6559));
+  loc.watchPosition.mockImplementation((onPosition: (p: DevicePosition) => void) => {
+    const stop = jest.fn(() => {
+      gps = null;
+    });
+    gps = { emit: onPosition, stop };
+    return stop;
+  });
 });
 
 afterEach(() => {
@@ -332,6 +383,72 @@ describe('driver-mobile integrado à API', () => {
     await pressAsync(tree, 'Transferir Saldo via Pix');
     expect(isDisabled(tree, 'TRANSFERIR AGORA VIA PIX')).toBe(true);
     expect(visibleText(tree)).toContain('O saque mínimo é R$ 10,00.');
+  });
+
+  it('pede a permissão e envia a posição ao ficar online', async () => {
+    server.isOnline = false;
+    await renderLoggedIn();
+    expect(loc.watchPosition).not.toHaveBeenCalled(); // offline: GPS desligado
+
+    loc.getCurrentPosition.mockResolvedValue(position(-23.5615, -46.6559, { heading: 45.5, speed: 3.2 }));
+    await pressAsync(tree, 'Disponibilidade para corridas');
+
+    expect(loc.requestLocationPermission).toHaveBeenCalled();
+    expect(m.driverApi.setOnlineStatus).toHaveBeenCalledWith(true);
+    expect(m.driverApi.updateLocation).toHaveBeenCalledWith({ latitude: -23.5615, longitude: -46.6559, heading: 45.5, speed: 3.2 });
+    expect(loc.watchPosition).toHaveBeenCalled();
+    expectNoStrayText(tree);
+    expect(visibleText(tree)).toContain('GPS ativo • precisão ±8 m');
+  });
+
+  it('não fica online sem permissão de localização', async () => {
+    server.isOnline = false;
+    await renderLoggedIn();
+    loc.requestLocationPermission.mockResolvedValue('blocked');
+
+    await pressAsync(tree, 'Disponibilidade para corridas');
+    expect(m.driverApi.setOnlineStatus).not.toHaveBeenCalled();
+    expectNoStrayText(tree);
+    const text = visibleText(tree);
+    expect(text).toContain('Libere nas configurações do aparelho para ficar online.');
+    expect(text).toContain('OFFLINE');
+  });
+
+  it('envia a posição do GPS com intervalo mínimo e sem heading/speed desconhecidos', async () => {
+    await renderLoggedIn();
+    expect(gps).not.toBeNull();
+    m.driverApi.updateLocation.mockClear();
+
+    // Primeira leitura: enviada (heading e speed desconhecidos não vão para a API)
+    await act(async () => gps!.emit(position(-23.5615, -46.6559, { heading: null, speed: null })));
+    expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(1);
+    expect(m.driverApi.updateLocation).toHaveBeenLastCalledWith({ latitude: -23.5615, longitude: -46.6559 });
+
+    // Movimento pequeno logo em seguida: segura até o intervalo de 10 s
+    await act(async () => gps!.emit(position(-23.5617, -46.6560)));
+    expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(1);
+
+    await advanceAsync(10_000);
+    await act(async () => gps!.emit(position(-23.5619, -46.6561)));
+    expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(2);
+
+    // Deslocamento grande (> 200 m): envia na hora
+    await act(async () => gps!.emit(position(-23.5650, -46.6600)));
+    expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(3);
+  });
+
+  it('para o GPS ao ficar offline e avisa quando o sinal falha', async () => {
+    await renderLoggedIn();
+    const LocationError = (location as unknown as { LocationError: new (m: string, c: string) => Error }).LocationError;
+    const onError = loc.watchPosition.mock.calls[0]![1] as (e: Error) => void;
+    await act(async () => onError(new LocationError('Localização indisponível. Verifique se o GPS está ligado.', 'unavailable')));
+    expectNoStrayText(tree);
+    expect(visibleText(tree)).toContain('Verifique se o GPS está ligado. Sem ela você não recebe corridas próximas.');
+
+    const stop = gps!.stop;
+    await pressAsync(tree, 'Disponibilidade para corridas');
+    expect(stop).toHaveBeenCalled();
+    expect(visibleText(tree)).not.toContain('GPS');
   });
 
   it('retoma a sessão salva e sai da conta', async () => {

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { POLL_INTERVAL_MS } from './config.js';
 import { usePolling } from './hooks/usePolling.js';
+import { useLocationTracking } from './hooks/useLocationTracking.js';
 import { useDriverStore } from './store/driverStore.js';
 import { LoginScreen } from './screens/LoginScreen.js';
 import { DriverDashboardScreen } from './screens/DriverDashboardScreen.js';
@@ -20,6 +21,7 @@ export const App: React.FC = () => {
     offer,
     error,
     connectionError,
+    locationWarning,
     bootstrap,
     refresh,
     acceptOffer,
@@ -37,6 +39,9 @@ export const App: React.FC = () => {
 
   // Ofertas e corrida em andamento chegam pelo polling enquanto há o que acompanhar
   usePolling(refresh, POLL_INTERVAL_MS, sessionStatus === 'authenticated' && (isOnline || !!currentRide));
+
+  // Posição enviada à API durante todo o turno online (inclusive em corrida)
+  useLocationTracking(sessionStatus === 'authenticated' && isOnline);
 
   if (sessionStatus === 'checking') {
     return (
@@ -64,6 +69,7 @@ export const App: React.FC = () => {
       <StatusBar barStyle={darkScreen ? 'light-content' : 'dark-content'} backgroundColor={darkScreen ? '#0B1026' : '#FFFFFF'} />
 
       {connectionError && <Banner tone="warning" message={connectionError} />}
+      {locationWarning && <Banner tone="warning" message={locationWarning} />}
       {error && <Banner message={error} onDismiss={dismissError} />}
 
       <View style={styles.content}>

@@ -15,7 +15,14 @@ function initials(name: string | undefined): string {
 }
 
 export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
-  const { user, logout } = usePassengerStore();
+  const { user, logout, origin, originSource, originAccuracy, originWarning, locateOrigin } = usePassengerStore();
+
+  const pickupText =
+    originSource === 'locating'
+      ? 'Obtendo sua localização…'
+      : originSource === 'gps'
+        ? `${origin.shortAddress}${originAccuracy != null ? ` (±${Math.round(originAccuracy)} m)` : ''}`
+        : `${origin.shortAddress} (endereço padrão)`;
 
   const confirmLogout = () =>
     Alert.alert('Sair da conta', 'Deseja sair da VOZTRI neste aparelho?', [
@@ -78,6 +85,26 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
         {/* Card de busca */}
         <View style={styles.searchCard}>
           <Text style={styles.searchTitle}>Para onde vamos hoje?</Text>
+
+          {/* Ponto de embarque: GPS ou origem padrão sinalizada */}
+          <View style={styles.pickupRow} accessibilityLiveRegion="polite">
+            <View style={[styles.pickupDot, { backgroundColor: originSource === 'gps' ? '#00C853' : '#FFAB00' }]} />
+            <View style={styles.flex}>
+              <Text style={styles.pickupLabel}>Embarque</Text>
+              <Text style={styles.pickupText}>{pickupText}</Text>
+              {originSource === 'fallback' && originWarning && <Text style={styles.pickupWarning}>{originWarning}</Text>}
+            </View>
+            {originSource === 'fallback' && (
+              <Pressable
+                onPress={() => void locateOrigin()}
+                accessibilityRole="button"
+                accessibilityLabel="Usar minha localização"
+                style={({ pressed }) => [styles.locateButton, pressed && styles.pressed]}
+              >
+                <Text style={[styles.locateText, { color: VoztriColors.brand.primary }]}>Usar minha localização</Text>
+              </Pressable>
+            )}
+          </View>
 
           <Pressable
             onPress={onOpenSearch}
@@ -255,6 +282,45 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#151A31',
     marginBottom: 14,
+  },
+  flex: {
+    flex: 1,
+  },
+  pickupRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  pickupDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+  },
+  pickupLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#7B7489',
+    textTransform: 'uppercase',
+  },
+  pickupText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#151A31',
+  },
+  pickupWarning: {
+    fontSize: 12,
+    color: '#7A4A00',
+  },
+  locateButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: '#F3F2FF',
+  },
+  locateText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   searchField: {
     flexDirection: 'row',

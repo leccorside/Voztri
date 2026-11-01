@@ -334,6 +334,13 @@ Os dois apps usam a API real (o backend do passo 3 precisa estar no ar). Login p
 
 O endereço da API fica em `src/config.ts` de cada app: `http://10.0.2.2:8080/api/v1` no emulador Android (o `localhost` da máquina) e `http://localhost:8080/api/v1` no simulador iOS. Em aparelho físico, troque pelo IP da máquina na rede. As ofertas e o andamento da corrida chegam por polling a cada 3 s; a sessão fica salva no aparelho (AsyncStorage).
 
+**Localização (GPS):**
+
+- **Passageiro:** o ponto de embarque é a posição do GPS, lida ao entrar no app. Sem permissão ou sem sinal, o app usa um endereço padrão, **avisa na tela inicial** e oferece "Usar minha localização" para tentar de novo. O SOS envia a posição do momento.
+- **Motorista:** só fica online com a permissão de localização. Enquanto está online, o app envia a posição para `/driver/location` (no máximo a cada 10 s, ou na hora se andar mais de 200 m), e o despacho oferece as corridas ao motorista mais próximo com posição recente (até 10 min).
+- O envio funciona **com o app aberto**; com o app em segundo plano o envio para (ainda não há serviço nativo em primeiro plano).
+- **Emulador Android:** a posição padrão do emulador fica nos Estados Unidos. Defina uma posição em São Paulo em *Extended controls → Location* (por exemplo, `-23.561414, -46.655881`), senão as estimativas calculam a distância até lá. No simulador iOS: *Features → Location → Custom Location*.
+
 **Android** (JDK 17+, Android SDK 34 e um emulador ou aparelho com depuração USB):
 
 ```bash

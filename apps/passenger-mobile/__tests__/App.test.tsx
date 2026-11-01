@@ -5,6 +5,7 @@ import type { ChatMessage, FareEstimate, Ride } from '@voztri/shared-types';
 import { App } from '../src/App';
 import { usePassengerStore } from '../src/store/passengerStore';
 import * as api from '../src/api';
+import * as location from '../src/location';
 import {
   advanceAsync,
   expectNoStrayText,
@@ -37,6 +38,26 @@ jest.mock('../src/api', () => ({
   errorMessage: (err: { message?: string }) => err?.message ?? 'Erro',
 }));
 
+// GPS e permissões simulados
+jest.mock('../src/location', () => {
+  class LocationError extends Error {
+    readonly code: string;
+    constructor(message: string, errorCode: string) {
+      super(message);
+      this.code = errorCode;
+    }
+  }
+  return {
+    LocationError,
+    distanceMeters: jest.requireActual('../src/geo').distanceMeters,
+    requestLocationPermission: jest.fn(),
+    getCurrentPosition: jest.fn(),
+    watchPosition: jest.fn(),
+  };
+});
+
+const gpsAt = (latitude: number, longitude: number) => ({ latitude, longitude, accuracy: 12, heading: null, speed: null, timestamp: 0 });
+
 type Mocks<K extends string> = Record<K, jest.Mock>;
 const m = api as unknown as {
   session: Mocks<'load' | 'save' | 'clear'>;
@@ -47,6 +68,7 @@ const m = api as unknown as {
   >;
   billingApi: Mocks<'submitRating'>;
 };
+const loc = location as unknown as Mocks<'requestLocationPermission' | 'getCurrentPosition'>;
 
 const PASSENGER = { id: 'u-bia', name: 'Beatriz Lima', role: 'passenger', status: 'active', phone: '11999991111' };
 
@@ -123,6 +145,9 @@ beforeEach(() => {
   m.activeRideMemory.save.mockResolvedValue(undefined);
   m.activeRideMemory.clear.mockResolvedValue(undefined);
   m.rideApi.getEstimates.mockResolvedValue(ESTIMATES);
+  // Praça da Sé: diferente da origem padrão, para provar que a estimativa usa o GPS
+  loc.requestLocationPermission.mockResolvedValue('granted');
+  loc.getCurrentPosition.mockResolvedValue(gpsAt(-23.55052, -46.633308));
   m.rideApi.requestRide.mockImplementation(async () => serverRide);
   m.rideApi.getRide.mockImplementation(async () => serverRide);
   m.rideApi.getChatMessages.mockImplementation(async () => [...chat]);
@@ -180,9 +205,9 @@ describe('passenger-mobile integrado à API', () => {
     expect(visibleText(tree)).not.toContain('Aeroporto de Congonhas'); // filtro por texto
     await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
 
-    // Estimativas vêm da API, com a origem e o destino escolhidos
+    // Estimativas vêm da API, com a origem do GPS e o destino escolhido
     expect(m.rideApi.getEstimates).toHaveBeenCalledWith(
-      expect.objectContaining({ latitude: -23.561414, longitude: -46.655881 }),
+      expect.objectContaining({ latitude: -23.55052, longitude: -46.633308, shortAddress: 'Sua localização atual' }),
       expect.objectContaining({ shortAddress: 'Av. Faria Lima, 3477' }),
     );
     expectNoStrayText(tree);
@@ -195,7 +220,11 @@ describe('passenger-mobile integrado à API', () => {
     await pressAsync(tree, 'Dinheiro em espécie');
     await pressAsync(tree, /^SOLICITAR VOZTRI BLACK • R\$ 30,52/);
     expect(m.rideApi.requestRide).toHaveBeenCalledWith(
-      expect.objectContaining({ category: 'black', paymentMethod: 'cash' }),
+      expect.objectContaining({
+        category: 'black',
+        paymentMethod: 'cash',
+        origin: expect.objectContaining({ address: 'Localização GPS (-23.55052, -46.63331)', latitude: -23.55052 }),
+      }),
     );
     expect(m.activeRideMemory.save).toHaveBeenCalledWith('ride-1');
     expectNoStrayText(tree);
@@ -226,10 +255,12 @@ describe('passenger-mobile integrado à API', () => {
     await pressAsync(tree, 'Fechar chat');
 
     // SOS pela API: aciona, PIN errado, PIN certo
+    // SOS envia a posição atual, não a do embarque
     m.rideApi.triggerSos.mockResolvedValue({ success: true, incidentId: 'inc-1' });
+    loc.getCurrentPosition.mockResolvedValueOnce(gpsAt(-23.57, -46.64));
     await pressAsync(tree, 'Acionar central de emergência SOS 24 horas');
     await pressAsync(tree, 'ACIONAR SOS IMEDIATAMENTE');
-    expect(m.rideApi.triggerSos).toHaveBeenCalledWith('ride-1', -23.561414, -46.655881);
+    expect(m.rideApi.triggerSos).toHaveBeenCalledWith('ride-1', -23.57, -46.64);
     expect(visibleText(tree)).toContain('O ALERTA SOS ESTÁ ATIVO!');
     m.rideApi.cancelSos.mockRejectedValueOnce({ code: 'INVALID_EMERGENCY_PIN', message: 'PIN de segurança inválido.' });
     await typeAsync(tree, 'PIN de emergência', '0000');
@@ -330,6 +361,44 @@ describe('passenger-mobile integrado à API', () => {
 
     await pressAsync(tree, 'Tentar de novo');
     expect(visibleText(tree)).toContain('R$ 18,69');
+  });
+
+  it('mostra o embarque pelo GPS na tela inicial', async () => {
+    await renderLoggedIn();
+    expect(loc.requestLocationPermission).toHaveBeenCalled();
+    expectNoStrayText(tree);
+    expect(visibleText(tree)).toContain('Sua localização atual (±12 m)');
+    expect(visibleText(tree)).not.toContain('Usar minha localização');
+  });
+
+  it('usa a origem padrão sinalizada sem permissão e tenta o GPS de novo', async () => {
+    loc.requestLocationPermission.mockResolvedValueOnce('denied');
+    await renderLoggedIn();
+    expectNoStrayText(tree);
+    let text = visibleText(tree);
+    expect(text).toContain('Av. Paulista, 1578 (endereço padrão)');
+    expect(text).toContain('Sem permissão de localização.');
+
+    await pressAsync(tree, 'Usar minha localização');
+    text = visibleText(tree);
+    expect(text).toContain('Sua localização atual (±12 m)');
+    expect(text).not.toContain('endereço padrão');
+  });
+
+  it('usa a origem padrão quando o GPS não responde', async () => {
+    const LocationError = (location as unknown as { LocationError: new (m: string, c: string) => Error }).LocationError;
+    loc.getCurrentPosition.mockRejectedValueOnce(new LocationError('Não foi possível obter a localização a tempo.', 'timeout'));
+    await renderLoggedIn();
+    expect(visibleText(tree)).toContain('(endereço padrão)');
+    expect(visibleText(tree)).toContain('Não foi possível obter a localização a tempo.');
+
+    // A estimativa segue funcionando com a origem padrão
+    await pressAsync(tree, 'Buscar endereço de destino');
+    await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
+    expect(m.rideApi.getEstimates).toHaveBeenCalledWith(
+      expect.objectContaining({ latitude: -23.561414, longitude: -46.655881 }),
+      expect.anything(),
+    );
   });
 
   it('sai da conta pelo avatar', async () => {

@@ -128,7 +128,7 @@ docker compose exec app php artisan migrate --seed
 - `POST /api/v1/driver/documents`: Envio de CNH e CRLV para análise.
 - `POST /api/v1/driver/status`: Body `{ "isOnline": true }`. Só motoristas `approved` ficam online (403 `DRIVER_NOT_APPROVED`).
 - `GET /api/v1/driver/rides/current`: Polling do app: `{ isOnline, offer, ride }`. `offer` traz `rideId`, `secondsLeft`, endereços, `earningsCents` (líquido, após 15%), `categoryName` e `passengerName`; `ride` é a corrida em andamento.
-- `POST /api/v1/driver/location`: Transmite coordenadas de GPS (`latitude`, `longitude`, `heading`, `speed`).
+- `POST /api/v1/driver/location`: Posição do GPS enviada pelo app enquanto o motorista está online (no máximo a cada 10 s, ou ao andar mais de 200 m). Body `{ latitude, longitude, heading?, speed? }`; `heading` em 0–360 e `speed` ≥ 0 (valores desconhecidos são omitidos). Atualiza `current_latitude`, `current_longitude` e `last_location_at`. No despacho, posição com mais de **10 minutos** é tratada como desconhecida (o motorista vai para o fim da fila).
 - `GET /api/v1/driver/earnings`: Ganhos **líquidos** do ledger: `todayCents`, `weekCents`, `daily` (segunda a domingo, com `isToday`), `ridesCount`, `availableBalanceCents`, `rating`, `pixKey`, `pixKeyType`. `onlineHours` ainda é `null`.
 
 ### Passageiro & Corridas

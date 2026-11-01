@@ -47,6 +47,7 @@ class RideFlowTest extends TestCase
             'is_online' => $online,
             'current_latitude' => $lat,
             'current_longitude' => $lng,
+            'last_location_at' => now(),
             'pix_key' => "{$phone}@voztri.com.br",
             'pix_key_type' => 'email',
         ]);
@@ -295,6 +296,53 @@ class RideFlowTest extends TestCase
         $this->actingAs($passenger, 'sanctum')->postJson("/api/v1/rides/{$rideId}/sos/cancel", ['emergencyPin' => '4321'])->assertOk();
 
         $this->assertSame('resolved', SafetyIncident::where('ride_id', $rideId)->value('status'));
+    }
+
+    public function test_location_update_moves_driver_and_drives_dispatch(): void
+    {
+        // A está mais perto pela posição antiga; B envia a posição real perto do embarque
+        $a = $this->driver('11922220001', -23.5700, -46.6600);
+        $b = $this->driver('11922220002', -23.6500, -46.7500);
+
+        $this->actingAs($b, 'sanctum')->postJson('/api/v1/driver/location', [
+            'latitude' => -23.56150, 'longitude' => -46.65590, 'heading' => 90.5, 'speed' => 8.3,
+        ])->assertOk();
+
+        $driverB = Driver::where('user_id', $b->id)->first();
+        $this->assertEqualsWithDelta(-23.56150, $driverB->current_latitude, 0.000001);
+        $this->assertNotNull($driverB->last_location_at);
+
+        $rideId = $this->requestRide($this->passenger())->json('id');
+        $this->current($b)->assertJsonPath('offer.rideId', $rideId);
+        $this->current($a)->assertJsonPath('offer', null);
+    }
+
+    public function test_location_update_validates_coordinates(): void
+    {
+        $driver = $this->driver('11922220001', -23.5620, -46.6560);
+
+        $this->actingAs($driver, 'sanctum')->postJson('/api/v1/driver/location', ['latitude' => 91, 'longitude' => 0])
+            ->assertStatus(422)->assertJsonValidationErrors(['latitude']);
+        // O iOS informa heading -1 quando desconhecido; o app omite o campo
+        $this->actingAs($driver, 'sanctum')->postJson('/api/v1/driver/location', ['latitude' => -23.5, 'longitude' => -46.6, 'heading' => -1])
+            ->assertStatus(422)->assertJsonValidationErrors(['heading']);
+
+        $passenger = $this->passenger();
+        $this->actingAs($passenger, 'sanctum')->postJson('/api/v1/driver/location', ['latitude' => -23.5, 'longitude' => -46.6])
+            ->assertNotFound();
+    }
+
+    public function test_stale_location_goes_to_end_of_dispatch_queue(): void
+    {
+        // A está colado no embarque, mas a posição tem 30 minutos (app fechado)
+        $a = $this->driver('11922220001', -23.56142, -46.65589);
+        Driver::where('user_id', $a->id)->update(['last_location_at' => now()->subMinutes(30)]);
+        $b = $this->driver('11922220002', -23.6000, -46.7000); // ~5 km, posição recente
+
+        $rideId = $this->requestRide($this->passenger())->json('id');
+
+        $this->current($b)->assertJsonPath('offer.rideId', $rideId);
+        $this->current($a)->assertJsonPath('offer', null);
     }
 
     public function test_driver_status_and_payout_rules(): void

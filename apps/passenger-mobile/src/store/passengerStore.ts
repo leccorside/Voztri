@@ -11,8 +11,12 @@ import {
   rideApi,
   session,
 } from '../api.js';
+import { getCurrentPosition, LocationError, requestLocationPermission } from '../location.js';
 
 export type SessionStatus = 'checking' | 'anonymous' | 'authenticated';
+
+/** gps: posição real; locating: lendo o GPS; fallback: origem padrão (sem permissão ou sem sinal). */
+export type OriginSource = 'gps' | 'locating' | 'fallback';
 
 export type PassengerFlowStep =
   | 'HOME'
@@ -30,8 +34,13 @@ export interface PassengerState {
   user: User | null;
 
   currentStep: PassengerFlowStep;
-  /** Origem fixa enquanto o app não lê o GPS do aparelho. */
+  /** Ponto de embarque: a posição do GPS ou, sem ela, a origem padrão. */
   origin: AddressLocation;
+  originSource: OriginSource;
+  /** Precisão da posição do GPS, em metros. */
+  originAccuracy: number | null;
+  /** Por que a origem padrão está sendo usada. */
+  originWarning: string | null;
   destination: AddressLocation | null;
   estimates: FareEstimate[];
   estimatesLoading: boolean;
@@ -50,6 +59,8 @@ export interface PassengerState {
   login: (phone: string, code: string) => Promise<boolean>;
   logout: () => Promise<void>;
 
+  /** Lê o GPS e usa a posição como ponto de embarque. */
+  locateOrigin: () => Promise<void>;
   setStep: (step: PassengerFlowStep) => void;
   setDestination: (destination: AddressLocation) => Promise<void>;
   loadEstimates: () => Promise<void>;
@@ -66,6 +77,7 @@ export interface PassengerState {
   dismissError: () => void;
 }
 
+/** Usada só quando o GPS não está disponível (sinalizada na tela inicial). */
 const DEFAULT_ORIGIN: AddressLocation = {
   address: 'Av. Paulista, 1578 - Bela Vista, São Paulo - SP',
   shortAddress: 'Av. Paulista, 1578',
@@ -112,6 +124,9 @@ const signedOut = {
   sessionStatus: 'anonymous' as SessionStatus,
   user: null,
   origin: DEFAULT_ORIGIN,
+  originSource: 'fallback' as OriginSource,
+  originAccuracy: null,
+  originWarning: null,
   selectedCategory: 'pop' as Category,
   selectedPaymentMethod: 'pix' as PaymentMethodType,
   busy: false,
@@ -146,8 +161,12 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
     set({ activeRide: ride, currentStep: stepForStatus(ride.status) });
   };
 
+  // Leitura do GPS em andamento (escolher o destino espera por ela)
+  let locating: Promise<void> | null = null;
+
   const startSession = async (user: User) => {
     set({ ...signedOut, sessionStatus: 'authenticated', user });
+    void get().locateOrigin();
     // Retoma a corrida em andamento (ou a avaliação pendente) após reabrir o app
     const rideId = await activeRideMemory.load();
     if (!rideId) return;
@@ -213,10 +232,58 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
       set({ ...signedOut });
     },
 
+    locateOrigin: () => {
+      if (locating) return locating;
+      locating = (async () => {
+        set({ originSource: 'locating', originWarning: null });
+        const permission = await requestLocationPermission();
+        if (permission !== 'granted') {
+          set({
+            origin: DEFAULT_ORIGIN,
+            originSource: 'fallback',
+            originAccuracy: null,
+            originWarning:
+              permission === 'blocked'
+                ? 'Localização bloqueada nas configurações do aparelho.'
+                : 'Sem permissão de localização.',
+          });
+          return;
+        }
+        try {
+          const position = await getCurrentPosition();
+          const coords = `${position.latitude.toFixed(5)}, ${position.longitude.toFixed(5)}`;
+          set({
+            origin: {
+              // Sem geocodificação reversa ainda: o endereço é a coordenada
+              address: `Localização GPS (${coords})`,
+              shortAddress: 'Sua localização atual',
+              latitude: position.latitude,
+              longitude: position.longitude,
+            },
+            originSource: 'gps',
+            originAccuracy: position.accuracy,
+            originWarning: null,
+          });
+        } catch (err) {
+          set({
+            origin: DEFAULT_ORIGIN,
+            originSource: 'fallback',
+            originAccuracy: null,
+            originWarning: err instanceof LocationError ? err.message : 'Não foi possível obter a localização.',
+          });
+        }
+      })().finally(() => {
+        locating = null;
+      });
+      return locating;
+    },
+
     setStep: (step) => set({ currentStep: step }),
 
     setDestination: async (destination) => {
       set({ destination, currentStep: 'SELECT_CATEGORY' });
+      // A estimativa precisa da origem final (GPS ainda sendo lido)
+      if (locating) await locating;
       await get().loadEstimates();
     },
 
@@ -309,9 +376,16 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
     triggerSos: async () => {
       const ride = get().activeRide;
       if (!ride) return;
-      // Sem GPS no app, envia a última posição conhecida: o embarque da corrida
-      const lat = ride.origin.latitude ?? get().origin.latitude;
-      const lng = ride.origin.longitude ?? get().origin.longitude;
+      // Posição atual do GPS; sem ela, o último ponto conhecido (o embarque)
+      let lat = ride.origin.latitude ?? get().origin.latitude;
+      let lng = ride.origin.longitude ?? get().origin.longitude;
+      try {
+        const now = await getCurrentPosition();
+        lat = now.latitude;
+        lng = now.longitude;
+      } catch {
+        // segue com o embarque: o alerta não pode deixar de ser enviado
+      }
       const res = await run(() => rideApi.triggerSos(ride.id, lat, lng));
       if (res) set({ isSosActive: true });
     },
