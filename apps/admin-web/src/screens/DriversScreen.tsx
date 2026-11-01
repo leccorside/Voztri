@@ -1,62 +1,41 @@
 import React, { useState } from 'react';
 import { VoztriColors } from '@voztri/design-tokens';
+import type { AdminDriverStatus } from '@voztri/api-client';
+import { adminApi, errorMessage } from '../lib/api.js';
+import { useAsync } from '../lib/useAsync.js';
+import { categoryLabel, formatPhone } from '../lib/format.js';
+import { EmptyRow, ErrorBox, Loading, Pager } from '../components/States.js';
 
-interface DriverItem {
-  id: string;
-  name: string;
-  phone: string;
-  cnh: string;
-  cnhEar: boolean;
-  vehicle: string;
-  plate: string;
-  category: string;
-  status: 'pending_approval' | 'approved' | 'blocked';
-}
+const STATUS: Record<AdminDriverStatus, { label: string; bg: string; fg: string }> = {
+  approved: { label: 'Aprovado', bg: '#E8F5E9', fg: '#1B5E20' },
+  pending_approval: { label: 'Pendente', bg: '#FFF3E0', fg: '#E65100' },
+  rejected: { label: 'Reprovado', bg: '#FFEBEE', fg: '#B71C1C' },
+  blocked: { label: 'Bloqueado', bg: '#FFEBEE', fg: '#B71C1C' },
+};
+
+const th: React.CSSProperties = { padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#7B7489', textTransform: 'uppercase' };
 
 export const DriversScreen: React.FC = () => {
-  const [drivers, setDrivers] = useState<DriverItem[]>([
-    {
-      id: '1',
-      name: 'Carlos Eduardo Silva',
-      phone: '(11) 99999-2222',
-      cnh: '12345678900',
-      cnhEar: true,
-      vehicle: 'Toyota Corolla 2022',
-      plate: 'VOZ2026',
-      category: 'Pop',
-      status: 'approved',
-    },
-    {
-      id: '2',
-      name: 'Mariana Santos',
-      phone: '(11) 98888-3333',
-      cnh: '98765432100',
-      cnhEar: true,
-      vehicle: 'Hyundai HB20 2021',
-      plate: 'BRA4F18',
-      category: 'Mulher',
-      status: 'pending_approval',
-    },
-    {
-      id: '3',
-      name: 'Rodrigo Albuquerque',
-      phone: '(11) 97777-4444',
-      cnh: '45678912300',
-      cnhEar: true,
-      vehicle: 'Jeep Compass 2023',
-      plate: 'SPX9912',
-      category: 'Black',
-      status: 'approved',
-    },
-  ]);
+  const [page, setPage] = useState(1);
+  const { data, error, loading, reload } = useAsync(() => adminApi.listDrivers(page), [page]);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const handleApprove = (id: string) => {
-    setDrivers((prev) => prev.map((d) => (d.id === id ? { ...d, status: 'approved' } : d)));
+  const runAction = async (id: string, action: 'approve' | 'block') => {
+    setPendingId(id);
+    setActionError(null);
+    try {
+      if (action === 'approve') await adminApi.approveDriver(id);
+      else await adminApi.blockDriver(id);
+      reload();
+    } catch (err) {
+      setActionError(errorMessage(err));
+    } finally {
+      setPendingId(null);
+    }
   };
 
-  const handleBlock = (id: string) => {
-    setDrivers((prev) => prev.map((d) => (d.id === id ? { ...d, status: 'blocked' } : d)));
-  };
+  const drivers = data?.data ?? [];
 
   return (
     <div style={{ padding: 32, overflowY: 'auto', height: '100vh', boxSizing: 'border-box' }}>
@@ -69,103 +48,131 @@ export const DriversScreen: React.FC = () => {
         </p>
       </div>
 
-      {/* Tabela de Motoristas */}
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: 20,
-        boxShadow: '0 4px 16px rgba(11, 16, 38, 0.05)',
-        border: '1px solid #ECECFF',
-        overflow: 'hidden',
-      }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#F8F9FE', borderBottom: '1px solid #ECECFF' }}>
-              <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#7B7489', textTransform: 'uppercase' }}>Motorista</th>
-              <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#7B7489', textTransform: 'uppercase' }}>CNH (EAR)</th>
-              <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#7B7489', textTransform: 'uppercase' }}>Veículo & Placa</th>
-              <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#7B7489', textTransform: 'uppercase' }}>Categoria</th>
-              <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#7B7489', textTransform: 'uppercase' }}>Status</th>
-              <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#7B7489', textTransform: 'uppercase', textAlign: 'right' }}>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {drivers.map((d) => (
-              <tr key={d.id} style={{ borderBottom: '1px solid #ECECFF' }}>
-                <td style={{ padding: '16px 20px' }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#151A31' }}>{d.name}</div>
-                  <span style={{ fontSize: 12, color: '#7B7489' }}>{d.phone}</span>
-                </td>
-                <td style={{ padding: '16px 20px' }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{d.cnh}</div>
-                  <span style={{ fontSize: 11, color: '#00C853', fontWeight: 700 }}>✓ EAR Válida</span>
-                </td>
-                <td style={{ padding: '16px 20px' }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{d.vehicle}</div>
-                  <span style={{ fontSize: 11, fontWeight: 800, backgroundColor: '#F4F6FA', padding: '2px 6px', borderRadius: 4 }}>
-                    {d.plate}
-                  </span>
-                </td>
-                <td style={{ padding: '16px 20px' }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: VoztriColors.brand.primary }}>
-                    {d.category}
-                  </span>
-                </td>
-                <td style={{ padding: '16px 20px' }}>
-                  <span style={{
-                    fontSize: 11,
-                    fontWeight: 800,
-                    padding: '4px 8px',
-                    borderRadius: 6,
-                    backgroundColor: d.status === 'approved' ? '#E8F5E9' : d.status === 'pending_approval' ? '#FFF3E0' : '#FFEBEE',
-                    color: d.status === 'approved' ? '#1B5E20' : d.status === 'pending_approval' ? '#E65100' : '#B71C1C',
-                    textTransform: 'uppercase',
-                  }}>
-                    {d.status === 'approved' ? 'Aprovado' : d.status === 'pending_approval' ? 'Pendente' : 'Bloqueado'}
-                  </span>
-                </td>
-                <td style={{ padding: '16px 20px', textAlign: 'right' }}>
-                  {d.status === 'pending_approval' && (
-                    <button
-                      onClick={() => handleApprove(d.id)}
-                      style={{
-                        padding: '6px 14px',
-                        borderRadius: 8,
-                        border: 'none',
-                        backgroundColor: '#00C853',
-                        color: '#FFFFFF',
-                        fontWeight: 700,
-                        fontSize: 12,
-                        cursor: 'pointer',
-                        marginRight: 8,
-                      }}
-                    >
-                      Aprovar
-                    </button>
-                  )}
-                  {d.status !== 'blocked' && (
-                    <button
-                      onClick={() => handleBlock(d.id)}
-                      style={{
-                        padding: '6px 14px',
-                        borderRadius: 8,
-                        border: '1px solid #FFCDD2',
-                        backgroundColor: '#FFFFFF',
-                        color: '#BA1A1A',
-                        fontWeight: 700,
-                        fontSize: 12,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Bloquear
-                    </button>
-                  )}
-                </td>
+      {error && <div style={{ marginBottom: 20 }}><ErrorBox message={error} onRetry={reload} /></div>}
+      {actionError && <div style={{ marginBottom: 20 }}><ErrorBox message={actionError} /></div>}
+      {loading && !data && <Loading />}
+
+      {data && (
+        <div style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: 20,
+          boxShadow: '0 4px 16px rgba(11, 16, 38, 0.05)',
+          border: '1px solid #ECECFF',
+          overflow: 'hidden',
+        }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#F8F9FE', borderBottom: '1px solid #ECECFF' }}>
+                <th style={th}>Motorista</th>
+                <th style={th}>CNH (EAR)</th>
+                <th style={th}>Veículo & Placa</th>
+                <th style={th}>Categoria</th>
+                <th style={th}>Status</th>
+                <th style={{ ...th, textAlign: 'right' }}>Ações</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {drivers.length === 0 && <EmptyRow colSpan={6} message="Nenhum motorista cadastrado." />}
+              {drivers.map((d) => {
+                const st = STATUS[d.status] ?? { label: d.status, bg: '#F4F6FA', fg: '#494457' };
+                const v = d.active_vehicle;
+                const busy = pendingId === d.id;
+                return (
+                  <tr key={d.id} style={{ borderBottom: '1px solid #ECECFF' }}>
+                    <td style={{ padding: '16px 20px' }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#151A31' }}>{d.user?.name ?? '—'}</div>
+                      <span style={{ fontSize: 12, color: '#7B7489' }}>
+                        {formatPhone(d.user?.phone)}
+                        {d.is_online && <span style={{ color: '#00C853', fontWeight: 700 }}> • online</span>}
+                      </span>
+                    </td>
+                    <td style={{ padding: '16px 20px' }}>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{d.cnh_number} ({d.cnh_category})</div>
+                      {d.cnh_has_ear ? (
+                        <span style={{ fontSize: 11, color: '#00C853', fontWeight: 700 }}>✓ EAR válida</span>
+                      ) : (
+                        <span style={{ fontSize: 11, color: '#BA1A1A', fontWeight: 700 }}>✗ Sem EAR</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '16px 20px' }}>
+                      {v ? (
+                        <>
+                          <div style={{ fontSize: 13, fontWeight: 600 }}>{v.brand} {v.model} {v.year}</div>
+                          <span style={{ fontSize: 11, fontWeight: 800, backgroundColor: '#F4F6FA', padding: '2px 6px', borderRadius: 4 }}>
+                            {v.plate}
+                          </span>
+                        </>
+                      ) : (
+                        <span style={{ fontSize: 13, color: '#7B7489' }}>Sem veículo ativo</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '16px 20px' }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: VoztriColors.brand.primary }}>
+                        {v ? categoryLabel(v.category) : '—'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '16px 20px' }}>
+                      <span style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        padding: '4px 8px',
+                        borderRadius: 6,
+                        backgroundColor: st.bg,
+                        color: st.fg,
+                        textTransform: 'uppercase',
+                      }}>
+                        {st.label}
+                      </span>
+                    </td>
+                    <td style={{ padding: '16px 20px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      {d.status !== 'approved' && (
+                        <button
+                          onClick={() => void runAction(d.id, 'approve')}
+                          disabled={busy}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: 8,
+                            border: 'none',
+                            backgroundColor: '#00C853',
+                            color: '#FFFFFF',
+                            fontWeight: 700,
+                            fontSize: 12,
+                            cursor: busy ? 'wait' : 'pointer',
+                            opacity: busy ? 0.6 : 1,
+                            marginRight: 8,
+                          }}
+                        >
+                          {d.status === 'blocked' ? 'Reativar' : 'Aprovar'}
+                        </button>
+                      )}
+                      {d.status !== 'blocked' && (
+                        <button
+                          onClick={() => void runAction(d.id, 'block')}
+                          disabled={busy}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: 8,
+                            border: '1px solid #FFCDD2',
+                            backgroundColor: '#FFFFFF',
+                            color: '#BA1A1A',
+                            fontWeight: 700,
+                            fontSize: 12,
+                            cursor: busy ? 'wait' : 'pointer',
+                            opacity: busy ? 0.6 : 1,
+                          }}
+                        >
+                          Bloquear
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <Pager page={data.current_page} lastPage={data.last_page} total={data.total} onChange={setPage} />
+        </div>
+      )}
     </div>
   );
 };
-

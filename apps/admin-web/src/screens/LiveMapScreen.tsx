@@ -1,17 +1,30 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { VoztriColors } from '@voztri/design-tokens';
+import { adminApi } from '../lib/api.js';
+import { useAsync } from '../lib/useAsync.js';
+import { ErrorBox } from '../components/States.js';
+
+const POLL_MS = 10_000;
 
 export const LiveMapScreen: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const { data, error, loading, reload } = useAsync(() => adminApi.getLiveMap(), [], POLL_MS);
 
-  const mockDrivers = [
-    { id: '1', name: 'Carlos Eduardo Silva', plate: 'VOZ2026', vehicle: 'Toyota Corolla', category: 'pop', status: 'online', lat: -23.550520, lng: -46.633308 },
-    { id: '2', name: 'Mariana Santos', plate: 'BRA4F18', vehicle: 'Hyundai HB20', category: 'mulher', status: 'in_ride', lat: -23.561414, lng: -46.655881 },
-    { id: '3', name: 'Rodrigo Albuquerque', plate: 'SPX9912', vehicle: 'Jeep Compass', category: 'black', status: 'online', lat: -23.585721, lng: -46.679199 },
-    { id: '4', name: 'Lucas Ferreira', plate: 'MOT1102', vehicle: 'Honda CG 160', category: 'moto', status: 'online', lat: -23.543201, lng: -46.629100 },
-  ];
+  const drivers = useMemo(() => {
+    const inRide = new Set((data?.activeRides ?? []).map((r) => r.driver_id));
+    return (data?.drivers ?? []).map((d) => ({
+      id: d.id,
+      name: d.name,
+      plate: d.plate,
+      vehicle: d.vehicle,
+      category: d.category,
+      status: inRide.has(d.id) ? 'in_ride' : 'online',
+      lat: d.latitude,
+      lng: d.longitude,
+    }));
+  }, [data]);
 
-  const filtered = selectedCategory === 'all' ? mockDrivers : mockDrivers.filter((d) => d.category === selectedCategory);
+  const filtered = selectedCategory === 'all' ? drivers : drivers.filter((d) => d.category === selectedCategory);
 
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100%' }}>
@@ -116,11 +129,19 @@ export const LiveMapScreen: React.FC = () => {
             Operações ao Vivo
           </h2>
           <span style={{ fontSize: 13, color: '#7B7489' }}>
-            {filtered.length} motoristas visíveis no radar
+            {loading && !data
+              ? 'Carregando…'
+              : `${filtered.length} motoristas online • atualiza a cada ${POLL_MS / 1000} s`}
           </span>
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {error && <ErrorBox message={error} onRetry={reload} />}
+          {data && filtered.length === 0 && (
+            <p style={{ fontSize: 13, color: '#7B7489', textAlign: 'center', padding: 16 }}>
+              Nenhum motorista online{selectedCategory !== 'all' ? ' nesta categoria' : ''} no momento.
+            </p>
+          )}
           {filtered.map((driver) => (
             <div
               key={driver.id}

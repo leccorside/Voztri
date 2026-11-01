@@ -41,6 +41,33 @@ class AuthTest extends TestCase
             ]);
     }
 
+    public function test_cannot_self_register_as_admin(): void
+    {
+        $response = $this->postJson('/api/v1/auth/request-otp', [
+            'phone' => '11999995555',
+            'role' => 'admin',
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['role']);
+        $this->assertDatabaseMissing('users', ['phone' => '11999995555']);
+    }
+
+    public function test_existing_admin_login_does_not_create_passenger_record(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin Teste',
+            'phone' => '11999996666',
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+
+        // Sem "role" na requisição: o padrão "passenger" não pode ser aplicado a um admin
+        $this->postJson('/api/v1/auth/request-otp', ['phone' => '11999996666'])->assertStatus(200);
+
+        $this->assertDatabaseMissing('passengers', ['user_id' => $admin->id]);
+        $this->assertSame('admin', $admin->fresh()->role);
+    }
+
     public function test_health_check_endpoint_returns_ok(): void
     {
         $response = $this->getJson('/api/v1/health');

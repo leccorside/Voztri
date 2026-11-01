@@ -1,12 +1,14 @@
 import React from 'react';
-import { VoztriColors } from '@voztri/design-tokens';
+import type { User } from '@voztri/shared-types';
 
 interface Props {
   activeScreen: string;
   onSelect: (screen: string) => void;
+  user: User;
+  onLogout: () => void;
 }
 
-export const Sidebar: React.FC<Props> = ({ activeScreen, onSelect }) => {
+export const Sidebar: React.FC<Props> = ({ activeScreen, onSelect, user, onLogout }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard Geral', icon: '📊' },
     { id: 'live-map', label: 'Operações ao Vivo', icon: '🗺️' },
@@ -104,12 +106,20 @@ export const Sidebar: React.FC<Props> = ({ activeScreen, onSelect }) => {
           alignItems: 'center',
           justifyContent: 'center',
           fontWeight: 800,
+          flexShrink: 0,
         }}>
-          A
+          {user.name.charAt(0).toUpperCase()}
         </div>
-        <div>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', display: 'block' }}>Admin VOZTRI</span>
-          <span style={{ fontSize: 11, color: '#00C853', fontWeight: 600 }}>● Sistema Operacional</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {user.name}
+          </span>
+          <button
+            onClick={onLogout}
+            style={{ border: 'none', background: 'none', padding: 0, color: '#A0A5BD', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            Sair do painel
+          </button>
         </div>
       </div>
     </aside>

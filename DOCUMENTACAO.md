@@ -81,7 +81,7 @@ docker compose exec app php artisan migrate --seed
 
 ### URLs de Acesso aos Serviços Locais:
 - **API REST**: `http://localhost:8080/api/v1`
-- **Painel Administrativo Web**: `http://localhost:3000`
+- **Painel Administrativo Web**: `http://localhost:3010` (subir com `cd apps/admin-web && npm install --workspaces=false && npm run dev`; login do seed: telefone `(11) 99999-0000`, código `123456`)
 - **Servidor WebSocket Reverb**: `ws://localhost:8081`
 - **Mailpit (Caixa postal local para OTPs/Emails)**: `http://localhost:8026`
 - **MinIO Console (Storage S3 local de fotos/documentos)**: `http://localhost:9011` (Usuário: `voztri_admin`, Senha: `voztri_password_safe`)

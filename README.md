@@ -288,7 +288,9 @@ docker compose up -d --force-recreate app worker reverb
 # 3. Rode as migrations e o seed
 docker compose exec app php artisan migrate --seed
 
-# 4. Atenção ao repetir o seed: o DatabaseSeeder só cria registros, sem checar se eles já existem. Rodar migrate --seed de novo vai falhar por telefone e e-mail duplicados. Para recomeçar do zero, use:
+# 4. Atenção ao repetir o seed: o DatabaseSeeder só cria registros, sem 
+# checar se eles já existem. Rodar migrate --seed de novo vai falhar por 
+# telefone e e-mail duplicados. Para recomeçar do zero, use:
 docker compose exec app php artisan migrate:fresh --seed
 ```
 
@@ -300,12 +302,27 @@ docker compose exec app php artisan migrate:fresh --seed
 > [!NOTE]
 > Os comandos consideram que o serviço PHP no `docker-compose.yml` se chama `app`. Ajuste o nome caso o Compose do seu ambiente seja diferente. Os dados cartográficos do OSRM podem exigir uma etapa de preparação documentada em `infrastructure/maps/`.
 
+### 5. Suba o painel administrativo (admin-web)
+
+O painel roda fora do Docker, com Node 20+:
+
+```bash
+cd apps/admin-web
+npm install --workspaces=false
+npm run dev
+```
+
+Acesse `http://localhost:3010` e entre com o administrador do seed: telefone **(11) 99999-0000**, código **123456** (o OTP é fixo em desenvolvimento). O painel chama `/api/v1` na própria origem, e o proxy do Vite encaminha as chamadas para a API em `http://localhost:8080`, então não depende de CORS. A porta e o destino ficam configuráveis em `apps/admin-web/.env` (veja o `.env.example`).
+
+> [!IMPORTANT]
+> Use `--workspaces=false`. Sem isso, o npm resolve o monorepo inteiro e falha num conflito de peer dependency dos apps mobile (`react-native@0.74` exige `react@18.2.0`, mas eles declaram `^18.3.1`). Os pacotes `@voztri/*` entram no painel pelo código-fonte, via aliases no `vite.config.ts` e no `tsconfig.json`.
+
 ## 🌐 Serviços locais
 
 | Serviço | Endereço de desenvolvimento | Finalidade |
 |---|---|---|
 | API REST v1 | `http://localhost:8080/api/v1` | Autenticação e corridas |
-| Admin web | `http://localhost:3000` | Gestão operacional |
+| Admin web | `http://localhost:3010` | Gestão operacional (login: (11) 99999-0000 / 123456) |
 | Laravel Reverb | `ws://localhost:8081` | Eventos por WebSocket |
 | PostgreSQL / PostGIS | `localhost:5434` | Persistência geoespacial |
 | Redis | `localhost:6380` | Cache e posição de motoristas |

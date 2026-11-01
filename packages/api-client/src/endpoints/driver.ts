@@ -1,5 +1,5 @@
 import { VoztriApiClient } from '../client.js';
-import { Driver, DriverEarningsSummary } from '@voztri/shared-types';
+import { DriverEarningsSummary } from '@voztri/shared-types';
 
 export class DriverApi {
   constructor(private client: VoztriApiClient) {}

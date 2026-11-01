@@ -1,5 +1,3 @@
-import { PaymentMethodType, PaymentStatus } from './ride.js';
-
 export interface PixPaymentData {
   qrCodeUrl: string;
   qrCodeBase64: string;

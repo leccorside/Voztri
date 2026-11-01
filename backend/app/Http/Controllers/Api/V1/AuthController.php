@@ -21,11 +21,13 @@ class AuthController extends Controller
     {
         $validated = $request->validate([
             'phone' => 'required|string|min:10|max:20',
-            'role' => 'nullable|string|in:passenger,driver,admin',
+            // "admin" não é aceito: administradores só existem via seed/painel,
+            // nunca por autocadastro (antes qualquer telefone novo virava admin).
+            'role' => 'nullable|string|in:passenger,driver',
         ]);
 
         $phone = preg_replace('/\D/', '', $validated['phone']);
-        $role = $validated['role'] ?? 'passenger';
+        $requestedRole = $validated['role'] ?? 'passenger';
 
         // Em desenvolvimento/demonstração fixa o OTP ou gera aleatório
         $otpCode = '123456';
@@ -35,10 +37,14 @@ class AuthController extends Controller
             ['phone' => $phone],
             [
                 'name' => 'Usuário VOZTRI',
-                'role' => $role,
+                'role' => $requestedRole,
                 'status' => 'active',
             ]
         );
+
+        // O papel vem do usuário persistido, não da requisição: um admin ou
+        // motorista já existente não ganha registro de passageiro ao logar.
+        $role = $user->role;
 
         $user->otp_code = $otpCode;
         $user->otp_expires_at = $expiresAt;

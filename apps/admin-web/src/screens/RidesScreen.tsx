@@ -1,42 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { VoztriColors } from '@voztri/design-tokens';
+import { adminApi } from '../lib/api.js';
+import { useAsync } from '../lib/useAsync.js';
+import { categoryLabel, formatCents, formatDateTime, PAYMENT_LABELS, RIDE_STATUS } from '../lib/format.js';
+import { EmptyRow, ErrorBox, Loading, Pager } from '../components/States.js';
+
+const th: React.CSSProperties = { padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#7B7489', textTransform: 'uppercase' };
 
 export const RidesScreen: React.FC = () => {
-  const rides = [
-    {
-      id: 'ride-901',
-      passenger: 'Beatriz Lima',
-      driver: 'Carlos Eduardo Silva',
-      route: 'Av. Paulista, 1578 → Av. Faria Lima, 3477',
-      category: 'Pop',
-      price: 'R$ 24,50',
-      status: 'Concluída',
-      payment: 'Pix',
-      date: 'Hoje, 11:24',
-    },
-    {
-      id: 'ride-900',
-      passenger: 'Marcos Vinicius',
-      driver: 'Mariana Santos',
-      route: 'Shopping Morumbi → Aeroporto Congonhas',
-      category: 'Mulher',
-      price: 'R$ 32,00',
-      status: 'Concluída',
-      payment: 'Cartão',
-      date: 'Hoje, 10:45',
-    },
-    {
-      id: 'ride-899',
-      passenger: 'Fernanda Rocha',
-      driver: 'Rodrigo Albuquerque',
-      route: 'Vila Olímpia → Jardins',
-      category: 'Black',
-      price: 'R$ 48,00',
-      status: 'Concluída',
-      payment: 'Pix',
-      date: 'Hoje, 09:18',
-    },
-  ];
+  const [page, setPage] = useState(1);
+  const { data, error, loading, reload } = useAsync(() => adminApi.listRides(page), [page]);
+  const rides = data?.data ?? [];
 
   return (
     <div style={{ padding: 32, overflowY: 'auto', height: '100vh', boxSizing: 'border-box' }}>
@@ -49,55 +23,72 @@ export const RidesScreen: React.FC = () => {
         </p>
       </div>
 
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: 20,
-        boxShadow: '0 4px 16px rgba(11, 16, 38, 0.05)',
-        border: '1px solid #ECECFF',
-        overflow: 'hidden',
-      }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#F8F9FE', borderBottom: '1px solid #ECECFF' }}>
-              <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#7B7489', textTransform: 'uppercase' }}>Corrida ID</th>
-              <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#7B7489', textTransform: 'uppercase' }}>Passageiro</th>
-              <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#7B7489', textTransform: 'uppercase' }}>Motorista</th>
-              <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#7B7489', textTransform: 'uppercase' }}>Trajeto</th>
-              <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#7B7489', textTransform: 'uppercase' }}>Valor</th>
-              <th style={{ padding: '16px 20px', fontSize: 12, fontWeight: 800, color: '#7B7489', textTransform: 'uppercase' }}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rides.map((r) => (
-              <tr key={r.id} style={{ borderBottom: '1px solid #ECECFF' }}>
-                <td style={{ padding: '16px 20px', fontSize: 13, fontWeight: 700, color: VoztriColors.brand.primary }}>
-                  {r.id}
-                </td>
-                <td style={{ padding: '16px 20px', fontSize: 14, fontWeight: 600 }}>{r.passenger}</td>
-                <td style={{ padding: '16px 20px', fontSize: 14, fontWeight: 600 }}>{r.driver}</td>
-                <td style={{ padding: '16px 20px', fontSize: 13, color: '#494457' }}>{r.route}</td>
-                <td style={{ padding: '16px 20px', fontSize: 14, fontWeight: 800, color: '#151A31' }}>
-                  {r.price}
-                </td>
-                <td style={{ padding: '16px 20px' }}>
-                  <span style={{
-                    fontSize: 11,
-                    fontWeight: 800,
-                    padding: '4px 8px',
-                    borderRadius: 6,
-                    backgroundColor: '#E8F5E9',
-                    color: '#1B5E20',
-                    textTransform: 'uppercase',
-                  }}>
-                    {r.status}
-                  </span>
-                </td>
+      {error && <div style={{ marginBottom: 20 }}><ErrorBox message={error} onRetry={reload} /></div>}
+      {loading && !data && <Loading />}
+
+      {data && (
+        <div style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: 20,
+          boxShadow: '0 4px 16px rgba(11, 16, 38, 0.05)',
+          border: '1px solid #ECECFF',
+          overflow: 'hidden',
+        }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#F8F9FE', borderBottom: '1px solid #ECECFF' }}>
+                <th style={th}>Corrida</th>
+                <th style={th}>Passageiro</th>
+                <th style={th}>Motorista</th>
+                <th style={th}>Trajeto</th>
+                <th style={th}>Valor</th>
+                <th style={th}>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {rides.length === 0 && <EmptyRow colSpan={6} message="Nenhuma corrida registrada ainda." />}
+              {rides.map((r) => {
+                const st = RIDE_STATUS[r.status] ?? { label: r.status, bg: '#F4F6FA', fg: '#494457' };
+                return (
+                  <tr key={r.id} style={{ borderBottom: '1px solid #ECECFF' }}>
+                    <td style={{ padding: '16px 20px' }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: VoztriColors.brand.primary, fontFamily: 'monospace' }} title={r.id}>
+                        #{r.id.slice(0, 8)}
+                      </div>
+                      <span style={{ fontSize: 12, color: '#7B7489' }}>{formatDateTime(r.created_at)}</span>
+                    </td>
+                    <td style={{ padding: '16px 20px', fontSize: 14, fontWeight: 600 }}>{r.passenger?.user?.name ?? '—'}</td>
+                    <td style={{ padding: '16px 20px', fontSize: 14, fontWeight: 600 }}>{r.driver?.user?.name ?? '—'}</td>
+                    <td style={{ padding: '16px 20px', fontSize: 13, color: '#494457' }}>
+                      {r.pickup_address} → {r.dropoff_address}
+                      <div style={{ fontSize: 12, color: '#7B7489' }}>{categoryLabel(r.category)}</div>
+                    </td>
+                    <td style={{ padding: '16px 20px', fontSize: 14, fontWeight: 800, color: '#151A31', whiteSpace: 'nowrap' }}>
+                      {formatCents(r.final_price_cents ?? r.estimated_price_cents)}
+                      <div style={{ fontSize: 12, fontWeight: 500, color: '#7B7489' }}>{PAYMENT_LABELS[r.payment_method] ?? r.payment_method}</div>
+                    </td>
+                    <td style={{ padding: '16px 20px' }}>
+                      <span style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        padding: '4px 8px',
+                        borderRadius: 6,
+                        backgroundColor: st.bg,
+                        color: st.fg,
+                        textTransform: 'uppercase',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {st.label}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <Pager page={data.current_page} lastPage={data.last_page} total={data.total} onChange={setPage} />
+        </div>
+      )}
     </div>
   );
 };
-
