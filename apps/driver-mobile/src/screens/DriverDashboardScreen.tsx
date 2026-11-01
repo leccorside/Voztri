@@ -9,11 +9,18 @@ interface Props {
 }
 
 export const DriverDashboardScreen: React.FC<Props> = ({ onOpenEarnings }) => {
-  const { isOnline, toggleOnline, earnings, busy, logout, locationStatus, lastPosition } = useDriverStore();
+  const { isOnline, toggleOnline, earnings, busy, logout, locationStatus, lastPosition, backgroundMode } = useDriverStore();
+
+  const backgroundText =
+    backgroundMode === 'native' || backgroundMode === 'ios'
+      ? ' • também em segundo plano'
+      : backgroundMode === 'foreground-only'
+        ? ' • só com o app aberto'
+        : '';
 
   const gpsText =
     locationStatus === 'tracking' && lastPosition
-      ? `📍 GPS ativo • precisão ±${Math.round(lastPosition.accuracy)} m`
+      ? `📍 GPS ativo • precisão ±${Math.round(lastPosition.accuracy)} m${backgroundText}`
       : locationStatus === 'denied'
         ? '📍 Localização sem permissão'
         : locationStatus === 'unavailable'

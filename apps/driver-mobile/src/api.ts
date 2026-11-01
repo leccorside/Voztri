@@ -24,6 +24,11 @@ export const session = {
   },
 };
 
+/** Token da sessão atual (repassado ao serviço nativo de rastreamento). */
+export function currentToken(): string | null {
+  return token;
+}
+
 /** Chamado quando a API responde 401 (token expirado ou revogado). */
 export function onUnauthorized(handler: () => void): void {
   unauthorizedHandler = handler;

@@ -338,7 +338,10 @@ O endereço da API fica em `src/config.ts` de cada app: `http://10.0.2.2:8080/ap
 
 - **Passageiro:** o ponto de embarque é a posição do GPS, lida ao entrar no app. Sem permissão ou sem sinal, o app usa um endereço padrão, **avisa na tela inicial** e oferece "Usar minha localização" para tentar de novo. O SOS envia a posição do momento.
 - **Motorista:** só fica online com a permissão de localização. Enquanto está online, o app envia a posição para `/driver/location` (no máximo a cada 10 s, ou na hora se andar mais de 200 m), e o despacho oferece as corridas ao motorista mais próximo com posição recente (até 10 min).
-- O envio funciona **com o app aberto**; com o app em segundo plano o envio para (ainda não há serviço nativo em primeiro plano).
+- **Com o app em segundo plano ou a tela desligada**, o envio continua enquanto o motorista está online:
+  - **Android:** pelo `LocationTrackingService`, um serviço nativo em primeiro plano com a notificação fixa "Você está online no VOZTRI Driver". Ele envia direto para a API (não depende do JavaScript) e para quando o motorista fica offline ou sai da conta, ou se a API responder 401/403/404. Se o motorista tirar o app da lista de recentes, o serviço continua, porque ele segue online.
+  - **iOS:** o próprio app segue recebendo o GPS em segundo plano (`allowsBackgroundLocationUpdates`, ligado só no turno online; o `UIBackgroundModes: location` já está no `Info.plist`). O iOS mostra o indicador azul de localização.
+- **Permissões:** depois de ficar online, o app explica o motivo e pede à parte a localização em segundo plano: "Permitir o tempo todo" (`ACCESS_BACKGROUND_LOCATION`) no Android 10+ e "Sempre" no iOS. No Android 13+ também pede a permissão de notificação, para o aviso do serviço aparecer. Se o motorista recusar, o envio continua com o app aberto e, no Android, também pelo serviço iniciado com o app aberto.
 - **Emulador Android:** a posição padrão do emulador fica nos Estados Unidos. Defina uma posição em São Paulo em *Extended controls → Location* (por exemplo, `-23.561414, -46.655881`), senão as estimativas calculam a distância até lá. No simulador iOS: *Features → Location → Custom Location*.
 
 **Android** (JDK 17+, Android SDK 34 e um emulador ou aparelho com depuração USB):

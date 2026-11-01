@@ -1,6 +1,7 @@
 package br.com.voztri.driver
 
 import android.app.Application
+import br.com.voztri.driver.services.LocationTrackingPackage
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
@@ -17,8 +18,8 @@ class MainApplication : Application(), ReactApplication {
       object : DefaultReactNativeHost(this) {
         override fun getPackages(): List<ReactPackage> =
             PackageList(this).packages.apply {
-              // Packages that cannot be autolinked yet can be added manually here, for example:
-              // add(MyReactNativePackage())
+              // Módulo nativo do app (não autolinkado): rastreamento em segundo plano
+              add(LocationTrackingPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"

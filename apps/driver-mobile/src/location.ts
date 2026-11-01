@@ -1,12 +1,16 @@
 import Geolocation, { GeolocationError, GeolocationResponse } from '@react-native-community/geolocation';
 import { Permission, PermissionsAndroid, Platform } from 'react-native';
 
-// Permissões pedidas por este módulo (não pela biblioteca), sempre "durante o uso"
-Geolocation.setRNConfiguration({
+// Permissões pedidas por este módulo (não pela biblioteca). Atenção: a biblioteca
+// usa enableBackgroundLocationUpdates = true quando a opção não é informada; aqui
+// ela fica desligada e só é ligada no turno online (setBackgroundUpdates).
+const BASE_CONFIG = {
   skipPermissionRequests: true,
-  authorizationLevel: 'whenInUse',
-  locationProvider: 'auto',
-});
+  authorizationLevel: 'whenInUse' as const,
+  locationProvider: 'auto' as const,
+};
+let backgroundUpdates = false;
+Geolocation.setRNConfiguration({ ...BASE_CONFIG, enableBackgroundLocationUpdates: false });
 
 export type LocationPermission = 'granted' | 'denied' | 'blocked';
 
@@ -24,6 +28,11 @@ export interface DevicePosition {
 // Mesmos valores de PermissionsAndroid.PERMISSIONS.* (tipados como opcionais pelo noUncheckedIndexedAccess)
 const FINE_LOCATION: Permission = 'android.permission.ACCESS_FINE_LOCATION';
 const COARSE_LOCATION: Permission = 'android.permission.ACCESS_COARSE_LOCATION';
+const BACKGROUND_LOCATION: Permission = 'android.permission.ACCESS_BACKGROUND_LOCATION';
+const POST_NOTIFICATIONS: Permission = 'android.permission.POST_NOTIFICATIONS';
+
+/** Versão da API do Android (0 no iOS). */
+const androidApi = (): number => (Platform.OS === 'android' ? Number(Platform.Version) : 0);
 
 const PERMISSION_DENIED = 1;
 const TIMEOUT = 3;
@@ -79,6 +88,67 @@ export async function requestLocationPermission(): Promise<LocationPermission> {
       (err) => resolve(err.code === PERMISSION_DENIED ? 'blocked' : 'denied'),
     );
   });
+}
+
+/**
+ * iOS: liga/desliga o allowsBackgroundLocationUpdates do CLLocationManager
+ * (exige UIBackgroundModes: location no Info.plist, já declarado). Vale para os
+ * acompanhamentos iniciados depois da chamada. No Android não faz nada: lá o
+ * envio em segundo plano é feito pelo LocationTrackingService.
+ */
+export function setBackgroundUpdates(enabled: boolean): void {
+  if (Platform.OS !== 'ios' || backgroundUpdates === enabled) return;
+  backgroundUpdates = enabled;
+  Geolocation.setRNConfiguration({ ...BASE_CONFIG, enableBackgroundLocationUpdates: enabled });
+}
+
+/** A permissão de localização em segundo plano já foi concedida? */
+export async function hasBackgroundLocationPermission(): Promise<boolean> {
+  if (Platform.OS === 'android') {
+    // Antes do Android 10 a permissão comum já vale para o segundo plano
+    return androidApi() < 29 || PermissionsAndroid.check(BACKGROUND_LOCATION);
+  }
+  return false; // no iOS o status "sempre" só é conhecido ao pedir
+}
+
+/**
+ * Pede a localização em segundo plano, separada da "durante o uso" (exigência do
+ * Android 11+ e recomendação da Apple). Android: ACCESS_BACKGROUND_LOCATION (o
+ * sistema leva o usuário à opção "Permitir o tempo todo"). iOS: autorização
+ * "sempre" — se o usuário mantiver "durante o uso", o iOS não responde, por isso
+ * há um tempo limite.
+ */
+export async function requestBackgroundLocationPermission(): Promise<LocationPermission> {
+  if (Platform.OS === 'android') {
+    if (androidApi() < 29) return 'granted';
+    const result = await PermissionsAndroid.request(BACKGROUND_LOCATION);
+    if (result === PermissionsAndroid.RESULTS.GRANTED) return 'granted';
+    return result === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ? 'blocked' : 'denied';
+  }
+
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (value: LocationPermission) => {
+      if (done) return;
+      done = true;
+      // Volta ao nível "durante o uso" para os próximos pedidos
+      Geolocation.setRNConfiguration({ ...BASE_CONFIG, enableBackgroundLocationUpdates: backgroundUpdates });
+      resolve(value);
+    };
+    Geolocation.setRNConfiguration({ ...BASE_CONFIG, authorizationLevel: 'always', enableBackgroundLocationUpdates: true });
+    Geolocation.requestAuthorization(
+      () => finish('granted'),
+      (err) => finish(err.code === PERMISSION_DENIED ? 'blocked' : 'denied'),
+    );
+    setTimeout(() => finish('denied'), 20_000);
+  });
+}
+
+/** Android 13+: a notificação do serviço de rastreamento depende desta permissão. */
+export async function requestNotificationPermission(): Promise<boolean> {
+  if (androidApi() < 33) return true;
+  const result = await PermissionsAndroid.request(POST_NOTIFICATIONS);
+  return result === PermissionsAndroid.RESULTS.GRANTED;
 }
 
 function currentPosition(enableHighAccuracy: boolean, timeout: number): Promise<DevicePosition> {

@@ -16,6 +16,15 @@ export type SessionStatus = 'checking' | 'anonymous' | 'authenticated';
 /** off: offline; tracking: GPS acompanhando; denied/unavailable: sem localização. */
 export type LocationStatus = 'off' | 'tracking' | 'denied' | 'unavailable';
 
+/**
+ * Quem envia a posição com o app em segundo plano:
+ * native: LocationTrackingService (Android); ios: JS com allowsBackgroundLocationUpdates;
+ * foreground-only: o serviço não iniciou, o envio só acontece com o app aberto.
+ */
+export type BackgroundMode = 'off' | 'native' | 'ios' | 'foreground-only';
+
+export type BackgroundPermission = 'unknown' | 'granted' | 'denied';
+
 const PERMISSION_MESSAGE: Record<Exclude<LocationPermission, 'granted'>, string> = {
   denied: 'Permita o acesso à localização para ficar online e receber corridas próximas.',
   blocked: 'A localização está bloqueada para o VOZTRI Driver. Libere nas configurações do aparelho para ficar online.',
@@ -44,6 +53,10 @@ export interface DriverState {
   locationWarning: string | null;
   /** Último envio a /driver/location (controla o intervalo mínimo). */
   lastSentLocation: { at: number; position: DevicePosition } | null;
+  backgroundMode: BackgroundMode;
+  backgroundPermission: BackgroundPermission;
+  /** O aviso sobre a localização em segundo plano já apareceu nesta sessão. */
+  backgroundPromptShown: boolean;
 
   bootstrap: () => Promise<void>;
   requestCode: (phone: string) => Promise<string | null>;
@@ -65,6 +78,9 @@ export interface DriverState {
   setLocationStatus: (status: LocationStatus, warning?: string | null) => void;
   onLocationError: (error: LocationError) => void;
   onLocationPermission: (permission: LocationPermission) => void;
+  setBackgroundMode: (mode: BackgroundMode) => void;
+  setBackgroundPermission: (permission: BackgroundPermission) => void;
+  markBackgroundPromptShown: () => void;
 }
 
 const signedOut = {
@@ -81,6 +97,9 @@ const signedOut = {
   lastPosition: null,
   locationWarning: null,
   lastSentLocation: null,
+  backgroundMode: 'off' as BackgroundMode,
+  backgroundPermission: 'unknown' as BackgroundPermission,
+  backgroundPromptShown: false,
 };
 
 
@@ -207,6 +226,8 @@ export const useDriverStore = create<DriverState>((set, get) => {
     reportPosition: async (position, force = false) => {
       set({ lastPosition: position, locationStatus: 'tracking', locationWarning: null });
       if (!get().isOnline || get().sessionStatus !== 'authenticated') return;
+      // Com o serviço nativo ativo, ele é quem envia (inclusive em segundo plano)
+      if (get().backgroundMode === 'native') return;
 
       const now = Date.now();
       const lastSent = get().lastSentLocation;
@@ -240,6 +261,12 @@ export const useDriverStore = create<DriverState>((set, get) => {
         set({ locationStatus: 'unavailable', locationWarning: `${error.message} Sem ela você não recebe corridas próximas.` });
       }
     },
+
+    setBackgroundMode: (mode) => set({ backgroundMode: mode }),
+
+    setBackgroundPermission: (permission) => set({ backgroundPermission: permission }),
+
+    markBackgroundPromptShown: () => set({ backgroundPromptShown: true }),
 
     onLocationPermission: (permission) => {
       if (permission === 'granted') return;

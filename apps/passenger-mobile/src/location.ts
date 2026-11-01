@@ -1,11 +1,14 @@
 import Geolocation, { GeolocationError, GeolocationResponse } from '@react-native-community/geolocation';
 import { Permission, PermissionsAndroid, Platform } from 'react-native';
 
-// Permissões pedidas por este módulo (não pela biblioteca), sempre "durante o uso"
+// Permissões pedidas por este módulo (não pela biblioteca), sempre "durante o uso".
+// enableBackgroundLocationUpdates explícito: a biblioteca usa true quando a opção
+// não é informada, e o passageiro não precisa de localização em segundo plano.
 Geolocation.setRNConfiguration({
   skipPermissionRequests: true,
   authorizationLevel: 'whenInUse',
   locationProvider: 'auto',
+  enableBackgroundLocationUpdates: false,
 });
 
 export type LocationPermission = 'granted' | 'denied' | 'blocked';

@@ -40,15 +40,13 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
-      <!-- Serviço de rastreamento em segundo plano para despacho contínuo.
-           Desativado até a classe .services.LocationTrackingService ser implementada
-           (o manifest original declarava o serviço, mas a classe nunca existiu). -->
-      <!--
+      <!-- Serviço em primeiro plano que envia a posição para /driver/location durante o
+           turno online, inclusive com o app em segundo plano (iniciado pelo módulo
+           VoztriLocationTracking quando o motorista fica online). -->
       <service
         android:name=".services.LocationTrackingService"
         android:enabled="true"
         android:exported="false"
         android:foregroundServiceType="location" />
-      -->
     </application>
 </manifest>

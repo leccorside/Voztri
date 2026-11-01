@@ -6,6 +6,8 @@ import { App } from '../src/App';
 import { useDriverStore } from '../src/store/driverStore';
 import * as api from '../src/api';
 import * as location from '../src/location';
+import { backgroundTracking } from '../src/backgroundTracking';
+import { Alert } from 'react-native';
 import type { DevicePosition } from '../src/location';
 import {
   advanceAsync,
@@ -37,6 +39,12 @@ jest.mock('../src/api', () => ({
   billingApi: { requestPayout: jest.fn() },
   apiErrorCode: (err: { code?: string }) => err?.code ?? null,
   errorMessage: (err: { message?: string }) => err?.message ?? 'Erro',
+  currentToken: () => 'token-salvo',
+}));
+
+// Serviço nativo de rastreamento (Android); supported=false simula o iOS
+jest.mock('../src/backgroundTracking', () => ({
+  backgroundTracking: { supported: false, start: jest.fn(), stop: jest.fn(), status: jest.fn() },
 }));
 
 // GPS e permissões simulados: o teste controla a permissão e emite posições
@@ -55,6 +63,10 @@ jest.mock('../src/location', () => {
     requestLocationPermission: jest.fn(),
     getCurrentPosition: jest.fn(),
     watchPosition: jest.fn(),
+    hasBackgroundLocationPermission: jest.fn(),
+    requestBackgroundLocationPermission: jest.fn(),
+    requestNotificationPermission: jest.fn(),
+    setBackgroundUpdates: jest.fn(),
   };
 });
 
@@ -68,7 +80,18 @@ const m = api as unknown as {
   rideApi: Record<'validatePin' | 'completeRide', jest.Mock>;
   billingApi: Record<'requestPayout', jest.Mock>;
 };
-const loc = location as unknown as Record<'requestLocationPermission' | 'getCurrentPosition' | 'watchPosition', jest.Mock>;
+const loc = location as unknown as Record<
+  | 'requestLocationPermission'
+  | 'getCurrentPosition'
+  | 'watchPosition'
+  | 'hasBackgroundLocationPermission'
+  | 'requestBackgroundLocationPermission'
+  | 'requestNotificationPermission'
+  | 'setBackgroundUpdates',
+  jest.Mock
+>;
+const bg = backgroundTracking as unknown as { supported: boolean } & Record<'start' | 'stop' | 'status', jest.Mock>;
+let alertSpy: jest.SpyInstance;
 
 const position = (latitude: number, longitude: number, over: Partial<DevicePosition> = {}): DevicePosition => ({
   latitude,
@@ -177,6 +200,13 @@ beforeEach(() => {
   m.driverApi.updateLocation.mockResolvedValue(undefined);
 
   gps = null;
+  bg.supported = false;
+  bg.start.mockResolvedValue(true);
+  bg.stop.mockResolvedValue(undefined);
+  loc.hasBackgroundLocationPermission.mockResolvedValue(true); // sem aviso, a não ser nos testes do aviso
+  loc.requestBackgroundLocationPermission.mockResolvedValue('granted');
+  loc.requestNotificationPermission.mockResolvedValue(true);
+  alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
   loc.requestLocationPermission.mockResolvedValue('granted');
   loc.getCurrentPosition.mockResolvedValue(position(-23.5615, -46.6559));
   loc.watchPosition.mockImplementation((onPosition: (p: DevicePosition) => void) => {
@@ -190,6 +220,7 @@ beforeEach(() => {
 
 afterEach(() => {
   act(() => tree?.unmount());
+  alertSpy.mockRestore();
   jest.useRealTimers();
 });
 
@@ -449,6 +480,101 @@ describe('driver-mobile integrado à API', () => {
     await pressAsync(tree, 'Disponibilidade para corridas');
     expect(stop).toHaveBeenCalled();
     expect(visibleText(tree)).not.toContain('GPS');
+  });
+
+  describe('segundo plano', () => {
+    it('Android: inicia o serviço nativo, que passa a ser o único a enviar', async () => {
+      bg.supported = true;
+      await renderLoggedIn();
+
+      expect(loc.requestNotificationPermission).toHaveBeenCalled();
+      expect(bg.start).toHaveBeenCalledWith({
+        apiUrl: 'http://localhost:8080/api/v1',
+        token: 'token-salvo',
+        intervalMs: 10_000,
+        distanceM: 200,
+        distanceFilterM: 25,
+      });
+      expect(loc.setBackgroundUpdates).not.toHaveBeenCalledWith(true);
+
+      // O GPS do JS só atualiza a tela; quem envia é o serviço
+      m.driverApi.updateLocation.mockClear();
+      await act(async () => gps!.emit(position(-23.5615, -46.6559)));
+      expect(m.driverApi.updateLocation).not.toHaveBeenCalled();
+      expectNoStrayText(tree);
+      expect(visibleText(tree)).toContain('GPS ativo • precisão ±8 m • também em segundo plano');
+    });
+
+    it('Android: se o serviço não iniciar, o app envia pelo JS e avisa', async () => {
+      bg.supported = true;
+      bg.start.mockResolvedValue(false);
+      await renderLoggedIn();
+      m.driverApi.updateLocation.mockClear();
+
+      await act(async () => gps!.emit(position(-23.5615, -46.6559)));
+      expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(1);
+      expect(visibleText(tree)).toContain('• só com o app aberto');
+    });
+
+    it('para o serviço ao ficar offline, mas não ao desmontar a tela', async () => {
+      bg.supported = true;
+      await renderLoggedIn();
+      expect(bg.start).toHaveBeenCalled();
+
+      await pressAsync(tree, 'Disponibilidade para corridas');
+      expect(bg.stop).toHaveBeenCalled();
+      expect(loc.setBackgroundUpdates).toHaveBeenLastCalledWith(false);
+
+      // Online de novo: a tela destruída (app tirado dos recentes) não derruba o serviço
+      await pressAsync(tree, 'Disponibilidade para corridas');
+      bg.stop.mockClear();
+      act(() => tree.unmount());
+      expect(bg.stop).not.toHaveBeenCalled();
+      tree = renderer.create(<View />); // o afterEach desmonta
+    });
+
+    it('iOS: liga as atualizações em segundo plano do GPS no turno online', async () => {
+      await renderLoggedIn();
+      expect(bg.start).not.toHaveBeenCalled();
+      expect(loc.setBackgroundUpdates).toHaveBeenCalledWith(true);
+      await act(async () => gps!.emit(position(-23.5615, -46.6559)));
+      expect(m.driverApi.updateLocation).toHaveBeenCalled(); // no iOS quem envia é o JS
+      expect(visibleText(tree)).toContain('também em segundo plano');
+    });
+
+    it('explica e pede a localização em segundo plano à parte, uma vez por sessão', async () => {
+      loc.hasBackgroundLocationPermission.mockResolvedValue(false);
+      await renderLoggedIn();
+
+      expect(alertSpy).toHaveBeenCalledTimes(1);
+      const [title, message, buttons] = alertSpy.mock.calls[0]!;
+      expect(title).toBe('Localização em segundo plano');
+      expect(message).toContain('Ela nunca é usada quando você está offline.');
+      expect(loc.requestBackgroundLocationPermission).not.toHaveBeenCalled(); // só depois do aviso
+
+      await act(async () => {
+        (buttons as { text: string; onPress: () => void }[]).find((b) => b.text === 'Continuar')!.onPress();
+      });
+      await settle();
+      expect(loc.requestBackgroundLocationPermission).toHaveBeenCalledTimes(1);
+      expect(useDriverStore.getState().backgroundPermission).toBe('granted');
+
+      // Offline e online de novo na mesma sessão: não pergunta outra vez
+      await pressAsync(tree, 'Disponibilidade para corridas');
+      await pressAsync(tree, 'Disponibilidade para corridas');
+      expect(alertSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('não insiste se o motorista recusar o aviso', async () => {
+      loc.hasBackgroundLocationPermission.mockResolvedValue(false);
+      await renderLoggedIn();
+      const buttons = alertSpy.mock.calls[0]![2] as { text: string; onPress: () => void }[];
+      await act(async () => buttons.find((b) => b.text === 'Agora não')!.onPress());
+      expect(loc.requestBackgroundLocationPermission).not.toHaveBeenCalled();
+      expect(useDriverStore.getState().backgroundPermission).toBe('denied');
+      await act(async () => gps!.emit(position(-23.5615, -46.6559)));
+      expect(visibleText(tree)).toContain('GPS ativo'); // segue funcionando em primeiro plano
+    });
   });
 
   it('retoma a sessão salva e sai da conta', async () => {

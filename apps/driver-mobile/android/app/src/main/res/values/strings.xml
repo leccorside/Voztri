@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">VOZTRI Driver</string>
+
+    <!-- Rastreamento em segundo plano (LocationTrackingService) -->
+    <string name="tracking_channel_name">Localização durante o turno</string>
+    <string name="tracking_channel_description">Aviso fixo enquanto o VOZTRI Driver envia sua localização para receber corridas próximas.</string>
+    <string name="tracking_notification_title">Você está online no VOZTRI Driver</string>
+    <string name="tracking_notification_text">Enviando sua localização para receber corridas próximas.</string>
 </resources>
