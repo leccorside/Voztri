@@ -21,7 +21,7 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@react-native/metro-config": "^0.74.89",
     "typescript": "^5.4.5"
   }
 }
-

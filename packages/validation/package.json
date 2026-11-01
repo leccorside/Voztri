@@ -2,6 +2,7 @@
   "name": "@voztri/validation",
   "version": "1.0.0",
   "main": "./dist/index.js",
+  "react-native": "./src/index.ts",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
@@ -14,4 +15,3 @@
     "typescript": "^5.4.5"
   }
 }
-
