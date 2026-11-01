@@ -256,3 +256,4 @@ Consulte as instruções completas no documento [docs/guia-build-ios.md](file://
 ## 📄 Licença
 
 Este software é um produto proprietário da **VOZTRI Tecnologia em Mobilidade Urbana**. Todos os direitos reservados.
+
