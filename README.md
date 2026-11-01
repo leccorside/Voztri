@@ -1,259 +1,392 @@
-# VOZTRI — Plataforma Completa de Mobilidade Urbana
+<div align="center">
 
-<p align="center">
-  <img src="packages/design-tokens/assets/logo-fundo-claro.png" alt="VOZTRI Logo" width="320" />
-</p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="packages/design-tokens/assets/logo-fundo-escuro.png">
+  <source media="(prefers-color-scheme: light)" srcset="packages/design-tokens/assets/logo-fundo-claro.png">
+  <img src="packages/design-tokens/assets/logo-fundo-claro.png" alt="VOZTRI — Mobilidade Urbana" width="520">
+</picture>
 
-<p align="center">
-  <strong>Solução de mobilidade urbana completa, escalável e 100% independente de APIs pagas de mapas.</strong><br>
-  Desenvolvida com arquitetura de alta concorrência para o mercado brasileiro, em conformidade com a <em>Lei nº 13.640/2018</em> e a <em>LGPD</em>.
-</p>
+### Mobilidade inteligente. Tecnologia que conecta caminhos.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/PHP-8.3-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.3" />
-  <img src="https://img.shields.io/badge/Laravel-11-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 11" />
-  <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
-  <img src="https://img.shields.io/badge/PostGIS-3.4-336791?style=for-the-badge&logo=postgis&logoColor=white" alt="PostGIS" />
-  <img src="https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
-  <img src="https://img.shields.io/badge/React_Native-0.74-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React Native" />
-  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
-</p>
+**Ecossistema de mobilidade urbana para passageiros, motoristas e operação, com serviços geoespaciais open source e arquitetura preparada para Android e iOS.**
 
----
+![PHP](https://img.shields.io/badge/PHP-8.3-777BB4?style=flat-square&logo=php&logoColor=white)
+![Laravel](https://img.shields.io/badge/Laravel-11-FF2D20?style=flat-square&logo=laravel&logoColor=white)
+![React Native](https://img.shields.io/badge/React_Native-0.74-61DAFB?style=flat-square&logo=react&logoColor=black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![PostGIS](https://img.shields.io/badge/PostGIS-3.4-336791?style=flat-square)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
 
-## 📌 Sumário
+**[Visão geral](#visão-geral)** · **[Funcionalidades](#funcionalidades)** · **[Instalação](#início-rápido)** · **[Arquitetura](#arquitetura)** · **[Identidade visual](#identidade-visual)**
 
-1. [Visão Geral & Missão](#-visão-geral--missão)
-2. [Identidade Visual & Experiência](#-identidade-visual--experiência)
-3. [Stack Tecnológica](#-stack-tecnológica)
-4. [Estrutura do Monorepo](#-estrutura-do-monorepo)
-5. [Início Rápido com Docker](#-início-rápido-com-docker)
-6. [Módulos e Funcionalidades](#-módulos-e-funcionalidades)
-   - [Aplicativo do Passageiro](#aplicativo-do-passageiro)
-   - [Aplicativo do Motorista](#aplicativo-do-motorista)
-   - [Painel Administrativo Master](#painel-administrativo-master)
-   - [Motor de Despacho & Concorrência](#motor-de-despacho--concorrência)
-   - [Sistema Financeiro & Ledger Imutável](#sistema-financeiro--ledger-imutável)
-   - [Infraestrutura de Mapas Open Source](#infraestrutura-de-mapas-open-source)
-7. [Testes & Observabilidade](#-testes--observabilidade)
-8. [Compilação Android & iOS](#-compilação-android--ios)
-9. [Conformidade Legal & LGPD](#-conformidade-legal--lgpd)
+</div>
 
 ---
 
-## 🚀 Visão Geral & Missão
+## ✨ Visão geral
 
-A **VOZTRI** é uma plataforma real de transporte individual e mobilidade urbana, concebida para oferecer uma experiência de nível industrial equivalente aos principais líderes de mercado (Uber e 99). 
+A **VOZTRI** é uma plataforma de mobilidade urbana projetada para reunir solicitações de corridas, gestão de motoristas, operações em tempo real e controles financeiros em um único ecossistema.
 
-O sistema integra:
-- **Zero Dependência de APIs Pagas de Mapas**: Toda a infraestrutura cartográfica, geocodificação e cálculo viário baseia-se em **OpenStreetMap (OSM)**, **OSRM** e **Photon/Pelias**.
-- **Alta Resiliência e Concorrência**: Despacho inteligente com travas atômicas distribuídas em **Redis** e consultas espaciais ultrarrápidas no **PostGIS**.
-- **Integridade Contábil Estrita**: Todas as operações financeiras são regidas por um **Ledger de partidas dobradas** com precisão decimal exata em centavos inteiros.
-- **Multiplataforma Pronta**: Código TypeScript compartilhado entre passageiro, motorista e painel web, com preparação arquitetural completa para **Android** e **iOS**.
+Seu projeto técnico prioriza **autonomia sobre a infraestrutura de mapas**, **concorrência segura no despacho de corridas**, **rastreabilidade financeira** e **experiência mobile-first**. A proposta é oferecer uma alternativa tecnológica para o mercado brasileiro, com funcionalidades comparáveis às principais plataformas de mobilidade.
 
----
+> [!IMPORTANT]
+> Este README descreve a arquitetura e os recursos previstos na documentação do projeto. A existência de um recurso nesta lista não comprova, por si só, que ele já esteja implantado, homologado ou disponível em produção. Integrações, segurança, regras locais e exigências regulatórias precisam de validação antes do lançamento.
 
-## 🎨 Identidade Visual & Experiência
+### Destaques da solução
 
-A plataforma utiliza o design system proprietário **Urban Mobility Kinetic System**:
+| 🗺️ Mapas abertos | ⚡ Operação em tempo real | 🔐 Corridas seguras | 💳 Finanças rastreáveis |
+|:---:|:---:|:---:|:---:|
+| OpenStreetMap, OSRM, Photon e MapLibre | Redis, PostGIS e Laravel Reverb | PIN de embarque, máquina de estados e controle de aceite | Ledger de partidas dobradas com valores em centavos |
 
-| Elemento | Especificação | Aplicação |
-| :--- | :--- | :--- |
-| **Cor Principal** | `#6A00FF` | Botões de ação primária, botões de solicitação, destaques |
-| **Primária Escura** | `#4F00C3` | Topbars, modais de estado elevado, texto de destaque |
-| **Roxo Claro** | `#9B4DFF` | Gradientes da marca, ícones ativos |
-| **Lavanda** | `#C9B2FF` | Chips de categorias, estados de hover |
-| **Superfície Escura** | `#0B1026` | Dark Mode, HUD de navegação noturna e painel admin |
-| **Superfície Clara** | `#F4F6FA` / `#FBF8FF` | Fundo das aplicações e cards limpos |
-| **Tipografia** | **Montserrat** | Pesos 800 (Display), 700 (Headline), 600 (Title), 400 (Body) |
+## 🧭 Sumário
 
----
-
-## 🛠 Stack Tecnológica
-
-### Backend & Serviços
-- **Linguagem / Framework**: PHP 8.3 & Laravel 11 (Domain-Driven Design Modular)
-- **Autenticação**: Laravel Sanctum (Tokens Bearer com expiração e revogação)
-- **WebSockets / Tempo Real**: Laravel Reverb & Redis Pub/Sub
-- **Banco de Dados**: PostgreSQL 16 com extensão espacial PostGIS 3.4
-- **Cache & Chaves Rápidas**: Redis 7 In-Memory (`GEOADD`, `GEORADIUS`)
-- **Roteamento & Geocodificação**: OSRM Local (`driving/car.lua`) & Photon
-- **Storage de Mídia**: MinIO (compatível com AWS S3)
-- **Servidor Web**: Nginx Alpine com proxy reverso e proteção contra DDoS/Injection
-
-### Aplicativos Móveis (Passageiro e Motorista)
-- **Framework**: React Native com TypeScript
-- **Gerenciamento de Estado**: Zustand (alta performance sem re-renderizações desnecessárias)
-- **Mapas**: MapLibre GL Native (Renderização em hardware 60fps)
-- **Validação de Schemas**: Zod para tipagem ponta a ponta
-- **Feedback Tátil**: Haptic feedback integrado para confirmação de ações
-
-### Painel Administrativo Web
-- **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS
-- **Mapas ao Vivo**: MapLibre GL JS integrado com monitoramento operacional
+- [Visão geral](#visão-geral)
+- [Funcionalidades](#funcionalidades)
+- [Arquitetura](#arquitetura)
+- [Stack tecnológica](#stack-tecnológica)
+- [Identidade visual](#identidade-visual)
+- [Estrutura do monorepo](#estrutura-do-monorepo)
+- [Início rápido](#início-rápido)
+- [Serviços locais](#serviços-locais)
+- [Testes e observabilidade](#testes-e-observabilidade)
+- [Aplicativos Android e iOS](#aplicativos-android-e-ios)
+- [Segurança e conformidade](#segurança-e-conformidade)
+- [Documentação complementar](#documentação-complementar)
+- [Licença](#licença)
 
 ---
 
-## 📂 Estrutura do Monorepo
+## 📱 Funcionalidades
+
+<details open>
+<summary><b>🚕 Aplicativo do passageiro</b></summary>
+
+- **Mapa interativo:** localização em tempo real, visualização de veículos e estimativas de chegada.
+- **Categorias de viagem:** VozTri Pop, VozTri Black, VozTri Mulher e VozTri Moto.
+- **Embarque por PIN:** código de quatro dígitos para validar o início da corrida.
+- **Recursos de segurança:** central SOS e contatos de confiança previstos no fluxo da aplicação.
+- **Avaliações e gorjetas:** nota de 1 a 5 estrelas, elogios e valores sugeridos.
+
+</details>
+
+<details open>
+<summary><b>🚘 Aplicativo do motorista</b></summary>
+
+- **Disponibilidade online/offline:** atualização de status e posição no índice geoespacial.
+- **Painel de ganhos:** receitas, viagens realizadas e avaliação.
+- **Ofertas de corrida:** janela de aceite com contagem regressiva e valor líquido estimado.
+- **Navegação:** informações de manobra e validação do PIN de embarque.
+- **Repasses:** extrato e fluxo projetado para solicitações de transferência via Pix, dependente de integração financeira.
+
+</details>
+
+<details open>
+<summary><b>🖥️ Painel administrativo Master</b></summary>
+
+- **Mapa operacional:** acompanhamento geográfico de motoristas e corridas.
+- **Homologação:** análise de documentação, CNH com EAR e CRLV.
+- **Tarifas:** configuração de preço base, por quilômetro e por minuto conforme a região.
+- **Auditoria:** rastreamento de intervenções administrativas com IP e data/hora.
+
+</details>
+
+<details>
+<summary><b>⚙️ Despacho, concorrência e ciclo da corrida</b></summary>
+
+- **Busca concêntrica:** expansão de procura em raios de 2, 5, 8 e 12 km.
+- **Controle de aceite:** locks distribuídos com Redis para evitar dupla atribuição.
+- **Estados explícitos:** transições de corrida verificáveis e auditáveis.
+
+```mermaid
+stateDiagram-v2
+    [*] --> REQUESTED
+    REQUESTED --> SEARCHING
+    SEARCHING --> OFFERED
+    OFFERED --> ACCEPTED
+    ACCEPTED --> DRIVER_EN_ROUTE
+    DRIVER_EN_ROUTE --> DRIVER_ARRIVED
+    DRIVER_ARRIVED --> IN_PROGRESS
+    IN_PROGRESS --> COMPLETED
+    REQUESTED --> CANCELLED
+    SEARCHING --> CANCELLED
+    OFFERED --> CANCELLED
+    ACCEPTED --> CANCELLED
+    DRIVER_EN_ROUTE --> CANCELLED
+    DRIVER_ARRIVED --> CANCELLED
+    COMPLETED --> [*]
+    CANCELLED --> [*]
+```
+
+</details>
+
+<details>
+<summary><b>💰 Financeiro e ledger</b></summary>
+
+- **Precisão monetária:** representação por centavos inteiros (`amount_cents`).
+- **Partidas dobradas:** lançamentos contábeis equilibrados.
+- **Rastreabilidade:** ajustes realizados por lançamentos compensatórios, sem apagar o histórico.
+- **Regra documentada:** exemplo de participação de 15% para a plataforma, sujeito à configuração comercial.
+
+</details>
+
+---
+
+## 🏗️ Arquitetura
+
+```mermaid
+flowchart TB
+    P[📱 App Passageiro] --> API[Laravel API REST]
+    M[🚘 App Motorista] --> API
+    A[🖥️ Painel Master] --> API
+    API --> DB[(PostgreSQL + PostGIS)]
+    API --> R[(Redis)]
+    API --> RT[Laravel Reverb]
+    API --> GEO[OSRM + Photon]
+    API --> S[(MinIO)]
+    RT --> P
+    RT --> M
+    RT --> A
+    GEO --> OSM[Dados OpenStreetMap]
+```
+
+A arquitetura documentada combina **domínios de negócio em Laravel**, APIs REST, eventos por WebSocket, índices espaciais e persistência financeira. O uso de dados OSM e serviços cartográficos auto-hospedados reduz a dependência de APIs comerciais, mas **não elimina custos de infraestrutura, armazenamento, tráfego ou operação**.
+
+## 🧰 Stack tecnológica
+
+| Camada | Tecnologias |
+|---|---|
+| **Backend** | PHP 8.3, Laravel 11, Sanctum, Reverb |
+| **Banco e geodados** | PostgreSQL 16, PostGIS 3.4 |
+| **Cache e geolocalização** | Redis 7, índices GEO, Pub/Sub |
+| **Apps móveis** | React Native 0.74, TypeScript, Zustand, Zod |
+| **Mapas mobile/web** | MapLibre GL Native, MapLibre GL JS |
+| **Painel administrativo** | React 18, Vite, Tailwind CSS |
+| **Rotas e geocodificação** | OpenStreetMap, OSRM, Photon / Pelias |
+| **Arquivos e mídia** | MinIO, compatibilidade S3 |
+| **Infraestrutura** | Docker Compose, Nginx Alpine |
+| **Testes e monitoramento** | Testes Laravel, k6, Prometheus |
+
+---
+
+## 🎨 Identidade visual
+
+O design system **Urban Mobility Kinetic System** combina contrastes intensos, superfícies limpas e um gradiente violeta característico da VOZTRI.
+
+<div align="center">
+  <img src="packages/design-tokens/assets/identidade-visual.png" alt="Painel de identidade visual VOZTRI, com aplicações da marca" width="900">
+</div>
+
+### Paleta oficial
+
+| Cor | Hex | Uso |
+|---|---|---|
+| 🟣 Roxo principal | `#6A00FF` | Ações primárias e destaques |
+| 🟪 Roxo escuro | `#4F00C3` | Superfícies e elementos de ênfase |
+| 💜 Roxo claro | `#9B4DFF` | Gradientes e estados ativos |
+| 🌸 Lavanda | `#C9B2FF` | Chips e interações secundárias |
+| 🌑 Azul escuro | `#0B1026` | Fundo dark e navegação noturna |
+| ⚪ Cinza claro | `#F4F6FA` | Superfícies claras |
+
+**Tipografia:** Montserrat · Display 800 · Headline 700 · Título 600 · Corpo 400.
+
+### Variações da marca
+
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="packages/design-tokens/assets/icone-fundo-escuro.png">
+    <source media="(prefers-color-scheme: light)" srcset="packages/design-tokens/assets/icone-fundo-claro.png">
+    <img src="packages/design-tokens/assets/icone-fundo-claro.png" alt="Ícone da VOZTRI, com versões para temas claro e escuro" width="200">
+  </picture>
+</div>
+
+> Os arquivos da marca usados neste documento devem estar em `packages/design-tokens/assets/` para que sejam exibidos corretamente no GitHub.
+
+---
+
+## 🗂️ Estrutura do monorepo
 
 ```text
 voztri/
 ├── apps/
-│   ├── passenger-mobile/       # App Passageiro (React Native)
-│   ├── driver-mobile/          # App Motorista (React Native)
-│   └── admin-web/              # Painel Administrativo Master (React + Vite)
+│   ├── passenger-mobile/           # React Native: passageiro
+│   ├── driver-mobile/              # React Native: motorista
+│   └── admin-web/                  # React + Vite: administração
 ├── backend/
 │   ├── app/
-│   │   ├── Domain/             # Entidades, Enums, Máquinas de Estado e Regras de Negócio
-│   │   ├── Application/        # Casos de Uso (UseCases) e DTOs
-│   │   ├── Infrastructure/     # Repositórios PostGIS, Redis Geo, OSRM e Gateways
-│   │   ├── Http/               # Controllers REST v1, FormRequests e Middlewares
-│   │   └── Events/             # Eventos WebSocket (Reverb)
-│   ├── database/               # Migrations PostGIS e Seeders com dados de SP
-│   ├── routes/                 # api.php, web.php, channels.php (WebSockets)
-│   └── tests/                  # Testes Unitários e de Concorrência
+│   │   ├── Domain/                # Entidades, enums e regras
+│   │   ├── Application/           # Casos de uso e DTOs
+│   │   ├── Infrastructure/        # PostGIS, Redis e gateways
+│   │   ├── Http/                  # REST, validações e middlewares
+│   │   └── Events/                # Eventos em tempo real
+│   ├── database/                   # Migrations e seeders
+│   ├── routes/                     # api.php, web.php, channels.php
+│   └── tests/                      # Testes automatizados
 ├── packages/
-│   ├── design-tokens/          # Cores (#6A00FF), Tipografia Montserrat e Assets
-│   ├── shared-types/           # Tipagens e DTOs TypeScript compartilhados
-│   ├── validation/             # Esquemas de validação Zod
-│   ├── localization/           # Suporte a pt-BR, en-US e es-ES
-│   └── api-client/             # Cliente HTTP Axios com interceptors e renovação de token
+│   ├── design-tokens/              # Marca, cores e tipografia
+│   ├── shared-types/               # Tipos compartilhados
+│   ├── validation/                 # Esquemas Zod
+│   ├── localization/               # pt-BR, en-US, es-ES
+│   └── api-client/                 # Cliente HTTP
 ├── infrastructure/
-│   ├── docker/                 # Dockerfile PHP 8.3-FPM
-│   ├── nginx/                  # Configuração de proxy e cabeçalhos de segurança
-│   ├── maps/                   # Instruções e grafo OSRM local
-│   ├── monitoring/             # Prometheus e script k6 de carga
-│   └── scripts/                # Scripts de build Android (.bat e .sh)
-├── docs/                       # Especificações arquiteturais e manuais de release
-├── docker-compose.yml          # Orquestrador completo dos serviços de backend
-├── CONTEXTO.md                 # Visão geral e estado vivo do projeto
-├── DOCUMENTACAO.md             # Guia técnico aprofundado e documentação de rotas
-└── PASSOS.md                   # Registro histórico de todas as 12 fases executadas
+│   ├── docker/
+│   ├── nginx/
+│   ├── maps/
+│   ├── monitoring/
+│   └── scripts/
+├── docs/
+├── docker-compose.yml
+├── CONTEXTO.md
+├── DOCUMENTACAO.md
+└── PASSOS.md
 ```
 
 ---
 
-## ⚡ Início Rápido com Docker
+## 🚀 Início rápido
 
-Toda a infraestrutura de backend, banco de dados e mensageria é executada via Docker:
+### Pré-requisitos
+
+- Git e Docker com Docker Compose.
+- Recursos de CPU, RAM e armazenamento suficientes para serviços e dados de mapas.
+- Android Studio para builds Android; macOS e Xcode para builds iOS.
+- Configurações de ambiente e credenciais locais conforme `.env.example`.
+
+### 1. Obtenha o código
 
 ```bash
-# 1. Clone o repositório
-git clone https://github.com/seu-usuario/voztri.git
+git clone <URL_DO_SEU_REPOSITORIO>
 cd voztri
+```
 
-# 2. Crie o arquivo de configuração de ambiente
+### 2. Configure o ambiente
+
+```bash
 cp .env.example .env
+```
 
-# 3. Suba todos os containers orquestrados
+> No Windows PowerShell, use `Copy-Item .env.example .env`.
+
+### 3. Inicie os serviços
+
+```bash
 docker compose up -d --build
+```
 
-# 4. Execute as migrações do banco com as tabelas espaciais PostGIS e dados iniciais
-docker compose exec app php artisan migrate --seed
+### 4. Inicialize o Laravel
 
-# 5. Gere as chaves de criptografia e cache
+```bash
 docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate --seed
 docker compose exec app php artisan config:cache
 ```
 
-### Portas e Serviços Locais
+> [!NOTE]
+> Os comandos consideram que o serviço PHP no `docker-compose.yml` se chama `app`. Ajuste o nome caso o Compose do seu ambiente seja diferente. Os dados cartográficos do OSRM podem exigir uma etapa de preparação documentada em `infrastructure/maps/`.
 
-| Serviço | URL Local | Descrição |
-| :--- | :--- | :--- |
-| **API REST v1** | `http://localhost:8080/api/v1` | Endpoints centrais de corridas e autenticação |
-| **Painel Admin Web** | `http://localhost:3000` | Dashboard operacional master |
-| **Servidor WebSocket** | `ws://localhost:8081` | Laravel Reverb para eventos em tempo real |
-| **PostgreSQL + PostGIS**| `localhost:5432` | Banco de dados geoespacial (`voztri_db`) |
-| **Redis In-Memory** | `localhost:6379` | Cache de alta velocidade e `driver_geo` |
-| **Mailpit (Dev SMTP)** | `http://localhost:8025` | Interface web para leitura de códigos OTP/SMS |
-| **MinIO Console** | `http://localhost:9001` | Armazenamento de fotos de CNH/CRLV |
+## 🌐 Serviços locais
 
----
+| Serviço | Endereço de desenvolvimento | Finalidade |
+|---|---|---|
+| API REST v1 | `http://localhost:8080/api/v1` | Autenticação e corridas |
+| Admin web | `http://localhost:3000` | Gestão operacional |
+| Laravel Reverb | `ws://localhost:8081` | Eventos por WebSocket |
+| PostgreSQL / PostGIS | `localhost:5432` | Persistência geoespacial |
+| Redis | `localhost:6379` | Cache e posição de motoristas |
+| Mailpit | `http://localhost:8025` | Visualização de e-mails em desenvolvimento |
+| MinIO Console | `http://localhost:9001` | Gestão de objetos e documentos |
 
-## 📱 Módulos e Funcionalidades
-
-### Aplicativo do Passageiro
-- **Mapa Interativo**: Localização em tempo real com indicador cinético e veículos próximos simulados com ETA.
-- **Categorias Diversificadas**:
-  - `VozTri Pop`: Viagens diárias com máxima economia.
-  - `VozTri Black`: Frotas executivas de alto padrão.
-  - `VozTri Mulher`: Opção exclusiva de motoristas mulheres para passageiras.
-  - `VozTri Moto`: Deslocamentos rápidos com custo até 40% menor.
-- **Código de Embarque (PIN)**: PIN de 4 dígitos em alta visibilidade gerado dinamicamente para validação obrigatória no início da viagem.
-- **Central de Emergência SOS 24h**: Acionamento em um clique que alerta a equipe de monitoramento e envia a rota aos contatos de confiança, desativável apenas com PIN de segurança.
-- **Avaliações & Gorjetas**: Avaliação de 1 a 5 estrelas com opções de gorjeta (+R$ 2, +R$ 5, +R$ 10) e tags de elogio.
-
-### Aplicativo do Motorista
-- **Painel Operacional**: Botão deslizante / toggle Online/Offline com atualização imediata no Redis GEO.
-- **HUD de Ganhos Diários**: Exibição consolidada dos ganhos do dia, viagens concluídas e avaliação com detalhamento de metas.
-- **Modal de Oferta de Corrida**: Contagem regressiva de 15 segundos exibindo valor líquido, distância de embarque e endereço de destino.
-- **Navegação Curva a Curva**: Informações de manobra em tempo real, velocímetro dinâmico e validação de PIN de embarque.
-- **Repasse Instantâneo Pix**: Extrato diário e semanal com botão para transferência imediata de saldo sem tarifas.
-
-### Painel Administrativo Master
-- **Live Operations Map**: Monitoramento geográfico ao vivo de todos os motoristas em trânsito e disponíveis.
-- **Homologação Documental**: Aprovação ou bloqueio de motoristas com validação de CNH com observação EAR e CRLV.
-- **Gestão de Tarifas**: Configuração de tarifa base, preço por km e minuto por cidade.
-- **Auditoria & Compliance**: Trilha imutável de todas as intervenções de operadores com registro de IP e timestamp.
-
-### Motor de Despacho & Concorrência
-- **Despacho Concêntrico**: Busca de motoristas qualificados em anéis progressivos de 2 km, 5 km, 8 km e 12 km.
-- **Proteção Atômica contra Duplo Aceite**: Locks distribuídos no Redis garantem que uma corrida oferecida não possa ser aceita simultaneamente por dois motoristas concorrentes.
-- **Máquina de Estados Rigorosa**: Transições auditadas: `REQUESTED` ➔ `SEARCHING` ➔ `OFFERED` ➔ `ACCEPTED` ➔ `DRIVER_EN_ROUTE` ➔ `DRIVER_ARRIVED` ➔ `IN_PROGRESS` ➔ `COMPLETED` / `CANCELLED`.
-
-### Sistema Financeiro & Ledger Imutável
-- **Sem Erros de Ponto Flutuante**: Todos os cálculos são executados com precisão inteira em centavos (`amount_cents`).
-- **Partidas Dobradas**: Todo fechamento de corrida gera crédito líquido para a conta do motorista e crédito de 15% para a plataforma com balanço contábil verificado.
+As portas representam a configuração descrita no projeto e podem variar conforme o arquivo Compose e o `.env`.
 
 ---
 
-## 🧪 Testes & Observabilidade
+## 🧪 Testes e observabilidade
 
-### Execução dos Testes Automatizados
+### Testes automatizados
+
 ```bash
-# Testes unitários de regras de negócio, cálculo de tarifas e Ledger
+# Ledger e consistência financeira
 docker compose exec app php artisan test --filter=LedgerServiceTest
+
+# Transições de estados de corrida
 docker compose exec app php artisan test --filter=RideStateMachineTest
 
-# Testes de concorrência e segurança de aceite de corridas
+# Concorrência e aceite seguro
 docker compose exec app php artisan test --filter=ConcurrencyAndSecurityTest
 ```
 
-### Teste de Carga com k6
-Para simular 100 usuários solicitando corridas simultaneamente:
+### Teste de carga
+
 ```bash
 k6 run infrastructure/monitoring/k6-load-test.js
 ```
 
+A documentação prevê um cenário de **100 solicitações simultâneas**. A capacidade efetiva deve ser medida em ambiente equivalente ao de produção; não é inferida apenas pela existência do script.
+
 ---
 
-## 📦 Compilação Android & iOS
+## 📦 Aplicativos Android e iOS
 
-### Android (Release APK & AAB)
-O projeto está configurado com otimização Hermes e ProGuard habilitado:
-```bash
-# Windows
+### Android
+
+```bat
+:: Windows
 infrastructure\scripts\build-android.bat
+```
 
+```bash
 # Linux / macOS
 chmod +x infrastructure/scripts/build-android.sh
 ./infrastructure/scripts/build-android.sh
 ```
 
-### iOS (Xcode & CocoaPods)
-Consulte as instruções completas no documento [docs/guia-build-ios.md](file:///d:/PROJETOS/VOZTRI/docs/guia-build-ios.md).
+Os builds Android foram planejados com **Hermes** e **ProGuard**; valide configurações de assinatura, permissões e geração dos artefatos APK/AAB no ambiente de release.
+
+### iOS
+
+A arquitetura React Native permite preparar o aplicativo para iOS, mas a compilação e publicação exigem configuração específica no **macOS com Xcode**, certificados e perfis de assinatura.
+
+Consulte: [`docs/guia-build-ios.md`](docs/guia-build-ios.md).
 
 ---
 
-## ⚖️ Conformidade Legal & LGPD
+## 🛡️ Segurança e conformidade
 
-1. **Lei nº 13.640/2018**: Os cadastros exigem comprovação de CNH na categoria B ou superior com observação **EAR** (Exerce Atividade Remunerada) e seguro APP para passageiros.
-2. **Minimização de Dados e Privacidade**: Os registros de telemetria GPS são vinculados à corrida ativa e limpos da memória operacional após a desconexão do motorista.
-3. **Imutabilidade Contábil**: Nenhuma transação pode ser excluída do sistema financeiro, permitindo apenas lançamentos compensatórios devidamente auditados.
+A solução foi concebida considerando requisitos brasileiros de mobilidade e proteção de dados:
+
+- **Mobilidade regulamentada:** observar a Lei nº 13.640/2018 e as regras municipais pertinentes; verificar documentação, habilitação com EAR, seguros e demais requisitos aplicáveis.
+- **LGPD:** limitar acesso a dados pessoais, definir retenção, políticas de privacidade e critérios para coleta de localização.
+- **Segurança das corridas:** PIN de embarque, controles de estado e trilhas de auditoria.
+- **Integridade financeira:** transações em centavos inteiros e registros compensatórios auditáveis.
+- **Operação confiável:** autenticação por token, validação de requisições, controles de concorrência e monitoramento.
+
+> [!WARNING]
+> A conformidade legal e a segurança operacional dependem de implementação, testes, processos e avaliação jurídica. Recursos como SOS, repasses Pix e monitoramento em tempo real não devem ser anunciados como garantidos sem validação ponta a ponta.
 
 ---
+
+## 📚 Documentação complementar
+
+| Documento | Conteúdo |
+|---|---|
+| [`CONTEXTO.md`](CONTEXTO.md) | Visão geral e contexto evolutivo do projeto |
+| [`DOCUMENTACAO.md`](DOCUMENTACAO.md) | Especificações técnicas e endpoints |
+| [`PASSOS.md`](PASSOS.md) | Histórico das fases de implementação |
+| [`docs/guia-build-ios.md`](docs/guia-build-ios.md) | Guia de compilação e preparação iOS |
+| [`infrastructure/maps/`](infrastructure/maps/) | Configuração dos dados e serviços cartográficos |
 
 ## 📄 Licença
 
-Este software é um produto proprietário da **VOZTRI Tecnologia em Mobilidade Urbana**. Todos os direitos reservados.
+**Software proprietário — VOZTRI Tecnologia em Mobilidade Urbana. Todos os direitos reservados.**
 
+Não é concedida licença de uso, modificação ou redistribuição por meio deste README. Consulte os responsáveis pelo projeto para obter autorização.
+
+---
+
+<div align="center">
+
+**VOZTRI · Mobilidade Urbana**
+
+*Tecnologia para conectar pessoas, trajetos e oportunidades.*
+
+</div>
