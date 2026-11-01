@@ -287,6 +287,9 @@ docker compose up -d --force-recreate app worker reverb
 
 # 3. Rode as migrations e o seed
 docker compose exec app php artisan migrate --seed
+
+# 4. Atenção ao repetir o seed: o DatabaseSeeder só cria registros, sem checar se eles já existem. Rodar migrate --seed de novo vai falhar por telefone e e-mail duplicados. Para recomeçar do zero, use:
+docker compose exec app php artisan migrate:fresh --seed
 ```
 
 > [!WARNING]
