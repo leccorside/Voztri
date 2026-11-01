@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Cor de fundo de icone-fundo-escuro.png (packages/design-tokens/assets) -->
+    <color name="ic_launcher_background">#08011E</color>
+</resources>

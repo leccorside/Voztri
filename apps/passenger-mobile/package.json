@@ -21,6 +21,10 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "@babel/runtime": "^7.29.10",
+    "@react-native/babel-preset": "^0.74.89",
     "@react-native/metro-config": "^0.74.89",
     "typescript": "^5.4.5"
   }

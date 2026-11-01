@@ -316,6 +316,39 @@ Acesse `http://localhost:3010` e entre com o administrador do seed: telefone **(
 > [!NOTE]
 > Todos os apps usam `react@18.2.0`, a versão exata exigida pelo `react-native@0.74`. Não suba o React de um app isoladamente: o `npm install` voltaria a falhar com `ERESOLVE`. Os pacotes `@voztri/*` entram no painel pelo código-fonte, via aliases no `vite.config.ts` e no `tsconfig.json`.
 
+### 6. Rode os apps mobile (driver-mobile e passenger-mobile)
+
+Os projetos nativos seguem o template do React Native 0.74.7, ajustados para o monorepo (as dependências ficam no `node_modules` da raiz).
+
+| App | Pacote / Bundle ID | Componente registrado | Nome exibido |
+|---|---|---|---|
+| `driver-mobile` | `br.com.voztri.driver` | `VoztriDriver` | VOZTRI Driver |
+| `passenger-mobile` | `br.com.voztri.passenger` | `VoztriPassenger` | VOZTRI |
+
+**Android** (JDK 17+, Android SDK 34 e um emulador ou aparelho com depuração USB):
+
+```bash
+# Terminal 1: Metro na pasta do app
+cd apps/driver-mobile && npx react-native start
+
+# Terminal 2: compila, instala e abre o app
+cd apps/driver-mobile && npx react-native run-android
+```
+
+Para só gerar o APK de debug: `cd apps/driver-mobile/android && ./gradlew assembleDebug` (saída em `app/build/outputs/apk/debug/app-debug.apk`). O build de release usa a keystore definida em `VOZTRI_RELEASE_STORE_FILE`, `VOZTRI_RELEASE_STORE_PASSWORD`, `VOZTRI_RELEASE_KEY_ALIAS` e `VOZTRI_RELEASE_KEY_PASSWORD` (em `~/.gradle/gradle.properties`, nunca no repositório).
+
+**iOS** (somente macOS, com Xcode e CocoaPods):
+
+```bash
+cd apps/driver-mobile
+bundle install                          # instala a versão de CocoaPods fixada no Gemfile
+cd ios && bundle exec pod install && cd ..
+npx react-native run-ios
+```
+
+> [!WARNING]
+> As telas dos dois apps ainda usam elementos de web (`<div>`, `<button>`) no lugar dos componentes do React Native (`View`, `Text`, `Pressable`). O app instala e inicia, mas a tela inicial quebra até as telas serem portadas.
+
 ## 🌐 Serviços locais
 
 | Serviço | Endereço de desenvolvimento | Finalidade |
