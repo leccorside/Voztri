@@ -85,9 +85,9 @@ services:
     volumes:
       - voztri_redis_data:/data
 
-  # MinIO (S3-compatible Object Storage)
+  # MinIO (S3-compatible Object Storage via Silo)
   minio:
-    image: minio/minio:latest
+    image: pgsty/silo:latest
     container_name: voztri_minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
