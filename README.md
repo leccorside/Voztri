@@ -408,6 +408,7 @@ O push está implementado nos dois apps, mas **desligado até as credenciais do 
 ```bash
 npm test -w @voztri/driver-mobile
 npm test -w @voztri/passenger-mobile
+npm test -w @voztri/mobile-core   # código comum: push, sessão, API, erros, config e login
 ```
 
 Os testes substituem a camada de API por mocks e percorrem o fluxo completo de cada app (login, oferta, aceite, PIN, finalização, ganhos e repasse no motorista; destino, estimativa, pagamento, busca, chat, SOS e avaliação no passageiro), verificando as chamadas feitas à API e a reação a cada resposta (PIN errado, oferta expirada, corrida cancelada, sem conexão). A cada passo, falham se algum texto estiver fora de um `<Text>`, erro que derruba o app no dispositivo.

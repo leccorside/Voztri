@@ -1,7 +1,7 @@
 /**
  * Endereço da API configurável por VOZTRI_API_URL (embutida pelo Babel no bundle).
  */
-import { API_URL, DEFAULT_API_URL, POLL_INTERVAL_MS, resolveApiUrl } from '@voztri/mobile-core';
+import { API_URL, DEFAULT_API_URL, POLL_INTERVAL_MS, resolveApiUrl } from '../src';
 
 const FALLBACK = 'http://localhost:8080/api/v1';
 

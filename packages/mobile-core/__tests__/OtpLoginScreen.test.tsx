@@ -1,10 +1,10 @@
 /**
- * Tela de login comum do @voztri/mobile-core, sem store: papel, textos
+ * OtpLoginScreen (tela de login comum dos apps), sem store: papel, textos
  * sobrescritos, código de depuração, erro e "Trocar telefone".
  */
 import React from 'react';
 import renderer, { act, ReactTestRenderer } from 'react-test-renderer';
-import { OtpLoginScreen } from '@voztri/mobile-core';
+import { OtpLoginScreen } from '../src';
 import { expectNoStrayText, isDisabled, pressAsync, typeAsync, useTestTimers, visibleText } from './rnTree';
 
 let tree: ReactTestRenderer;
