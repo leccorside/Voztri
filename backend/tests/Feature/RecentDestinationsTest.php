@@ -6,7 +6,12 @@ use App\Jobs\PruneRecentDestinations;
 use App\Models\Passenger;
 use App\Models\RecentDestination;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Console\Scheduling\CacheEventMutex;
+use Illuminate\Console\Scheduling\CacheSchedulingMutex;
+use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -189,12 +194,62 @@ class RecentDestinationsTest extends TestCase
         $this->assertSame(1, RecentDestination::count());
     }
 
-    public function test_pruning_is_scheduled_daily_at_dawn_in_sao_paulo(): void
+    private function pruneEvent(): Event
     {
         $event = collect(app(Schedule::class)->events())->first(fn ($e) => $e->description === 'prune-recent-destinations');
-
         $this->assertNotNull($event, 'Tarefa não agendada em routes/console.php.');
+
+        return $event;
+    }
+
+    public function test_pruning_is_scheduled_daily_at_dawn_in_sao_paulo(): void
+    {
+        $event = $this->pruneEvent();
+
         $this->assertSame('30 3 * * *', $event->expression);
         $this->assertSame('America/Sao_Paulo', $event->timezone);
+    }
+
+    public function test_pruning_runs_on_one_server_without_overlapping_with_locks_in_redis(): void
+    {
+        $event = $this->pruneEvent();
+
+        $this->assertTrue($event->onOneServer, 'Falta o onOneServer().');
+        $this->assertTrue($event->withoutOverlapping, 'Falta o withoutOverlapping().');
+        $this->assertSame(10, $event->expiresAt, 'A trava de sobreposição expira em 10 min.');
+
+        // As duas travas usam o Redis, mesmo com o CACHE_STORE=array dos testes
+        $this->assertInstanceOf(CacheEventMutex::class, $event->mutex);
+        $this->assertSame('redis', $event->mutex->store);
+        $scheduling = (new \ReflectionProperty(Schedule::class, 'schedulingMutex'))->getValue(app(Schedule::class));
+        $this->assertInstanceOf(CacheSchedulingMutex::class, $scheduling);
+        $this->assertSame('redis', $scheduling->store);
+    }
+
+    public function test_redis_locks_block_a_second_server_and_an_overlapping_run(): void
+    {
+        $event = $this->pruneEvent();
+        $scheduling = (new \ReflectionProperty(Schedule::class, 'schedulingMutex'))->getValue(app(Schedule::class));
+        // Horário fora do agendamento real (03:30), para não atrapalhar o scheduler do dev
+        $tick = Carbon::create(2000, 1, 1, 12, 34, 0, 'America/Sao_Paulo');
+        $redis = Cache::store('redis')->getStore();
+
+        try {
+            // onOneServer: o primeiro servidor pega o minuto; o segundo não dispara
+            $this->assertTrue($scheduling->create($event, $tick));
+            $this->assertFalse($scheduling->create($event, $tick));
+
+            // withoutOverlapping: o disparo pega a trava (shouldSkipDueToOverlapping é o
+            // que o agendador chama); com ele em andamento, o próximo é pulado
+            $this->assertFalse($event->shouldSkipDueToOverlapping());
+            $this->assertTrue($event->mutex->exists($event));
+            $this->assertTrue($event->shouldSkipDueToOverlapping());
+            // Terminado o disparo, a trava é solta e o próximo pode rodar
+            $event->mutex->forget($event);
+            $this->assertFalse($event->shouldSkipDueToOverlapping());
+        } finally {
+            $redis->lock($event->mutexName() . $tick->format('Hi'))->forceRelease();
+            $event->mutex->forget($event);
+        }
     }
 }
