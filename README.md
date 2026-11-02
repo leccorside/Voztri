@@ -354,12 +354,17 @@ O endereço da API fica em `src/config.ts` de cada app: `http://10.0.2.2:8080/ap
 **Android** (JDK 17+, Android SDK 34 e um emulador ou aparelho com depuração USB):
 
 ```bash
-# Terminal 1: Metro na pasta do app
-cd apps/driver-mobile && npx react-native start
+# Terminal 1: Metro na pasta do app, na porta 8082 (a 8081 é do Reverb no docker-compose)
+cd apps/driver-mobile && npx react-native start --port 8082
 
-# Terminal 2: compila, instala e abre o app
-cd apps/driver-mobile && npx react-native run-android
+# Terminal 2: compila, instala e abre o app apontando para o Metro na 8082
+cd apps/driver-mobile && npx react-native run-android --port 8082
+# ou, só pelo Gradle: cd android && ./gradlew installDebug -PreactNativeDevServerPort=8082
 ```
+
+> **Por que `--port` também no `run-android`:** no emulador o app procura o Metro em `10.0.2.2:<porta>`, a porta da máquina, e não em `localhost`. Por isso `adb reverse tcp:8081 tcp:8082` não resolve: a porta precisa estar no APK, e é isso que o `--port` (ou `-PreactNativeDevServerPort`) grava. Sem ela, o app tenta a 8081, cai no Reverb e mostra "Unable to load script".
+>
+> **Depois de mudar o backend, reinicie o worker** (`docker compose restart worker`): o `queue:work` carrega o código uma vez e continua rodando a versão antiga, então jobs novos (push, timeout da busca) falham até o reinício.
 
 Para só gerar o APK de debug: `cd apps/driver-mobile/android && ./gradlew assembleDebug` (saída em `app/build/outputs/apk/debug/app-debug.apk`). O build de release usa a keystore definida em `VOZTRI_RELEASE_STORE_FILE`, `VOZTRI_RELEASE_STORE_PASSWORD`, `VOZTRI_RELEASE_KEY_ALIAS` e `VOZTRI_RELEASE_KEY_PASSWORD` (em `~/.gradle/gradle.properties`, nunca no repositório).
 
