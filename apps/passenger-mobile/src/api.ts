@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AuthApi, BillingApi, DeviceApi, GeoApi, RideApi } from '@voztri/api-client';
+import { AuthApi, BillingApi, DeviceApi, GeoApi, PlacesApi, RideApi } from '@voztri/api-client';
 import { createMobileApi } from '@voztri/mobile-core';
 import { API_URL } from './config.js';
 import { serverClock } from './serverClock.js';
@@ -43,3 +43,4 @@ export const rideApi = new RideApi(core.client);
 export const billingApi = new BillingApi(core.client);
 export const deviceApi = new DeviceApi(core.client);
 export const geoApi = new GeoApi(core.client);
+export const placesApi = new PlacesApi(core.client);

@@ -25,6 +25,7 @@ jest.mock('../src/api', () => ({
   onUnauthorized: jest.fn(),
   authApi: { requestOtp: jest.fn(), verifyOtp: jest.fn(), getMe: jest.fn() },
   geoApi: { reverse: jest.fn(), search: jest.fn() },
+  placesApi: { list: jest.fn(), save: jest.fn(), remove: jest.fn() },
   rideApi: {
     getEstimates: jest.fn(),
     requestRide: jest.fn(),
@@ -78,6 +79,7 @@ const m = api as unknown as {
   >;
   billingApi: Mocks<'submitRating'>;
   geoApi: Mocks<'reverse' | 'search'>;
+  placesApi: Mocks<'list' | 'save' | 'remove'>;
 };
 const loc = location as unknown as Mocks<'requestLocationPermission' | 'getCurrentPosition'>;
 const pushMock = push as unknown as Mocks<'enablePush' | 'disablePush'>;
@@ -200,6 +202,10 @@ beforeEach(() => {
   m.geoApi.reverse.mockRejectedValue({ message: 'GEOCODING_UNAVAILABLE' });
   // Busca de destino: a Faria Lima, como o Photon devolve
   m.geoApi.search.mockResolvedValue([FARIA_LIMA]);
+  // Sem endereços salvos por padrão
+  m.placesApi.list.mockResolvedValue({ home: null, work: null });
+  m.placesApi.save.mockImplementation(async (kind: string, place: unknown) => ({ home: null, work: null, [kind]: place }));
+  m.placesApi.remove.mockResolvedValue(undefined);
   // Praça da Sé: diferente da origem padrão, para provar que a estimativa usa o GPS
   loc.requestLocationPermission.mockResolvedValue('granted');
   loc.getCurrentPosition.mockResolvedValue(gpsAt(-23.55052, -46.633308));
@@ -463,6 +469,122 @@ describe('passenger-mobile integrado à API', () => {
     expect(m.session.clear).toHaveBeenCalled();
     expect(visibleText(tree)).toContain('Entrar na VOZTRI');
     alertSpy.mockRestore();
+  });
+
+  describe('endereços salvos (Casa e Trabalho)', () => {
+    const CASA = {
+      address: 'Rua dos Pinheiros, 870 - Pinheiros, São Paulo - SP',
+      shortAddress: 'Rua dos Pinheiros, 870',
+      latitude: -23.5653,
+      longitude: -46.6825,
+      city: 'São Paulo',
+      state: 'SP',
+    };
+
+    it('sem endereço, o atalho adiciona: busca pelo Photon, salva na conta e volta ao início', async () => {
+      await renderLoggedIn();
+      expect(m.placesApi.list).toHaveBeenCalled();
+      expectNoStrayText(tree);
+      let text = visibleText(tree);
+      expect(text).toContain('Casa');
+      expect(text).toContain('Adicionar');
+      expect(text).not.toContain('Pinheiros'); // os atalhos fixos saíram
+
+      await pressAsync(tree, 'Casa, adicionar endereço');
+      text = visibleText(tree);
+      expect(text).toContain('Endereço de Casa');
+      expect(text).toContain('Busque o novo endereço de Casa e toque nele para salvar.');
+      expect(text).not.toContain('(Sua Localização)');
+
+      await typeAsync(tree, 'Destino', 'Faria Lima');
+      await advanceAsync(400);
+      await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
+
+      expect(m.placesApi.save).toHaveBeenCalledWith('home', FARIA_LIMA);
+      expect(m.rideApi.getEstimates).not.toHaveBeenCalled(); // não virou destino de corrida
+      expectNoStrayText(tree);
+      text = visibleText(tree);
+      expect(text).toContain('Para onde vamos hoje?');
+      expect(text).toContain('Av. Faria Lima, 3477');
+    });
+
+    it('com endereço salvo, o atalho leva direto às estimativas daquele destino', async () => {
+      m.placesApi.list.mockResolvedValue({ home: CASA, work: null });
+      await renderLoggedIn();
+      expect(visibleText(tree)).toContain('Rua dos Pinheiros, 870');
+
+      await pressAsync(tree, 'Casa, Rua dos Pinheiros, 870');
+
+      expect(m.rideApi.getEstimates).toHaveBeenCalledWith(
+        expect.objectContaining({ latitude: -23.55052 }),
+        expect.objectContaining({ shortAddress: 'Rua dos Pinheiros, 870', latitude: -23.5653, longitude: -46.6825 }),
+      );
+      expect(visibleText(tree)).toContain('R$ 18,69');
+    });
+
+    it('alterar mostra o endereço atual e permite remover', async () => {
+      m.placesApi.list.mockResolvedValue({ home: CASA, work: null });
+      await renderLoggedIn();
+
+      await pressAsync(tree, 'Alterar Casa');
+      let text = visibleText(tree);
+      expect(text).toContain('Atual: Rua dos Pinheiros, 870.');
+
+      await pressAsync(tree, 'Remover endereço de Casa');
+      expect(m.placesApi.remove).toHaveBeenCalledWith('home');
+      text = visibleText(tree);
+      expect(text).toContain('Para onde vamos hoje?');
+      expect(text).not.toContain('Rua dos Pinheiros, 870');
+      expect(usePassengerStore.getState().savedPlaces).toEqual({ home: null, work: null });
+    });
+
+    it('o Trabalho é independente da Casa', async () => {
+      m.placesApi.list.mockResolvedValue({ home: CASA, work: null });
+      m.placesApi.save.mockResolvedValue({ home: CASA, work: FARIA_LIMA });
+      await renderLoggedIn();
+
+      await pressAsync(tree, 'Trabalho, adicionar endereço');
+      expect(visibleText(tree)).toContain('Endereço do Trabalho');
+      await typeAsync(tree, 'Destino', 'Faria Lima');
+      await advanceAsync(400);
+      await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
+
+      expect(m.placesApi.save).toHaveBeenCalledWith('work', FARIA_LIMA);
+      const text = visibleText(tree);
+      expect(text).toContain('Rua dos Pinheiros, 870');
+      expect(text).toContain('Av. Faria Lima, 3477');
+    });
+
+    it('falha ao salvar mostra o erro e continua na escolha', async () => {
+      m.placesApi.save.mockRejectedValueOnce({ message: 'Sem conexão com a API.' });
+      await renderLoggedIn();
+      await pressAsync(tree, 'Casa, adicionar endereço');
+      await typeAsync(tree, 'Destino', 'Faria Lima');
+      await advanceAsync(400);
+      await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
+
+      const text = visibleText(tree);
+      expect(text).toContain('Sem conexão com a API.');
+      expect(text).toContain('Endereço de Casa');
+      expect(usePassengerStore.getState().savedPlaces).toEqual({ home: null, work: null });
+    });
+
+    it('voltar da escolha encerra o modo: a busca seguinte é de destino', async () => {
+      await renderLoggedIn();
+      await pressAsync(tree, 'Casa, adicionar endereço');
+      await pressAsync(tree, 'Voltar');
+      expect(usePassengerStore.getState().placePicker).toBeNull();
+
+      await pressAsync(tree, 'Buscar endereço de destino');
+      expect(visibleText(tree)).toContain('Para onde você vai?');
+    });
+
+    it('sem conseguir carregar os endereços, os atalhos só oferecem adicionar (sem aviso)', async () => {
+      m.placesApi.list.mockRejectedValue({ message: 'Sem conexão com a API.' });
+      await renderLoggedIn();
+      expect(visibleText(tree)).toContain('Adicionar');
+      expect(usePassengerStore.getState().error).toBeNull();
+    });
   });
 
   describe('busca de destino (API → Photon)', () => {

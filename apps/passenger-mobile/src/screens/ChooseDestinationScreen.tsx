@@ -4,13 +4,18 @@ import { VoztriColors } from '@voztri/design-tokens';
 import { usePassengerStore } from '../store/passengerStore.js';
 import { Button } from '@voztri/mobile-core';
 import { MIN_SEARCH_LENGTH, useDestinationSearch } from '../hooks/useDestinationSearch.js';
+import { PLACE_LABELS } from './HomeScreen.js';
 
 interface Props {
   onBack: () => void;
 }
 
 export const ChooseDestinationScreen: React.FC<Props> = ({ onBack }) => {
-  const { origin, setDestination } = usePassengerStore();
+  const { origin, setDestination, placePicker, savedPlaces, savePlace, removePlace, busy } = usePassengerStore();
+  // Escolhendo o endereço de Casa ou do Trabalho (em vez do destino da corrida)
+  const picking = placePicker ? PLACE_LABELS[placePicker] : null;
+  const current = placePicker ? savedPlaces?.[placePicker] ?? null : null;
+  const placeName = placePicker === 'home' ? 'de Casa' : 'do Trabalho';
   const [query, setQuery] = useState('');
   // Destinos pelo texto (API → Photon), perto do embarque
   const { status, results, retry } = useDestinationSearch(query, origin);
@@ -22,21 +27,27 @@ export const ChooseDestinationScreen: React.FC<Props> = ({ onBack }) => {
       <View style={styles.header}>
         <Button label="←" onPress={onBack} accessibilityLabel="Voltar" textStyle={styles.back} />
         <Text style={styles.headerTitle} accessibilityRole="header">
-          Para onde você vai?
+          {picking ? `Endereço ${placeName}` : 'Para onde você vai?'}
         </Text>
       </View>
 
       {/* Campos de origem e destino */}
       <View style={styles.routeFields}>
-        <View style={[styles.fieldRow, { marginBottom: 12 }]}>
-          <View style={[styles.marker, { borderRadius: 999, backgroundColor: '#00C853' }]} />
-          <Text style={styles.origin}>{origin.shortAddress} (Sua Localização)</Text>
-        </View>
+        {picking ? (
+          <Text style={styles.pickHint}>
+            {current ? `Atual: ${current.shortAddress}. ` : ''}Busque o novo endereço {placeName} e toque nele para salvar.
+          </Text>
+        ) : (
+          <View style={[styles.fieldRow, { marginBottom: 12 }]}>
+            <View style={[styles.marker, { borderRadius: 999, backgroundColor: '#00C853' }]} />
+            <Text style={styles.origin}>{origin.shortAddress} (Sua Localização)</Text>
+          </View>
+        )}
 
         <View style={styles.fieldRow}>
           <View style={[styles.marker, { borderRadius: 2, backgroundColor: VoztriColors.brand.primary }]} />
           <TextInput
-            placeholder="Digite o endereço ou o nome do lugar"
+            placeholder={picking ? `Endereço ${placeName}` : 'Digite o endereço ou o nome do lugar'}
             placeholderTextColor="#7B7489"
             value={query}
             onChangeText={setQuery}
@@ -50,6 +61,16 @@ export const ChooseDestinationScreen: React.FC<Props> = ({ onBack }) => {
 
       {/* Resultados da busca */}
       <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
+        {picking && current && (
+          <Button
+            label={`Remover endereço ${placeName}`}
+            onPress={() => placePicker && void removePlace(placePicker)}
+            disabled={busy}
+            style={styles.remove}
+            textStyle={styles.removeText}
+          />
+        )}
+
         {status === 'idle' && (
           <Text style={styles.empty}>Digite pelo menos {MIN_SEARCH_LENGTH} letras do endereço ou do nome do lugar.</Text>
         )}
@@ -85,7 +106,7 @@ export const ChooseDestinationScreen: React.FC<Props> = ({ onBack }) => {
           results.map((dest, i) => (
             <Pressable
               key={`${dest.latitude},${dest.longitude},${i}`}
-              onPress={() => void setDestination(dest)}
+              onPress={() => (placePicker ? void savePlace(placePicker, dest) : void setDestination(dest))}
               accessibilityRole="button"
               accessibilityLabel={`${dest.shortAddress}, ${dest.address}`}
               style={({ pressed }) => [styles.suggestion, pressed && { opacity: 0.6 }]}
@@ -190,6 +211,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  pickHint: {
+    fontSize: 13,
+    color: '#7B7489',
+    marginBottom: 12,
+  },
+  remove: {
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+  },
+  removeText: {
+    color: '#BA1A1A',
+    fontWeight: '700',
+    fontSize: 14,
   },
   retry: {
     alignSelf: 'flex-start',

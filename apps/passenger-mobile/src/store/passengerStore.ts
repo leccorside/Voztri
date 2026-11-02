@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import type { AddressLocation, ChatMessage, FareEstimate, PaymentMethodType, Ride, RideStatus, User } from '@voztri/shared-types';
+import type { SavedPlaceKind, SavedPlaces } from '@voztri/api-client';
 import {
   activeRideMemory,
+  placesApi,
   geoApi,
   apiErrorCode,
   authApi,
@@ -56,6 +58,10 @@ export interface PassengerState {
   noDriverRide: Ride | null;
   chatMessages: ChatMessage[];
   isSosActive: boolean;
+  /** Casa e Trabalho da conta (null: ainda não carregados ou falha ao carregar). */
+  savedPlaces: SavedPlaces | null;
+  /** Com um tipo, a tela de busca escolhe o endereço desse tipo em vez do destino. */
+  placePicker: SavedPlaceKind | null;
   /** Push do andamento da corrida (off: ainda não ativado nesta sessão). */
   pushStatus: PushStatus | 'off';
 
@@ -71,6 +77,12 @@ export interface PassengerState {
   /** Lê o GPS e usa a posição como ponto de embarque. */
   locateOrigin: () => Promise<void>;
   setStep: (step: PassengerFlowStep) => void;
+  loadSavedPlaces: () => Promise<void>;
+  /** Abre a busca para escolher o endereço de Casa ou do Trabalho. */
+  openPlacePicker: (kind: SavedPlaceKind) => void;
+  /** Salva o endereço do tipo e volta ao início. */
+  savePlace: (kind: SavedPlaceKind, place: AddressLocation) => Promise<boolean>;
+  removePlace: (kind: SavedPlaceKind) => Promise<boolean>;
   setDestination: (destination: AddressLocation) => Promise<void>;
   loadEstimates: () => Promise<void>;
   selectCategory: (category: Category) => void;
@@ -149,6 +161,8 @@ const signedOut = {
   originSource: 'fallback' as OriginSource,
   originAccuracy: null,
   originWarning: null,
+  savedPlaces: null as SavedPlaces | null,
+  placePicker: null as SavedPlaceKind | null,
   selectedCategory: 'pop' as Category,
   selectedPaymentMethod: 'pix' as PaymentMethodType,
   pushStatus: 'off' as PushStatus | 'off',
@@ -253,6 +267,7 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
   const startSession = async (user: User) => {
     set({ ...signedOut, sessionStatus: 'authenticated', user });
     void get().locateOrigin();
+    void get().loadSavedPlaces();
     // Push em paralelo: avisa quando o motorista aceita e quando chega, com o app em
     // segundo plano; com o app aberto (ou ao tocar na notificação) só antecipa o polling.
     void enablePush((rideId) => void get().onRidePush(rideId)).then((pushStatus) => {
@@ -374,7 +389,41 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
       return locating;
     },
 
-    setStep: (step) => set({ currentStep: step }),
+    // Sair da busca encerra a escolha de Casa/Trabalho
+    setStep: (step) => set({ currentStep: step, ...(step !== 'DESTINATION' ? { placePicker: null } : {}) }),
+
+    loadSavedPlaces: async () => {
+      try {
+        const savedPlaces = await placesApi.list();
+        if (get().sessionStatus === 'authenticated') set({ savedPlaces });
+      } catch {
+        // Sem os endereços salvos, os atalhos só oferecem "Adicionar"; nada a avisar
+      }
+    },
+
+    openPlacePicker: (kind) => set({ placePicker: kind, currentStep: 'DESTINATION' }),
+
+    savePlace: async (kind, place) => {
+      const savedPlaces = await run(() => placesApi.save(kind, place));
+      if (!savedPlaces) return false; // erro no banner; continua na busca para tentar de novo
+      set({ savedPlaces, placePicker: null, currentStep: 'HOME' });
+      return true;
+    },
+
+    removePlace: async (kind) => {
+      const done = await run(async () => {
+        await placesApi.remove(kind);
+        return true;
+      });
+      if (!done) return false;
+      const current = get().savedPlaces;
+      set({
+        savedPlaces: { home: current?.home ?? null, work: current?.work ?? null, [kind]: null },
+        placePicker: null,
+        currentStep: 'HOME',
+      });
+      return true;
+    },
 
     setDestination: async (destination) => {
       set({ destination, currentStep: 'SELECT_CATEGORY' });

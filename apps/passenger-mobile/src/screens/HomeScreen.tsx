@@ -1,6 +1,8 @@
 import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
+import type { AddressLocation } from '@voztri/shared-types';
+import type { SavedPlaceKind } from '@voztri/api-client';
 import { usePassengerStore } from '../store/passengerStore.js';
 import { shadow } from '@voztri/mobile-core';
 
@@ -15,7 +17,18 @@ function initials(name: string | undefined): string {
 }
 
 export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
-  const { user, logout, origin, originSource, originAccuracy, originWarning, locateOrigin } = usePassengerStore();
+  const {
+    user,
+    logout,
+    origin,
+    originSource,
+    originAccuracy,
+    originWarning,
+    locateOrigin,
+    savedPlaces,
+    setDestination,
+    openPlacePicker,
+  } = usePassengerStore();
 
   const pickupText =
     originSource === 'locating'
@@ -116,10 +129,17 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
             <Text style={styles.searchPlaceholder}>Buscar endereço de destino...</Text>
           </Pressable>
 
-          {/* Atalhos */}
+          {/* Endereços salvos da conta: com endereço, vai direto às estimativas; sem, adiciona */}
           <View style={styles.shortcuts}>
-            <Shortcut icon="🏠" title="Casa" subtitle="Pinheiros" onPress={onOpenSearch} />
-            <Shortcut icon="💼" title="Trabalho" subtitle="Itaim Bibi" onPress={onOpenSearch} />
+            {(['home', 'work'] as const).map((kind) => (
+              <PlaceShortcut
+                key={kind}
+                kind={kind}
+                place={savedPlaces?.[kind] ?? null}
+                onUse={(place) => void setDestination(place)}
+                onEdit={openPlacePicker}
+              />
+            ))}
           </View>
         </View>
       </View>
@@ -127,25 +147,48 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
   );
 };
 
-const Shortcut: React.FC<{ icon: string; title: string; subtitle: string; onPress: () => void }> = ({
-  icon,
-  title,
-  subtitle,
-  onPress,
-}) => (
-  <Pressable
-    onPress={onPress}
-    accessibilityRole="button"
-    accessibilityLabel={`${title}, ${subtitle}`}
-    style={({ pressed }) => [styles.shortcut, pressed && styles.pressed]}
-  >
-    <Text style={styles.shortcutIcon}>{icon}</Text>
-    <View>
-      <Text style={styles.shortcutTitle}>{title}</Text>
-      <Text style={styles.shortcutSubtitle}>{subtitle}</Text>
+export const PLACE_LABELS: Record<SavedPlaceKind, { icon: string; title: string }> = {
+  home: { icon: '🏠', title: 'Casa' },
+  work: { icon: '💼', title: 'Trabalho' },
+};
+
+const PlaceShortcut: React.FC<{
+  kind: SavedPlaceKind;
+  place: AddressLocation | null;
+  onUse: (place: AddressLocation) => void;
+  onEdit: (kind: SavedPlaceKind) => void;
+}> = ({ kind, place, onUse, onEdit }) => {
+  const { icon, title } = PLACE_LABELS[kind];
+  return (
+    <View style={styles.shortcut}>
+      <Pressable
+        onPress={() => (place ? onUse(place) : onEdit(kind))}
+        accessibilityRole="button"
+        accessibilityLabel={place ? `${title}, ${place.shortAddress}` : `${title}, adicionar endereço`}
+        style={({ pressed }) => [styles.shortcutMain, pressed && styles.pressed]}
+      >
+        <Text style={styles.shortcutIcon}>{icon}</Text>
+        <View style={styles.flex}>
+          <Text style={styles.shortcutTitle}>{title}</Text>
+          <Text style={styles.shortcutSubtitle} numberOfLines={1}>
+            {place ? place.shortAddress : 'Adicionar'}
+          </Text>
+        </View>
+      </Pressable>
+      {place && (
+        <Pressable
+          onPress={() => onEdit(kind)}
+          accessibilityRole="button"
+          accessibilityLabel={`Alterar ${title}`}
+          hitSlop={8}
+          style={({ pressed }) => [styles.shortcutEdit, pressed && styles.pressed]}
+        >
+          <Text style={styles.shortcutEditText}>✎</Text>
+        </Pressable>
+      )}
     </View>
-  </Pressable>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   screen: {
@@ -348,13 +391,27 @@ const styles = StyleSheet.create({
   },
   shortcut: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
     borderRadius: 12,
     backgroundColor: '#F8F9FE',
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  shortcutMain: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingLeft: 12,
+    paddingRight: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
+  },
+  shortcutEdit: {
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+  },
+  shortcutEditText: {
+    fontSize: 14,
+    color: '#7B7489',
   },
   shortcutIcon: {
     fontSize: 16,

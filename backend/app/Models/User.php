@@ -52,5 +52,19 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserDevice::class);
     }
+
+    public function savedPlaces()
+    {
+        return $this->hasMany(SavedPlace::class);
+    }
+
+    protected static function booted(): void
+    {
+        // A exclusão é lógica (SoftDeletes), então o cascade do banco não age: Casa e
+        // Trabalho são dados sensíveis e não ficam guardados para uma conta excluída
+        static::deleted(function (User $user) {
+            $user->savedPlaces()->delete();
+        });
+    }
 }
 

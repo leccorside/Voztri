@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\BillingController;
 use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\GeoController;
+use App\Http\Controllers\Api\V1\SavedPlaceController;
 
 Route::prefix('v1')->group(function () {
     // Health Check
@@ -44,6 +45,13 @@ Route::prefix('v1')->group(function () {
         Route::get('/geo/reverse', [GeoController::class, 'reverse'])->middleware('throttle:30,1');
         // Busca de destino pelo texto (o app espera a digitação parar antes de chamar)
         Route::get('/geo/search', [GeoController::class, 'search'])->middleware('throttle:60,1');
+
+        // Endereços salvos do passageiro (Casa e Trabalho)
+        Route::prefix('places')->middleware('role:passenger')->group(function () {
+            Route::get('/', [SavedPlaceController::class, 'index']);
+            Route::put('/{kind}', [SavedPlaceController::class, 'update'])->whereIn('kind', ['home', 'work']);
+            Route::delete('/{kind}', [SavedPlaceController::class, 'destroy'])->whereIn('kind', ['home', 'work']);
+        });
 
         // Aparelhos para notificações push
         Route::post('/devices', [DeviceController::class, 'store']);
