@@ -34,6 +34,7 @@ class LocationTrackingModule(private val context: ReactApplicationContext) : Rea
           putExtra(LocationTrackingService.EXTRA_INTERVAL_MS, number(config, "intervalMs", 10_000.0))
           putExtra(LocationTrackingService.EXTRA_DISTANCE_M, number(config, "distanceM", 200.0))
           putExtra(LocationTrackingService.EXTRA_FILTER_M, number(config, "distanceFilterM", 25.0))
+          putExtra(LocationTrackingService.EXTRA_HEARTBEAT_MS, number(config, "heartbeatMs", 120_000.0))
         }
 
     try {

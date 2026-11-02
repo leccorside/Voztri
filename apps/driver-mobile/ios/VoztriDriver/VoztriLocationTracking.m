@@ -11,8 +11,10 @@
 //   - distanceFilter = kCLDistanceFilterNone: continua recebendo leituras com o
 //     carro parado (com filtro de distância, parado não chega leitura nenhuma);
 //   - envio direto para /driver/location (NSURLSession), sem depender do JS, com as
-//     mesmas regras do Android: no máximo a cada intervalMs, ou na hora ao andar
-//     distanceM; a leitura segurada pelo intervalo é enviada quando ele vence.
+//     mesmas regras do Android: na hora ao andar distanceM; em movimento (ao menos
+//     distanceFilterM), no máximo a cada intervalMs, com a leitura segurada enviada quando
+//     o intervalo vence; parado, a cada heartbeatMs (batimento, para o despacho não tratar
+//     a posição como velha).
 // A chegada automática ao embarque (distância + precisão <= 100 m) depende disso.
 
 #import <CoreLocation/CoreLocation.h>
@@ -29,7 +31,9 @@
 - (nullable NSString *)startWithApiUrl:(NSString *)apiUrl
                                  token:(NSString *)token
                             intervalMs:(double)intervalMs
-                             distanceM:(double)distanceM;
+                             distanceM:(double)distanceM
+                               filterM:(double)filterM
+                           heartbeatMs:(double)heartbeatMs;
 - (void)stop;
 @end
 
@@ -40,6 +44,8 @@
   NSString *_token;
   NSTimeInterval _interval;
   CLLocationDistance _distance;
+  CLLocationDistance _filter;
+  NSTimeInterval _heartbeat;
   CLLocation *_lastSent;
   NSDate *_lastSentAt;
   CLLocation *_pending;
@@ -86,6 +92,8 @@
                                  token:(NSString *)token
                             intervalMs:(double)intervalMs
                              distanceM:(double)distanceM
+                               filterM:(double)filterM
+                           heartbeatMs:(double)heartbeatMs
 {
   if (!_manager) {
     _manager = [CLLocationManager new];
@@ -109,6 +117,8 @@
   _token = token;
   _interval = MAX(1.0, intervalMs / 1000.0);
   _distance = MAX(1.0, distanceM);
+  _filter = MAX(0.0, filterM);
+  _heartbeat = MAX(_interval, heartbeatMs / 1000.0);
   _lastSent = nil;
   _lastSentAt = nil;
   [self cancelTrailing];
@@ -184,9 +194,16 @@
 {
   NSDate *now = [NSDate date];
   NSTimeInterval elapsed = _lastSentAt ? [now timeIntervalSinceDate:_lastSentAt] : DBL_MAX;
-  BOOL due = !_lastSent || elapsed >= _interval || [location distanceFromLocation:_lastSent] >= _distance;
+  CLLocationDistance moved = _lastSent ? [location distanceFromLocation:_lastSent] : DBL_MAX;
+  BOOL due = !_lastSent
+      || moved >= _distance                        // deslocamento grande: na hora
+      || (elapsed >= _interval && moved >= _filter) // em movimento: no máximo a cada intervalo
+      || elapsed >= _heartbeat;                     // parado: batimento
 
   if (!due) {
+    // Parado (abaixo do filtro): nada a segurar; as leituras seguem chegando (sem
+    // distanceFilter) e o batimento reenvia a posição quando vencer
+    if (moved < _filter) return;
     // Segura a leitura mais recente e envia quando o intervalo vencer: a última
     // posição antes de o motorista parar nunca fica sem chegar à API.
     _pending = location;
@@ -327,7 +344,9 @@ RCT_EXPORT_METHOD(start:(NSDictionary *)config resolve:(RCTPromiseResolveBlock)r
   NSString *errorCode = [[VoztriLocationTracker shared] startWithApiUrl:apiUrl
                                                                   token:token
                                                              intervalMs:numberOr(config, @"intervalMs", 10000)
-                                                              distanceM:numberOr(config, @"distanceM", 200)];
+                                                              distanceM:numberOr(config, @"distanceM", 200)
+                                                                filterM:numberOr(config, @"distanceFilterM", 25)
+                                                            heartbeatMs:numberOr(config, @"heartbeatMs", 120000)];
   if (errorCode) {
     reject(errorCode, @"Não foi possível iniciar o rastreamento em segundo plano", nil);
     return;

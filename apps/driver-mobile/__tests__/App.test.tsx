@@ -552,6 +552,63 @@ describe('driver-mobile integrado à API', () => {
     );
   });
 
+  describe('batimento (motorista parado reenvia a posição a cada 2 min)', () => {
+    it('parado, reenvia a última posição a cada 2 min para não envelhecer no despacho', async () => {
+      await renderLoggedIn();
+      m.driverApi.updateLocation.mockClear();
+      await act(async () => gps!.emit(position(-23.5615, -46.6559)));
+      expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(1);
+
+      // Parado: o GPS do JS (filtro de 25 m) não entrega nada
+      await advanceAsync(119_000);
+      expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(1);
+      await advanceAsync(1_000);
+      expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(2);
+      expect(m.driverApi.updateLocation).toHaveBeenLastCalledWith(expect.objectContaining({ latitude: -23.5615, longitude: -46.6559 }));
+
+      await advanceAsync(120_000);
+      expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(3);
+    });
+
+    it('um envio normal adia o batimento', async () => {
+      await renderLoggedIn();
+      m.driverApi.updateLocation.mockClear();
+      await act(async () => gps!.emit(position(-23.5615, -46.6559)));
+
+      // 100 s depois, andou mais de 200 m: envia na hora e o batimento recomeça a contar
+      await advanceAsync(100_000);
+      await act(async () => gps!.emit(position(-23.5650, -46.6600)));
+      expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(2);
+
+      await advanceAsync(20_000); // 120 s desde o primeiro envio, mas só 20 s desde o último
+      expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(2);
+      await advanceAsync(100_000);
+      expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(3);
+      expect(m.driverApi.updateLocation).toHaveBeenLastCalledWith(expect.objectContaining({ latitude: -23.565 }));
+    });
+
+    it('offline não reenvia', async () => {
+      await renderLoggedIn();
+      await act(async () => gps!.emit(position(-23.5615, -46.6559)));
+      await pressAsync(tree, 'Disponibilidade para corridas');
+      m.driverApi.updateLocation.mockClear();
+
+      await advanceAsync(250_000);
+      expect(m.driverApi.updateLocation).not.toHaveBeenCalled();
+    });
+
+    it('com o serviço nativo, quem reenvia é ele (o JS não envia)', async () => {
+      bg.supported = true;
+      await renderLoggedIn();
+      expect(bg.start).toHaveBeenCalledWith(expect.objectContaining({ heartbeatMs: 120_000 }));
+      m.driverApi.updateLocation.mockClear();
+      await act(async () => gps!.emit(position(-23.5615, -46.6559)));
+
+      await advanceAsync(250_000);
+      expect(m.driverApi.updateLocation).not.toHaveBeenCalled();
+    });
+  });
+
   describe('envio pendente (motorista parado)', () => {
     it('Android foreground-only: envia a última posição segurada quando o intervalo vence', async () => {
       const os = jest.replaceProperty(Platform, 'OS', 'android');
@@ -653,6 +710,7 @@ describe('driver-mobile integrado à API', () => {
         intervalMs: 10_000,
         distanceM: 200,
         distanceFilterM: 25,
+        heartbeatMs: 120_000,
       });
       expect(loc.setBackgroundUpdates).not.toHaveBeenCalledWith(true);
       expect(useDriverStore.getState().backgroundMode).toBe('native');

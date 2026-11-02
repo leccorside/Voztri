@@ -8,6 +8,8 @@ export interface BackgroundTrackingConfig {
   distanceM: number;
   /** Só no Android; no iOS não há filtro (parado também precisa de leituras). */
   distanceFilterM: number;
+  /** Parado, reenvia a última posição a cada intervalo destes (batimento). */
+  heartbeatMs: number;
 }
 
 interface NativeTracking {

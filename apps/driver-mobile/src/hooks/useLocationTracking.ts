@@ -2,7 +2,13 @@ import { useEffect } from 'react';
 import { Alert, Platform } from 'react-native';
 import { currentToken } from '../api.js';
 import { backgroundTracking } from '../backgroundTracking.js';
-import { API_URL, LOCATION_DISTANCE_FILTER_M, LOCATION_SEND_DISTANCE_M, LOCATION_SEND_INTERVAL_MS } from '../config.js';
+import {
+  API_URL,
+  LOCATION_DISTANCE_FILTER_M,
+  LOCATION_HEARTBEAT_MS,
+  LOCATION_SEND_DISTANCE_M,
+  LOCATION_SEND_INTERVAL_MS,
+} from '../config.js';
 import {
   hasBackgroundLocationPermission,
   requestBackgroundLocationPermission,
@@ -90,6 +96,7 @@ export function useLocationTracking(enabled: boolean): void {
               intervalMs: LOCATION_SEND_INTERVAL_MS,
               distanceM: LOCATION_SEND_DISTANCE_M,
               distanceFilterM: LOCATION_DISTANCE_FILTER_M,
+              heartbeatMs: LOCATION_HEARTBEAT_MS,
             })
           : false;
         if (cancelled) return;

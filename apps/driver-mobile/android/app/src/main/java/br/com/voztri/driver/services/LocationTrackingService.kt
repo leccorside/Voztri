@@ -39,8 +39,9 @@ import java.util.concurrent.Executors
  *
  * O envio é feito aqui, em Kotlin, e não no JavaScript: em segundo plano a
  * thread JS pode ser suspensa pelo sistema. Mesmas regras do app: no máximo um
- * envio a cada [EXTRA_INTERVAL_MS], a não ser que o motorista ande mais do que
- * [EXTRA_DISTANCE_M]. Para sozinho se a API responder 401/403/404.
+ * envio a cada [EXTRA_INTERVAL_MS] quando o motorista andou ao menos [EXTRA_FILTER_M], na
+ * hora ao andar [EXTRA_DISTANCE_M] e, parado, a cada [EXTRA_HEARTBEAT_MS] (batimento, para o
+ * despacho não tratar a posição como velha). Para sozinho se a API responder 401/403/404.
  */
 class LocationTrackingService : Service() {
 
@@ -50,6 +51,7 @@ class LocationTrackingService : Service() {
     const val EXTRA_INTERVAL_MS = "intervalMs"
     const val EXTRA_DISTANCE_M = "distanceM"
     const val EXTRA_FILTER_M = "distanceFilterM"
+    const val EXTRA_HEARTBEAT_MS = "heartbeatMs"
 
     private const val TAG = "VoztriTracking"
     private const val CHANNEL_ID = "voztri_location_tracking"
@@ -75,6 +77,7 @@ class LocationTrackingService : Service() {
   private var intervalMs: Long = 10_000
   private var distanceM: Float = 200f
   private var filterM: Float = 25f
+  private var heartbeatMs: Long = 120_000
 
   private var lastSentAt: Long = 0
   private var lastSentLocation: Location? = null
@@ -121,6 +124,7 @@ class LocationTrackingService : Service() {
     intervalMs = intent.getDoubleExtra(EXTRA_INTERVAL_MS, 10_000.0).toLong()
     distanceM = intent.getDoubleExtra(EXTRA_DISTANCE_M, 200.0).toFloat()
     filterM = intent.getDoubleExtra(EXTRA_FILTER_M, 25.0).toFloat()
+    heartbeatMs = intent.getDoubleExtra(EXTRA_HEARTBEAT_MS, 120_000.0).toLong()
 
     if (!hasLocationPermission() || !enterForeground()) {
       shutdown()
@@ -206,9 +210,11 @@ class LocationTrackingService : Service() {
   private fun requestUpdates() {
     if (updatesRequested) fused.removeLocationUpdates(callback)
     val request =
+        // Sem filtro de distância no pedido: parado, as leituras precisam continuar chegando
+        // para o batimento (um timer do Handler para junto com a CPU no Doze). O filtro de
+        // deslocamento é aplicado no maybeSend.
         LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, intervalMs / 2)
             .setMinUpdateIntervalMillis(intervalMs / 4)
-            .setMinUpdateDistanceMeters(filterM)
             .build()
     try {
       fused.requestLocationUpdates(request, callback, Looper.getMainLooper())
@@ -229,8 +235,16 @@ class LocationTrackingService : Service() {
   private fun maybeSend(location: Location) {
     val now = System.currentTimeMillis()
     val previous = lastSentLocation
-    val due = previous == null || now - lastSentAt >= intervalMs || location.distanceTo(previous) >= distanceM
+    val elapsed = now - lastSentAt
+    val moved = previous?.let { location.distanceTo(it) } ?: Float.MAX_VALUE
+    val due =
+        previous == null ||
+            moved >= distanceM || // deslocamento grande: na hora
+            (elapsed >= intervalMs && moved >= filterM) || // em movimento: no máximo a cada intervalMs
+            elapsed >= heartbeatMs // parado: batimento, para a posição não envelhecer no despacho
     if (!due) {
+      // Parado (abaixo do filtro): nada a segurar; o batimento cuida do reenvio
+      if (moved < filterM) return
       val scheduled = pendingLocation != null
       pendingLocation = location
       if (!scheduled) mainHandler.postDelayed(flushPending, (intervalMs - (now - lastSentAt)).coerceAtLeast(500))

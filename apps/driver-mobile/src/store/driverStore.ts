@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { DriverEarningsSummary, DriverRideOffer, Ride, User } from '@voztri/shared-types';
 import { apiErrorCode, authApi, billingApi, driverApi, errorMessage, onUnauthorized, rideApi, session } from '../api.js';
-import { LOCATION_SEND_DISTANCE_M, LOCATION_SEND_INTERVAL_MS } from '../config.js';
+import { LOCATION_HEARTBEAT_MS, LOCATION_SEND_DISTANCE_M, LOCATION_SEND_INTERVAL_MS } from '../config.js';
 import {
   DevicePosition,
   distanceMeters,
@@ -138,11 +138,28 @@ export const useDriverStore = create<DriverState>((set, get) => {
   // Timer do envio pendente. Sempre recriado (nunca reaproveitado), para um handle
   // velho não impedir o agendamento; o disparo confere sessão, turno e modo.
   let pendingTimer: ReturnType<typeof setTimeout> | null = null;
+  // Batimento: parado, o GPS do JS (filtro de 25 m) não entrega leitura nova, então um timer
+  // reenvia a última posição para o last_location_at não envelhecer no despacho
+  let heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
 
+  /** Cancela os envios agendados (pendente e batimento): offline, logout, modo nativo. */
   const cancelPending = () => {
     if (pendingTimer) clearTimeout(pendingTimer);
     pendingTimer = null;
+    if (heartbeatTimer) clearTimeout(heartbeatTimer);
+    heartbeatTimer = null;
     if (get().pendingLocation) set({ pendingLocation: null });
+  };
+
+  /** Reenvia a posição atual daqui a LOCATION_HEARTBEAT_MS, se nada for enviado antes. */
+  const scheduleHeartbeat = () => {
+    if (heartbeatTimer) clearTimeout(heartbeatTimer);
+    heartbeatTimer = setTimeout(() => {
+      heartbeatTimer = null;
+      const position = get().lastPosition;
+      // O reportPosition confere sessão, turno e modo; passado o batimento, o envio é devido
+      if (position) void get().reportPosition(position);
+    }, LOCATION_HEARTBEAT_MS);
   };
 
   /** Guarda a leitura e envia daqui a `delayMs` (a mais nova substitui a anterior). */
@@ -300,6 +317,7 @@ export const useDriverStore = create<DriverState>((set, get) => {
 
       cancelPending();
       set({ lastSentLocation: { at: now, position } });
+      scheduleHeartbeat();
       try {
         const res = await driverApi.updateLocation({
           latitude: position.latitude,

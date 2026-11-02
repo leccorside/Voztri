@@ -11,3 +11,9 @@ export const LOCATION_SEND_INTERVAL_MS = 10_000;
 export const LOCATION_SEND_DISTANCE_M = 200;
 /** O GPS só avisa mudanças de posição maiores que isto. */
 export const LOCATION_DISTANCE_FILTER_M = 25;
+/**
+ * Parado, a posição é reenviada a cada intervalo destes (batimento): sem isso o
+ * last_location_at envelhece e, depois de RideDispatcher::LOCATION_MAX_AGE_MINUTES
+ * (10 min), o despacho manda o motorista para o fim da fila.
+ */
+export const LOCATION_HEARTBEAT_MS = 120_000;
