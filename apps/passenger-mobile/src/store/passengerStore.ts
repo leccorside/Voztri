@@ -48,6 +48,11 @@ export interface PassengerState {
   selectedCategory: Category;
   selectedPaymentMethod: PaymentMethodType;
   activeRide: Ride | null;
+  /**
+   * Corrida cuja busca terminou sem motorista (NO_DRIVER_AVAILABLE). A tela de
+   * busca mostra o aviso e oferece refazer a solicitação com os mesmos dados.
+   */
+  noDriverRide: Ride | null;
   chatMessages: ChatMessage[];
   isSosActive: boolean;
   /** Push do andamento da corrida (off: ainda não ativado nesta sessão). */
@@ -71,6 +76,10 @@ export interface PassengerState {
   selectPaymentMethod: (method: PaymentMethodType) => void;
   confirmRideRequest: () => Promise<void>;
   refreshRide: () => Promise<void>;
+  /** Refaz a solicitação da busca encerrada (mesma origem, destino, categoria e pagamento). */
+  retrySearch: () => Promise<void>;
+  /** Sai do aviso de busca sem motorista e volta ao início. */
+  dismissNoDriver: () => void;
   /** Chegou um push sobre a corrida (app aberto ou toque na notificação). */
   onRidePush: (rideId: string) => Promise<void>;
   cancelActiveRide: (reason: string) => Promise<void>;
@@ -124,6 +133,7 @@ const tripReset = {
   estimates: [],
   estimatesLoading: false,
   activeRide: null,
+  noDriverRide: null,
   chatMessages: [],
   isSosActive: false,
 };
@@ -159,16 +169,41 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
 
   /** Aplica uma corrida vinda da API e decide a etapa da interface. */
   const applyRide = async (ride: Ride) => {
-    if (ride.status === 'CANCELLED' || ride.status === 'NO_DRIVER_AVAILABLE') {
+    if (ride.status === 'NO_DRIVER_AVAILABLE') {
+      // Fica na tela de busca, com o aviso e o "Tentar de novo"
       await activeRideMemory.clear();
-      const byMe = get().activeRide === null;
-      set({
-        ...tripReset,
-        error: byMe ? null : ride.status === 'CANCELLED' ? 'A corrida foi cancelada.' : NO_DRIVER_MESSAGE,
-      });
+      set({ ...tripReset, currentStep: 'SEARCHING', noDriverRide: ride, error: null });
       return;
     }
-    set({ activeRide: ride, currentStep: stepForStatus(ride.status) });
+    if (ride.status === 'CANCELLED') {
+      await activeRideMemory.clear();
+      const byMe = get().activeRide === null;
+      set({ ...tripReset, error: byMe ? null : 'A corrida foi cancelada.' });
+      return;
+    }
+    set({ activeRide: ride, currentStep: stepForStatus(ride.status), noDriverRide: null });
+  };
+
+  /** Solicita a corrida e passa a acompanhá-la (ou retoma a que já estava ativa). */
+  const requestWith = async (params: Parameters<typeof rideApi.requestRide>[0]) => {
+    set({ busy: true, error: null });
+    try {
+      const ride = await rideApi.requestRide(params);
+      await activeRideMemory.save(ride.id);
+      set({ chatMessages: [], isSosActive: false });
+      await applyRide(ride);
+    } catch (err) {
+      // Já existe uma corrida em andamento: retoma o acompanhamento dela
+      const existing = apiErrorCode(err) === 'RIDE_ALREADY_ACTIVE' ? errorBody<{ ride: Ride }>(err)?.ride : null;
+      if (existing) {
+        await activeRideMemory.save(existing.id);
+        await applyRide(existing);
+      } else {
+        set({ error: errorMessage(err) });
+      }
+    } finally {
+      set({ busy: false });
+    }
   };
 
   // Leitura do GPS em andamento (escolher o destino espera por ela)
@@ -327,30 +362,23 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
     confirmRideRequest: async () => {
       const { origin, destination, selectedCategory, selectedPaymentMethod } = get();
       if (!destination) return;
-      set({ busy: true, error: null });
-      try {
-        const ride = await rideApi.requestRide({
-          origin,
-          destination,
-          category: selectedCategory,
-          paymentMethod: selectedPaymentMethod,
-        });
-        await activeRideMemory.save(ride.id);
-        set({ chatMessages: [], isSosActive: false });
-        await applyRide(ride);
-      } catch (err) {
-        // Já existe uma corrida em andamento: retoma o acompanhamento dela
-        const existing = apiErrorCode(err) === 'RIDE_ALREADY_ACTIVE' ? errorBody<{ ride: Ride }>(err)?.ride : null;
-        if (existing) {
-          await activeRideMemory.save(existing.id);
-          await applyRide(existing);
-        } else {
-          set({ error: errorMessage(err) });
-        }
-      } finally {
-        set({ busy: false });
-      }
+      await requestWith({ origin, destination, category: selectedCategory, paymentMethod: selectedPaymentMethod });
     },
+
+    retrySearch: async () => {
+      const failed = get().noDriverRide;
+      if (!failed || get().busy) return;
+      // Mesmos dados da busca encerrada; em caso de erro, o aviso e o botão continuam na tela
+      set({ destination: failed.destination, selectedCategory: failed.category, selectedPaymentMethod: failed.paymentMethod });
+      await requestWith({
+        origin: failed.origin,
+        destination: failed.destination,
+        category: failed.category,
+        paymentMethod: failed.paymentMethod,
+      });
+    },
+
+    dismissNoDriver: () => set({ ...tripReset }),
 
     refreshRide: async () => {
       const ride = get().activeRide;
@@ -377,10 +405,20 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
       try {
         const ride = await rideApi.getRide(rideId);
         if (get().activeRide) return;
-        if (ride.status === 'CANCELLED' || ride.status === 'NO_DRIVER_AVAILABLE') {
-          // Só o cancelamento pelo motorista e o fim da busca geram push: explica o que houve
+        if (ride.status === 'NO_DRIVER_AVAILABLE') {
           await activeRideMemory.clear();
-          set({ error: ride.status === 'CANCELLED' ? DRIVER_CANCELLED_MESSAGE : NO_DRIVER_MESSAGE, connectionError: null });
+          // Na tela inicial, abre o aviso com o "Tentar de novo"; no meio de outro fluxo, só avisa
+          if (get().currentStep === 'HOME') {
+            set({ ...tripReset, currentStep: 'SEARCHING', noDriverRide: ride, connectionError: null });
+          } else {
+            set({ error: NO_DRIVER_MESSAGE, connectionError: null });
+          }
+          return;
+        }
+        if (ride.status === 'CANCELLED') {
+          // Só o cancelamento pelo motorista gera push: explica por que a corrida sumiu
+          await activeRideMemory.clear();
+          set({ error: DRIVER_CANCELLED_MESSAGE, connectionError: null });
           return;
         }
         // Concluída: o aviso convida a avaliar (avaliação repetida é tratada no envio)

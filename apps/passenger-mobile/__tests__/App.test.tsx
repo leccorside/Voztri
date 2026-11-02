@@ -504,30 +504,97 @@ describe('passenger-mobile integrado à API', () => {
       expect(visibleText(tree)).toContain('Para onde vamos hoje?');
     });
 
-    it('busca encerrada sem motorista: volta ao início com aviso, pelo polling ou pelo push', async () => {
+    it('busca encerrada sem motorista pelo push: mostra o aviso e "Tentar de novo" refaz a solicitação', async () => {
       await renderLoggedIn();
       await requestBlackRide();
       expect(visibleText(tree)).toContain('Buscando o melhor motorista...');
+      const firstRequest = m.rideApi.requestRide.mock.calls[0]![0];
 
       // A API encerrou a busca (3 min sem motorista); o push chega antes do polling
       serverRide = ride('NO_DRIVER_AVAILABLE');
       await act(async () => deliverPush!('ride-1'));
       await settle();
       expectNoStrayText(tree);
-      expect(visibleText(tree)).toContain('Nenhum motorista disponível no momento. Tente de novo em instantes.');
-      expect(visibleText(tree)).toContain('Para onde vamos hoje?');
+      let text = visibleText(tree);
+      expect(text).toContain('Nenhum motorista disponível');
+      expect(text).toContain('Não encontramos um motorista VozTri Black perto de Av. Paulista, 1578 em 3 minutos.');
+      expect(text).toContain('Tentar de novo');
+      expect(text).not.toContain('Prazo da busca');
       expect(m.activeRideMemory.clear).toHaveBeenCalled();
+      expect(usePassengerStore.getState().activeRide).toBeNull();
+
+      // Sem corrida ativa, o polling para
+      const polls = m.rideApi.getRide.mock.calls.length;
+      await advanceAsync(9000);
+      expect(m.rideApi.getRide.mock.calls.length).toBe(polls);
+
+      // Mesmo destino, categoria e pagamento (e a mesma origem da busca encerrada)
+      serverRide = ride('SEARCHING', { id: 'ride-2', createdAt: new Date(Date.now()).toISOString() });
+      await pressAsync(tree, 'Tentar de novo');
+      expect(m.rideApi.requestRide).toHaveBeenCalledTimes(2);
+      expect(m.rideApi.requestRide).toHaveBeenLastCalledWith({
+        origin: expect.objectContaining({ shortAddress: 'Av. Paulista, 1578', latitude: -23.561414, longitude: -46.655881 }),
+        destination: expect.objectContaining({ shortAddress: 'Av. Faria Lima, 3477' }),
+        category: 'black',
+        paymentMethod: 'cash',
+      });
+      expect(firstRequest).toEqual(expect.objectContaining({ category: 'black', paymentMethod: 'cash' }));
+      expect(m.activeRideMemory.save).toHaveBeenLastCalledWith('ride-2');
+      text = visibleText(tree);
+      expect(text).toContain('Buscando o melhor motorista...');
+      expect(text).toContain('Prazo da busca: 3:00');
+      expect(usePassengerStore.getState().noDriverRide).toBeNull();
     });
 
-    it('aberto pela notificação de busca sem motorista, sem corrida na tela, explica o que houve', async () => {
+    it('falha ao tentar de novo mantém o aviso e o botão; "Voltar ao início" sai do aviso', async () => {
+      await renderLoggedIn();
+      await requestBlackRide();
+      serverRide = ride('NO_DRIVER_AVAILABLE');
+      await advanceAsync(3000); // pelo polling desta vez
+      expect(visibleText(tree)).toContain('Tentar de novo');
+
+      m.rideApi.requestRide.mockRejectedValueOnce({ message: 'Sem conexão com a API.' });
+      await pressAsync(tree, 'Tentar de novo');
+      let text = visibleText(tree);
+      expect(text).toContain('Sem conexão com a API.');
+      expect(text).toContain('Tentar de novo');
+
+      await pressAsync(tree, 'Voltar ao início');
+      text = visibleText(tree);
+      expect(text).toContain('Para onde vamos hoje?');
+      expect(usePassengerStore.getState().noDriverRide).toBeNull();
+    });
+
+    it('aberto pela notificação de busca sem motorista, na tela inicial, mostra o aviso com "Tentar de novo"', async () => {
       await renderLoggedIn(null);
       serverRide = ride('NO_DRIVER_AVAILABLE');
       await act(async () => deliverPush!('ride-1'));
       await settle();
       expect(m.activeRideMemory.save).not.toHaveBeenCalled();
       expect(usePassengerStore.getState().activeRide).toBeNull();
-      expect(visibleText(tree)).toContain('Nenhum motorista disponível no momento. Tente de novo em instantes.');
-      expect(visibleText(tree)).toContain('Para onde vamos hoje?');
+      expectNoStrayText(tree);
+      expect(visibleText(tree)).toContain('Nenhum motorista disponível');
+      expect(visibleText(tree)).toContain('Tentar de novo');
+    });
+
+    it('mostra o prazo da busca contando a partir do createdAt da corrida', async () => {
+      // Corrida criada há 23 s
+      serverRide = ride('SEARCHING', { createdAt: new Date(Date.now() - 23_000).toISOString() });
+      await renderLoggedIn();
+      await requestBlackRide();
+      expectNoStrayText(tree);
+      expect(visibleText(tree)).toContain('Prazo da busca: 2:37');
+
+      await advanceAsync(1000);
+      expect(visibleText(tree)).toContain('Prazo da busca: 2:36');
+
+      await advanceAsync(96_000);
+      expect(visibleText(tree)).toContain('Prazo da busca: 1:00');
+
+      // Prazo esgotado: aguarda a API encerrar a busca
+      await advanceAsync(60_000);
+      expect(visibleText(tree)).toContain('Encerrando a busca…');
+      expect(visibleText(tree)).not.toContain('Prazo da busca');
     });
 
     it('ignora aviso de uma corrida diferente da que está na tela', async () => {
