@@ -129,6 +129,13 @@ android {
     }
 }
 
+// O bundle embute VOZTRI_API_URL (babel.config.js). Sem declarar a variável como entrada,
+// o Gradle considera a tarefa UP-TO-DATE e um release feito depois de testar num aparelho
+// continuaria apontando para o IP da rede local.
+tasks.matching { it.name.startsWith("createBundle") && it.name.endsWith("JsAndAssets") }.configureEach {
+    inputs.property("voztriApiUrl", System.getenv("VOZTRI_API_URL") ?: "")
+}
+
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")

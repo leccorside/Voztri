@@ -372,6 +372,27 @@ cd ios && bundle exec pod install && cd ..
 npx react-native run-ios
 ```
 
+#### Testando num aparelho físico (`VOZTRI_API_URL`)
+
+Por padrão os apps chamam a API em `http://10.0.2.2:8080/api/v1` (emulador Android) ou `http://localhost:8080/api/v1` (simulador iOS). Num aparelho, defina `VOZTRI_API_URL` com o endereço da máquina na rede, **sem editar o código**. O valor é embutido no JavaScript na hora do bundle (Babel), então vale para a sessão do Metro ou para o build em que foi definido.
+
+```bash
+# Debug (o app carrega o JavaScript do Metro): defina ao subir o Metro
+VOZTRI_API_URL=http://192.168.0.10:8080/api/v1 npx react-native start
+
+# Android por USB, sem depender do IP: o aparelho acessa a porta 8080 da máquina
+adb reverse tcp:8080 tcp:8080
+VOZTRI_API_URL=http://localhost:8080/api/v1 npx react-native start
+
+# Release Android: exporte antes do Gradle (o bundle é refeito quando o valor muda)
+VOZTRI_API_URL=https://api.exemplo.com.br/api/v1 ./gradlew assembleRelease
+
+# Release iOS: o Xcode lê ios/.xcode.env.local (fora do git)
+echo 'export VOZTRI_API_URL=https://api.exemplo.com.br/api/v1' >> ios/.xcode.env.local
+```
+
+No PowerShell: `$env:VOZTRI_API_URL = 'http://192.168.0.10:8080/api/v1'` antes do comando. O valor precisa começar com `http://` ou `https://` (a barra final é removida); se for inválido, o app avisa no console e usa o padrão. Trocar o valor não exige `--reset-cache`: ele entra na chave do cache do Metro e nas entradas da tarefa de bundle do Gradle. Fora do debug, o Android bloqueia HTTP sem TLS: use HTTPS no release.
+
 #### Ativando as notificações push
 
 O push está implementado nos dois apps, mas **desligado até as credenciais do Firebase serem adicionadas**: sem elas o backend só registra no log e os apps compilam e rodam normalmente (ofertas e andamento da corrida seguem pelo polling). Os arquivos abaixo estão no `.gitignore`.

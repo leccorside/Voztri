@@ -9,6 +9,11 @@ const path = require('path');
  *   usa o mock oficial e imports relativos com ".js" (convenção NodeNext do
  *   TypeScript) perdem a extensão.
  */
+// O babel.config.js embute VOZTRI_API_URL no código (endereço da API para aparelho
+// físico). Nos testes ela é sempre ignorada: os testes esperam o endereço padrão, e o
+// cache do babel-jest não leva essa variável em conta.
+delete process.env.VOZTRI_API_URL;
+
 module.exports = {
   preset: 'react-native',
   rootDir: __dirname,

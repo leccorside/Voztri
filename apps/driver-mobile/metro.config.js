@@ -17,6 +17,9 @@ const monorepoRoot = path.resolve(projectRoot, '../..');
  *   procura pelas sourceExts (.ts, .tsx, ...).
  */
 const config = {
+  // VOZTRI_API_URL é embutida no código pelo Babel (babel.config.js), mas não faz parte da
+  // chave do cache de transformação: sem isto, trocar o valor reaproveitaria o código antigo.
+  cacheVersion: `voztri-api-url:${process.env.VOZTRI_API_URL ?? ''}`,
   watchFolders: [monorepoRoot],
   resolver: {
     nodeModulesPaths: [path.join(projectRoot, 'node_modules'), path.join(monorepoRoot, 'node_modules')],
