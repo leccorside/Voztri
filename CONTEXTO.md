@@ -318,6 +318,8 @@ voztri/
   - **Decisão: `UIBackgroundModes` mantido, só sem `location`.** O pedido era tirar a chave, mas ela também tem `remote-notification`, que o push do `@voztri/mobile-core` precisa no iOS (registra o `setBackgroundMessageHandler` do React Native Firebase). Tirar a chave inteira quebraria o push com o app em segundo plano; saiu só o `location`.
   - **Validação:** `Info.plist` lido pelo `plistlib` (válido; `UIBackgroundModes: ['remote-notification']`; sem "Always"; com "WhenInUse") e manifest pelo parser XML. `installDebug` com `BUILD SUCCESSFUL`; o **manifest final** (`merged_manifest`, depois do merge das bibliotecas) não tem `ACCESS_BACKGROUND_LOCATION` (nenhuma biblioteca a reinjeta) e o `dumpsys package` do emulador lista só a localização precisa e a aproximada, concedidas. Com o build novo, o GPS do embarque continuou funcionando (`geo fix` em Pinheiros → "Rua dos Pinheiros, 436 (±5 m)"). A instalação foi dirigida ao emulador (`ANDROID_SERIAL`); o celular físico conectado não foi tocado. O `docs/checklist-google-play.md` ganhou a nota de que o passageiro está dispensado da declaração.
 
+- **2026-11-02 — Pendências dos apps registradas no `PASSOS.md` (Fases 12 a 19).** Levantamento do que falta, conferido no código: PIN de emergência fixo em `'1234'`, `PUT /auth/profile` sem uso, sem exclusão de conta, `POST /driver/documents` sem tela no app, `AsaasPaymentGateway` e `CouponService` sem uso, gorjeta gravada em `ride_ratings.tip_cents` sem cobrança nem lançamento no ledger, mapas estáticos, polling no lugar do Reverb, push desligado, apps nunca rodados em aparelho físico nem no iOS, mais os itens de produção e dívidas da seção 7. **Decisão:** as fases antigas marcadas como `CONCLUÍDO` com itens que não chegaram aos apps (envio de documentos na Fase 3, MapLibre na Fase 4, Pix/cartão na Fase 6, chat por WebSockets e cupons na Fase 7) **não foram desmarcadas**: o que falta entrou nas fases novas, com a referência à fase original e uma nota no índice. A seção 8 passou a apontar para as fases novas.
+
 ## 7. Pendências Técnicas Conhecidas
 
 - **Apps não rodaram num aparelho físico nem no iOS:** os dois foram executados no emulador Android em 2026-11-02 (ver o histórico).
@@ -368,7 +370,16 @@ voztri/
 - `php artisan test` não existe porque o projeto não tem `nunomaduro/collision`. Use `vendor/bin/phpunit`.
 
 ## 8. Próximos Passos
-- Execução sequencial das Fases conforme `PASSOS.md`:
+- **O que falta nos apps está no `PASSOS.md`, Fases 12 a 19** (levantamento de 2026-11-02, todas `PENDENTE`). Ordem sugerida: 12 → 13 → 16 → 14 → 15, com 17 e 18 antes da publicação:
+  - Fase 12: Conta e Segurança do Usuário (PIN de emergência definido pelo passageiro, perfil, exclusão de conta, contatos de confiança).
+  - Fase 13: Cadastro do Motorista no App (dados, veículo, envio de CNH/CRLV/selfie, status da análise).
+  - Fase 14: Pagamentos Reais, Gorjeta e Cupons (Asaas, Pix, cartão, repasse real).
+  - Fase 15: Mapas e Tempo Real nos Apps (MapLibre, rota, Reverb no lugar do polling).
+  - Fase 16: Notificações Push Ativas (Firebase, APNs, ações na notificação).
+  - Fase 17: Validação em Aparelho Físico e iOS.
+  - Fase 18: Preparação para Produção (Photon próprio, `trustProxies`, LGPD, cron/fila, splash, lojas).
+  - Fase 19: Melhorias e Dívidas Técnicas.
+- Fases originais (todas marcadas `CONCLUÍDO` no `PASSOS.md`; os itens delas que não chegaram aos apps estão nas Fases 12 a 19):
   - Fase 1: Fundação & Autenticação (Models, Migrations, Seeders, Auth API e Telas Iniciais).
   - Fase 2: Geolocalização e Rastreamento em Tempo Real (Mapas, OSRM, PostGIS, Reverb).
   - Fase 3: App do Motorista (Onboarding, Documentos, Dashboard, Toggle Online/Offline).

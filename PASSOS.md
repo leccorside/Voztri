@@ -18,6 +18,16 @@ Este documento registra todas as fases do desenvolvimento da plataforma **VOZTRI
 - [Fase 9: Qualidade, Testes de Concorrência, Segurança e Resiliência](#fase-9--qualidade-testes-de-concorrência-segurança-e-resiliência) — `CONCLUÍDO`
 - [Fase 10: Compilação Android, Release Builds e Permissões de Fundo](#fase-10--compilação-android-release-builds-e-permissões-de-fundo) — `CONCLUÍDO`
 - [Fase 11: Preparação Multiplataforma iOS e Conformidade](#fase-11--preparação-multiplataforma-ios-e-conformidade) — `CONCLUÍDO`
+- [Fase 12: Conta e Segurança do Usuário](#fase-12--conta-e-segurança-do-usuário) — `PENDENTE`
+- [Fase 13: Cadastro do Motorista no App](#fase-13--cadastro-do-motorista-no-app) — `PENDENTE`
+- [Fase 14: Pagamentos Reais, Gorjeta e Cupons](#fase-14--pagamentos-reais-gorjeta-e-cupons) — `PENDENTE`
+- [Fase 15: Mapas e Tempo Real nos Apps](#fase-15--mapas-e-tempo-real-nos-apps) — `PENDENTE`
+- [Fase 16: Notificações Push Ativas](#fase-16--notificações-push-ativas) — `PENDENTE`
+- [Fase 17: Validação em Aparelho Físico e iOS](#fase-17--validação-em-aparelho-físico-e-ios) — `PENDENTE`
+- [Fase 18: Preparação para Produção](#fase-18--preparação-para-produção) — `PENDENTE`
+- [Fase 19: Melhorias e Dívidas Técnicas](#fase-19--melhorias-e-dívidas-técnicas) — `PENDENTE`
+
+> **Fases 12 a 19 (levantamento de 2026-11-02):** o que falta nos apps, conferido no código. Algumas fases anteriores estão marcadas como concluídas com itens que não chegaram aos apps (envio de documentos na Fase 3, mapa MapLibre na Fase 4, cobrança Pix/cartão na Fase 6, chat por WebSockets e cupons na Fase 7); esses itens foram mantidos como estavam e o que falta está nas fases novas, com a referência à fase original. Ordem sugerida: 12 → 13 → 16 → 14 → 15, com 17 e 18 antes da publicação.
 
 ---
 
@@ -195,4 +205,132 @@ Este documento registra todas as fases do desenvolvimento da plataforma **VOZTRI
 - **Dependências**: Fase 10.
 - **Critérios de Aceite**: Arquitetura modular de plataforma implementada e documentada para submissão futura na Apple App Store.
 - **Testes**: Validação estática de compatibilidade multiplataforma.
+
+---
+
+### Fase 12 — Conta e Segurança do Usuário
+- **Status**: `PENDENTE`
+- **Objetivo**: Dar ao usuário controle sobre a própria conta e sobre o PIN que desativa o SOS, e cumprir a exigência das lojas de excluir a conta pelo app.
+- **Tarefas**:
+  - [ ] PIN de emergência definido pelo passageiro: hoje a API cria todo passageiro com `emergency_pin = '1234'` (`AuthController` e `RideController::requestRide`). Pedir o PIN no primeiro acesso (ou antes da primeira corrida), permitir a troca e guardar com hash.
+  - [ ] Tela de perfil nos dois apps (nome, e-mail, foto), usando o `PUT /api/v1/auth/profile`, que já existe e não é chamado.
+  - [ ] Exclusão de conta pelo app nos dois apps (exigida pela Google Play e pela App Store para apps com cadastro), com confirmação; apagar ou anonimizar os dados pessoais (Casa/Trabalho e histórico de destinos já saem no evento `deleted` do `User`).
+  - [ ] Contatos de confiança do passageiro (citados no README e no protótipo do SOS): cadastro e aviso a eles quando o SOS é acionado.
+- **Dependências**: Nenhuma.
+- **Critérios de Aceite**: Passageiro define e troca o PIN de emergência e o SOS só desativa com ele; motorista e passageiro editam o perfil e excluem a conta pelo app.
+- **Testes**: Testes de API (PIN com hash, troca, exclusão e o que sobra da conta) e testes Jest das telas.
+
+---
+
+### Fase 13 — Cadastro do Motorista no App
+- **Status**: `PENDENTE`
+- **Objetivo**: Permitir que um motorista novo se cadastre pelo app (hoje só existe motorista do seed ou criado pelo painel). Completa a Fase 3, que previa essas telas.
+- **Tarefas**:
+  - [ ] Fluxo de cadastro depois do primeiro login: dados pessoais e CNH (número, categoria, validade, EAR).
+  - [ ] Cadastro do veículo (marca, modelo, ano, cor, placa, RENAVAM, categoria).
+  - [ ] Envio de fotos de CNH, CRLV e selfie pelo `POST /api/v1/driver/documents` (já existe no backend, sem uso no app), com câmera e galeria; armazenamento no MinIO.
+  - [ ] Permissão `CAMERA` no `AndroidManifest.xml` do motorista (o `Info.plist` já pede a câmera).
+  - [ ] Tela de status da análise (pendente, aprovado, recusado com motivo) e bloqueio do botão "Ficar online" até a aprovação.
+  - [ ] Painel admin: ver as fotos enviadas na aprovação e, ao reativar um motorista bloqueado, não deixá-lo fora do mapa ao vivo (`approveDriver` não religa o `is_online`).
+- **Dependências**: Fase 12 (perfil).
+- **Critérios de Aceite**: Motorista novo se cadastra, envia documentos, é aprovado no painel e consegue ficar online.
+- **Testes**: Testes de API do envio de documentos (tipos, tamanho, dono) e testes Jest do fluxo de cadastro.
+
+---
+
+### Fase 14 — Pagamentos Reais, Gorjeta e Cupons
+- **Status**: `PENDENTE`
+- **Objetivo**: Cobrar de verdade. Hoje a corrida só é lançada no ledger interno: nenhum Pix ou cartão é processado. Completa as Fases 6 e 7.
+- **Tarefas**:
+  - [ ] Ligar o `AsaasPaymentGateway` (existe em `backend/app/Infrastructure/Payments`, sem uso) ao fluxo da corrida, com chaves de sandbox.
+  - [ ] Pix: QR Code / Copia e Cola no app do passageiro e confirmação por webhook idempotente.
+  - [ ] Cartão de crédito: tokenização no app (sem dado de cartão no servidor) e cobrança ao concluir a corrida.
+  - [ ] Repasse Pix real ao motorista (`POST /billing/payout` hoje só lança no ledger).
+  - [ ] Gorjeta: o valor escolhido na avaliação é gravado em `ride_ratings.tip_cents`, mas não é cobrado do passageiro nem creditado ao motorista no ledger.
+  - [ ] Cupons: o `CouponService` existe no backend sem uso; campo de cupom no app do passageiro e desconto aplicado na estimativa e na cobrança.
+- **Dependências**: Fase 12.
+- **Critérios de Aceite**: Corrida paga por Pix e por cartão no sandbox, com ledger e extrato do motorista batendo com o gateway; gorjeta e cupom refletidos na cobrança.
+- **Testes**: Testes de webhook (idempotência, assinatura), do ledger com gorjeta e cupom, e testes Jest das telas de pagamento.
+
+---
+
+### Fase 15 — Mapas e Tempo Real nos Apps
+- **Status**: `PENDENTE`
+- **Objetivo**: Trocar os desenhos estáticos por mapas reais e o polling de 3 s por eventos em tempo real. Completa as Fases 2, 4 e 7.
+- **Tarefas**:
+  - [ ] SDK de mapas (MapLibre) nos dois apps: posição do passageiro, do motorista e do embarque.
+  - [ ] Rota traçada (polyline do OSRM) na estimativa, no motorista a caminho e durante a viagem.
+  - [ ] Posição do motorista ao vivo no app do passageiro.
+  - [ ] Disparar os eventos do backend (`RideStatusUpdated` etc., que existem e não são disparados) e consumi-los nos apps pelo Reverb, mantendo o polling como reserva.
+  - [ ] Chat da corrida por WebSocket.
+  - [ ] Decidir o destino do `DispatchEngine` (Redis GEO, hoje sem uso) junto com o rastreamento em tempo real.
+- **Dependências**: Nenhuma (pode correr em paralelo com 13 e 14).
+- **Critérios de Aceite**: Passageiro vê o motorista se aproximando no mapa; mudanças de status e mensagens chegam sem esperar o polling.
+- **Testes**: Testes de broadcast no backend e testes Jest do consumo dos eventos com o polling de reserva.
+
+---
+
+### Fase 16 — Notificações Push Ativas
+- **Status**: `PENDENTE`
+- **Objetivo**: Ligar o push, que está implementado nos dois apps e no backend, mas desligado por falta da configuração do Firebase.
+- **Tarefas**:
+  - [ ] Criar o projeto Firebase e colocar o `google-services.json` (Android) e o `GoogleService-Info.plist` (iOS, no target pelo Xcode).
+  - [ ] Enviar a chave APNs `.p8` ao Firebase e configurar o `FCM_CREDENTIALS` no backend (passo a passo no README).
+  - [ ] Validar em aparelho: oferta com o app do motorista minimizado; motorista a caminho/chegou, cancelamento, conclusão e "sem motorista" no passageiro.
+  - [ ] Aceitar ou recusar a oferta direto pela notificação (mensagem só de dados + notificação local, ex.: Notifee).
+  - [ ] Push de início da viagem para o passageiro (opcional).
+  - [ ] Não reabrir a avaliação de uma corrida já avaliada ao tocar numa notificação antiga (a API não informa se a corrida já foi avaliada).
+  - [ ] Tokens órfãos: tentar de novo o `deleteToken()` quando a sessão expira sem rede.
+- **Dependências**: Fase 17 (aparelho físico para validar).
+- **Critérios de Aceite**: Motorista recebe a oferta com o app minimizado e o passageiro recebe os avisos da corrida, nos dois sistemas.
+- **Testes**: Validação manual em aparelhos Android e iOS; testes Jest das ações da notificação.
+
+---
+
+### Fase 17 — Validação em Aparelho Físico e iOS
+- **Status**: `PENDENTE`
+- **Objetivo**: Os apps só rodaram no emulador Android. Validar em aparelho real e compilar o iOS (exige macOS).
+- **Tarefas**:
+  - [ ] Rodar os dois apps num aparelho Android físico (`VOZTRI_API_URL` apontando para o IP da máquina).
+  - [ ] Build iOS no macOS (`bundle exec pod install` e `run-ios`) dos dois apps.
+  - [ ] Compilar e validar o `VoztriLocationTracking.m` (envio em segundo plano, batimento de 2 min com o motorista parado e chegada automática) no simulador e num iPhone.
+  - [ ] Conferir o `Info.plist` do passageiro sem "Sempre" e sem o modo `location`, e se o ATS libera HTTP para IP da rede em debug.
+  - [ ] Medir o consumo de bateria do rastreamento do motorista no iOS (`kCLLocationAccuracyBest` o turno inteiro).
+  - [ ] Conferir com o TalkBack (e o VoiceOver) se o contador da busca é lido atualizado.
+- **Dependências**: Acesso a um Mac e a aparelhos físicos.
+- **Critérios de Aceite**: Fluxo completo (login, corrida, embarque, conclusão) funcionando em Android físico e em iOS.
+- **Testes**: Roteiro manual de ponta a ponta nos dois sistemas.
+
+---
+
+### Fase 18 — Preparação para Produção
+- **Status**: `PENDENTE`
+- **Objetivo**: Itens que precisam estar resolvidos antes do primeiro deploy e da publicação nas lojas.
+- **Tarefas**:
+  - [ ] Photon próprio (dados do OpenStreetMap) ou provedor contratado no lugar do `photon.komoot.io` público (trocar só o `PHOTON_GEOCODING_URL`).
+  - [ ] Configurar `trustProxies` no `bootstrap/app.php` (sem isso, atrás de proxy o limite do login admin vira um só para todos).
+  - [ ] Confirmar com o jurídico (LGPD) o prazo de 90 dias do histórico de destinos e definir a retenção dos endereços das corridas (`rides`).
+  - [ ] Deploy: cron com `php artisan schedule:run` a cada minuto e `php artisan queue:restart` a cada atualização (o `worker` não recarrega o código).
+  - [ ] Splash com a identidade VOZTRI nos dois sistemas (hoje é a tela padrão do template).
+  - [ ] Ícone monocromático do Android 13+ (precisa de uma versão do logo com fundo transparente).
+  - [ ] Builds de release assinados (AAB e IPA) e fichas das lojas (Data Safety, privacidade).
+- **Dependências**: Fases 12, 14 e 17.
+- **Critérios de Aceite**: Ambiente de produção no ar com agendador e fila; apps aprovados nas lojas.
+- **Testes**: Checklist de publicação (`docs/checklist-google-play.md` e `docs/guia-build-ios.md`).
+
+---
+
+### Fase 19 — Melhorias e Dívidas Técnicas
+- **Status**: `PENDENTE`
+- **Objetivo**: Ajustes menores levantados durante o desenvolvimento, sem bloquear o uso.
+- **Tarefas**:
+  - [ ] Horas online do motorista (`onlineHours` é `null`: a API não registra sessões online).
+  - [ ] Favoritos com nome livre além de Casa e Trabalho.
+  - [ ] Painel admin: nota média real no lugar do 4.88 fixo; endpoints de volume por categoria e de incidentes SOS.
+  - [ ] Tipos do `shared-types` alinhados à API (camelCase nos tipos e snake_case nas respostas).
+  - [ ] Helper de testes `rnTree.ts` em um só lugar (hoje há três cópias iguais).
+  - [ ] DOCUMENTACAO: corrigir o `POST /rides/{id}/sos`, que diz que o app envia o embarque "pois ainda não lê o GPS" (o app já envia a posição atual e só usa o embarque se o GPS falhar).
+- **Dependências**: Nenhuma.
+- **Critérios de Aceite**: Cada item fechado com teste e registro no `CONTEXTO.md`.
+- **Testes**: Os de cada item.
 
