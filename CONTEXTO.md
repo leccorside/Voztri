@@ -46,7 +46,7 @@ voztri/
 │   ├── api-client/             # Cliente HTTP Axios resiliente com interceptors e autenticação
 │   ├── validation/             # Esquemas de validação Zod para todas as entidades
 │   ├── localization/           # i18n (pt-BR, en-US, es-ES)
-│   └── mobile-core/            # Código comum dos apps React Native (push, API, usePolling e kit de UI), só fonte, sem build
+│   └── mobile-core/            # Código comum dos apps React Native (push, API, usePolling, kit de UI e login), só fonte, sem build
 ├── infrastructure/
 │   ├── docker/                 # Dockerfiles para PHP-FPM, Nginx, Reverb, Worker
 │   ├── nginx/                  # Configuração de proxy reverso e SSL
@@ -210,6 +210,10 @@ voztri/
   - **Testes:** com o kit vindo do pacote, toda tela passou a importar o índice, que também carrega o RNFB (ESM que o Jest não transforma). Em vez de repetir o mock em cada arquivo, cada app ganhou um **`jest.setup.js`** (`setupFiles`) que simula o RNFB como "Firebase não configurado" (`apps: []`); os testes de push declaram o próprio `jest.mock`, que tem prioridade, e os mocks avulsos dos `api.test.ts` foram removidos.
   - **Validação:** typecheck da raiz (9 workspaces) sem erros; Jest do driver 45/45 e do passenger 48/48, sem alterar nenhum teste de tela (o detector de texto fora de `<Text>` segue valendo); `npm ls react` com uma única cópia (18.2.0, deduplicada), condição para os hooks do pacote funcionarem no app; bundles de release dos dois apps gerados, com o kit uma vez só em cada; build da raiz sem erros.
 
+- **2026-11-02 — Tela de login extraída para o `@voztri/mobile-core` (`OtpLoginScreen`), parametrizada por papel.** O pedido incluía "todas as demais telas duplicadas", mas a conferência mostrou que **só a `LoginScreen` existia nos dois apps**; as outras são próprias de cada um (nenhum nome nem conteúdo em comum). As duas versões do login diferiam só no store, no título ("Entrar como motorista" / "Entrar na VOZTRI"), no selo "Driver" e no tema (fundo escuro e sombra forte no motorista; fundo claro e sombra leve no passageiro).
+  - **Como ficou:** `packages/mobile-core/src/screens/OtpLoginScreen.tsx` **sem dependência de store** (props `requestCode`, `login`, `busy`, `error`), com `role: 'driver' | 'passenger'` escolhendo um preset de textos e tema, e `texts` (parcial) para sobrescrever título, instrução e selo (`badge: null` tira o selo). Os `src/screens/LoginScreen.tsx` dos apps viraram adaptadores de poucas linhas que ligam o store à tela, então o `App.tsx` e os testes de tela não mudaram. O pacote passou a depender do `@voztri/design-tokens` (com `paths` no `tsconfig`).
+  - **Validação:** typecheck da raiz sem erros; Jest do driver 45/45 e do passenger 52/52 (os fluxos de login dos dois apps seguem verdes sem alteração; +4 em `OtpLoginScreen.test.tsx`: selo e título por papel, textos sobrescritos sem selo, código de depuração, entrada com o código só em dígitos e "Trocar telefone", falha ao pedir o código mantém o passo e mostra o erro); bundles de release dos dois apps com a tela uma vez só; build da raiz sem erros.
+
 ## 7. Pendências Técnicas Conhecidas
 
 - **Apps mobile ainda não foram executados em emulador ou aparelho:** o port para React Native foi validado com typecheck, testes Jest do fluxo completo e bundle Hermes de release, mas não com o app rodando de verdade (layout real, teclado, safe area, sombras no Android).
@@ -236,7 +240,8 @@ voztri/
 - **"Tentar de novo" cobra o valor da nova estimativa:** a API recalcula o preço na solicitação; com a mesma rota e sem tarifa dinâmica o valor é o mesmo, mas o resumo mostra o preço da busca encerrada até a nova corrida chegar. Sem o `worker`, o timeout só acontece quando alguém faz polling da corrida (passageiro com o app aberto ou motorista que recebeu a oferta). Quem recusou ou deixou expirar uma oferta não recebe a mesma corrida de novo dentro da busca.
 - **`onlineHours` é `null`:** a API não registra sessões online; o painel do motorista mostra "—".
 - **`DispatchEngine` (Redis GEO) está sem uso:** foi substituído pelo `RideDispatcher` (banco de dados). Remover ou reaproveitar quando o rastreamento em tempo real existir.
-- **Código compartilhado ainda duplicado entre os apps:** `src/config.ts` (só o `API_URL` e o `POLL_INTERVAL_MS` coincidem; o driver tem as constantes de localização) e a tela de login (quase igual, com textos e papel diferentes). Candidatos ao `packages/mobile-core`.
+- **Código compartilhado ainda duplicado entre os apps:** só o `src/config.ts` (o `API_URL` e o `POLL_INTERVAL_MS` coincidem; o driver tem as constantes de localização). As demais telas não são duplicadas: cada app tem as suas (motorista: painel, navegação, oferta, PIN, ganhos, Pix; passageiro: início, destino, categorias, busca, motorista a caminho, chat, SOS, avaliação).
+- **Presets dos dois papéis no bundle de cada app:** a `OtpLoginScreen` guarda os textos do motorista e do passageiro, então o bundle do passageiro também contém "Entrar como motorista" (algumas linhas de texto, sem efeito na tela).
 - **Índice único do `@voztri/mobile-core`:** importar qualquer coisa do pacote (até o `Button`) carrega também o `push.ts` e o `@react-native-firebase`. No app não faz diferença (os dois usam push); nos testes, o `jest.setup.js` de cada app simula o RNFB para todos (o Jest não transforma o ESM dele). Subcaminhos (`@voztri/mobile-core/ui`) exigiriam `exports` no `package.json`, que o Metro 0.80 não lê por padrão.
 - **Kit de UI duplicado:** `src/ui/kit.tsx` é idêntico nos dois apps. Se crescer, extrair para um pacote `packages/mobile-ui`, com `react-native` como peer dependency, fora do alcance do admin-web.
 - **Permissões Android x iOS do driver não batem:** o `Info.plist` do driver pede câmera (fotos de CNH/CRLV), mas o `AndroidManifest.xml` original não tinha `CAMERA`. A permissão foi mantida como estava, por pedido; adicionar `CAMERA` quando o envio de documentos for implementado.

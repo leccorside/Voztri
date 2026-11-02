@@ -2,7 +2,7 @@
   "name": "@voztri/mobile-core",
   "version": "1.0.0",
   "private": true,
-  "description": "Código compartilhado pelos apps React Native (driver-mobile e passenger-mobile): push, sessão e infraestrutura de API, usePolling e kit de UI. Só código-fonte: usado pelo Metro e pelo Jest via src, sem build.",
+  "description": "Código compartilhado pelos apps React Native (driver-mobile e passenger-mobile): push, sessão e infraestrutura de API, usePolling, kit de UI e tela de login. Só código-fonte: usado pelo Metro e pelo Jest via src, sem build.",
   "main": "./src/index.ts",
   "react-native": "./src/index.ts",
   "types": "./src/index.ts",
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@voztri/api-client": "*",
+    "@voztri/design-tokens": "*",
     "axios": "^1.7.2"
   },
   "peerDependencies": {

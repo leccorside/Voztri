@@ -7,6 +7,7 @@
     // Pacotes do monorepo pelo src (o types deles aponta para dist/, que só existe depois do build)
     "paths": {
       "@voztri/api-client": ["../api-client/src/index.ts"],
+      "@voztri/design-tokens": ["../design-tokens/src/index.ts"],
       "@voztri/shared-types": ["../shared-types/src/index.ts"]
     }
   },
