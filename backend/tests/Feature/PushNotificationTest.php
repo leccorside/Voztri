@@ -233,6 +233,127 @@ class PushNotificationTest extends TestCase
         $this->assertCount(1, $this->push->messagesFor($passenger));
     }
 
+    // ------------------------------------------------------------ chegada pela posição
+
+    /** Embarque dos testes: Av. Paulista, 1578 (-23.561414, -46.655881); 0,001° de latitude ≈ 111 m. */
+    private const PICKUP_LAT = -23.561414;
+    private const PICKUP_LNG = -46.655881;
+
+    /** Motorista a ~1,1 km do embarque, com a corrida aceita (a caminho). */
+    private function rideEnRoute(): array
+    {
+        $driver = $this->driver('11922220001', -23.5714, -46.6559);
+        $passenger = $this->passenger();
+        $rideId = $this->requestRide($passenger);
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/accept")->assertOk();
+
+        return [$driver, $passenger, $rideId];
+    }
+
+    private function sendLocation(User $driver, float $lat, float $lng = self::PICKUP_LNG)
+    {
+        return $this->actingAs($driver, 'sanctum')->postJson('/api/v1/driver/location', ['latitude' => $lat, 'longitude' => $lng])->assertOk();
+    }
+
+    private function rideStatus(string $rideId): string
+    {
+        return \App\Models\Ride::findOrFail($rideId)->status;
+    }
+
+    public function test_location_within_100m_marks_arrival_and_pushes_once(): void
+    {
+        [$driver, $passenger, $rideId] = $this->rideEnRoute();
+
+        // ~200 m: ainda não chegou
+        $this->sendLocation($driver, self::PICKUP_LAT - 0.0018)->assertJson(['arrivedAtPickup' => false, 'rideId' => null]);
+        $this->assertSame('DRIVER_EN_ROUTE', $this->rideStatus($rideId));
+
+        // ~50 m: chegada automática
+        $this->sendLocation($driver, self::PICKUP_LAT - 0.00045)->assertJson(['arrivedAtPickup' => true, 'rideId' => $rideId]);
+        $this->assertSame('DRIVER_ARRIVED', $this->rideStatus($rideId));
+
+        $history = \App\Models\RideStatusHistory::where('ride_id', $rideId)->where('to_status', 'DRIVER_ARRIVED')->firstOrFail();
+        $this->assertSame('auto', $history->metadata['source']);
+        $this->assertEqualsWithDelta(50, $history->metadata['distance_m'], 3);
+
+        // Posições seguintes (parado no embarque) não repetem a chegada nem o push
+        $this->sendLocation($driver, self::PICKUP_LAT - 0.0002)->assertJson(['arrivedAtPickup' => false]);
+        $messages = $this->push->messagesFor($passenger);
+        $this->assertCount(2, $messages);
+        $this->assertSame(['Motorista está a caminho', 'Seu motorista chegou'], array_map(fn ($m) => $m->title, $messages));
+    }
+
+    public function test_location_near_pickup_without_ride_en_route_does_nothing(): void
+    {
+        $driver = $this->driver('11922220001', -23.5714, -46.6559);
+        $passenger = $this->passenger();
+        $rideId = $this->requestRide($passenger); // só oferecida, ainda não aceita
+
+        $this->sendLocation($driver, self::PICKUP_LAT)->assertJson(['arrivedAtPickup' => false]);
+        $this->assertSame('OFFERED', $this->rideStatus($rideId));
+
+        // Já em viagem: passar perto do embarque de novo não volta o status
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/accept")->assertOk();
+        $pin = \App\Models\Ride::findOrFail($rideId)->boarding_pin;
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/validate-pin", ['pin' => $pin])->assertOk();
+        $this->sendLocation($driver, self::PICKUP_LAT)->assertJson(['arrivedAtPickup' => false]);
+        $this->assertSame('IN_PROGRESS', $this->rideStatus($rideId));
+        $this->assertCount(1, $this->push->messagesFor($passenger));
+    }
+
+    public function test_manual_arrival_rejected_when_too_far(): void
+    {
+        [$driver, $passenger, $rideId] = $this->rideEnRoute();
+
+        // ~553 m (geodésico), posição enviada pelo app
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/arrived", [
+            'latitude' => self::PICKUP_LAT - 0.005, 'longitude' => self::PICKUP_LNG,
+        ])->assertStatus(422)
+            ->assertJsonPath('error', 'TOO_FAR_FROM_PICKUP')
+            ->assertJsonPath('maxDistanceMeters', 300)
+            ->assertJsonPath('message', 'Você está a 550 m do embarque. Avise a chegada quando estiver a até 300 m.');
+
+        $this->assertSame('DRIVER_EN_ROUTE', $this->rideStatus($rideId));
+        $this->assertCount(1, $this->push->messagesFor($passenger), 'Sem push de chegada.');
+        // A posição enviada atualiza a do motorista
+        $this->assertEqualsWithDelta(self::PICKUP_LAT - 0.005, (float) Driver::where('user_id', $driver->id)->value('current_latitude'), 1e-6);
+
+        // Sem posição no corpo, vale a guardada (a ~1,1 km do embarque)
+        Driver::where('user_id', $driver->id)->update(['current_latitude' => -23.5714, 'last_location_at' => now()]);
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/arrived")
+            ->assertStatus(422)->assertJsonPath('error', 'TOO_FAR_FROM_PICKUP')
+            ->assertJsonPath('message', 'Você está a 1,1 km do embarque. Avise a chegada quando estiver a até 300 m.');
+    }
+
+    public function test_manual_arrival_within_300m_or_with_fresh_position(): void
+    {
+        [$driver, $passenger, $rideId] = $this->rideEnRoute();
+
+        // Posição guardada velha e nenhuma no corpo: não dá para confirmar
+        Driver::where('user_id', $driver->id)->update(['last_location_at' => now()->subMinutes(5)]);
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/arrived")
+            ->assertStatus(422)->assertJsonPath('error', 'LOCATION_REQUIRED');
+
+        // Coordenada pela metade é recusada
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/arrived", ['latitude' => self::PICKUP_LAT])
+            ->assertStatus(422)->assertJsonValidationErrors(['longitude']);
+
+        // ~200 m: fora do raio automático, mas dentro do manual
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/arrived", [
+            'latitude' => self::PICKUP_LAT - 0.0018, 'longitude' => self::PICKUP_LNG,
+        ])->assertOk()->assertJsonPath('status', 'DRIVER_ARRIVED');
+
+        $history = \App\Models\RideStatusHistory::where('ride_id', $rideId)->where('to_status', 'DRIVER_ARRIVED')->firstOrFail();
+        $this->assertSame('manual', $history->metadata['source']);
+        $this->assertEqualsWithDelta(200, $history->metadata['distance_m'], 5);
+
+        // Repetir longe depois de chegar não falha nem reenvia
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/arrived", [
+            'latitude' => self::PICKUP_LAT - 0.01, 'longitude' => self::PICKUP_LNG,
+        ])->assertOk();
+        $this->assertCount(2, $this->push->messagesFor($passenger));
+    }
+
     // ------------------------------------------------------------ FCM HTTP v1
 
     private function fcmWithKey(): array

@@ -208,7 +208,7 @@ beforeEach(() => {
     return { isOnline, message: '' };
   });
   m.driverApi.rejectOffer.mockResolvedValue({ success: true });
-  m.driverApi.updateLocation.mockResolvedValue(undefined);
+  m.driverApi.updateLocation.mockResolvedValue({ success: true, arrivedAtPickup: false, rideId: null });
 
   deliverPush = null;
   pushMock.enablePush.mockImplementation(async (onOffer: () => void) => {
@@ -322,7 +322,8 @@ describe('driver-mobile integrado à API', () => {
       return server.ride;
     });
     await pressAsync(tree, 'CHEGUEI AO EMBARQUE');
-    expect(m.rideApi.markArrived).toHaveBeenCalledWith('ride-1');
+    // A API confere a distância ao embarque com a posição lida na hora
+    expect(m.rideApi.markArrived).toHaveBeenCalledWith('ride-1', { latitude: -23.5615, longitude: -46.6559 });
     expectNoStrayText(tree);
     text = visibleText(tree);
     expect(text).toContain('No embarque • passageiro avisado');
@@ -357,15 +358,23 @@ describe('driver-mobile integrado à API', () => {
     expect(visibleText(tree)).toContain('Painel Operacional');
   });
 
-  it('valida o PIN direto, sem avisar a chegada, e mostra a falha do aviso', async () => {
+  it('mostra a recusa do aviso feito longe do embarque e permite validar o PIN direto', async () => {
     server = { isOnline: true, offer: null, ride: ride('DRIVER_EN_ROUTE') };
     await renderLoggedIn();
     expect(visibleText(tree)).toContain('CHEGUEI AO EMBARQUE');
 
-    m.rideApi.markArrived.mockRejectedValueOnce({ code: 'INVALID_STATE', message: 'A corrida não está a caminho do embarque.' });
+    const tooFar = 'Você está a 550 m do embarque. Avise a chegada quando estiver a até 300 m.';
+    m.rideApi.markArrived.mockRejectedValueOnce({ code: 'TOO_FAR_FROM_PICKUP', message: tooFar });
     await pressAsync(tree, 'CHEGUEI AO EMBARQUE');
-    expect(visibleText(tree)).toContain('A corrida não está a caminho do embarque.');
+    expect(visibleText(tree)).toContain(tooFar);
     expect(useDriverStore.getState().currentRide?.status).toBe('DRIVER_EN_ROUTE');
+
+    // GPS sem resposta e sem leitura recente: deixa a API usar a última posição recebida
+    const LocationError = (location as unknown as { LocationError: new (m: string, c: string) => Error }).LocationError;
+    loc.getCurrentPosition.mockRejectedValueOnce(new LocationError('Sem sinal.', 'timeout'));
+    m.rideApi.markArrived.mockRejectedValueOnce({ code: 'LOCATION_REQUIRED', message: 'Não foi possível confirmar sua localização.' });
+    await pressAsync(tree, 'CHEGUEI AO EMBARQUE');
+    expect(m.rideApi.markArrived).toHaveBeenLastCalledWith('ride-1', undefined);
 
     // O PIN segue disponível como ação secundária
     await pressAsync(tree, 'VALIDAR PIN DE EMBARQUE');
@@ -461,6 +470,27 @@ describe('driver-mobile integrado à API', () => {
     await pressAsync(tree, 'Transferir Saldo via Pix');
     expect(isDisabled(tree, 'TRANSFERIR AGORA VIA PIX')).toBe(true);
     expect(visibleText(tree)).toContain('O saque mínimo é R$ 10,00.');
+  });
+
+  it('atualiza a corrida na hora quando a posição enviada marca a chegada ao embarque', async () => {
+    server = { isOnline: true, offer: null, ride: ride('DRIVER_EN_ROUTE') };
+    await renderLoggedIn();
+    await settle();
+    expect(gps).not.toBeNull();
+
+    // O backend marcou DRIVER_ARRIVED ao receber esta posição (a até 100 m do embarque)
+    m.driverApi.updateLocation.mockImplementationOnce(async () => {
+      server.ride = ride('DRIVER_ARRIVED');
+      return { success: true, arrivedAtPickup: true, rideId: 'ride-1' };
+    });
+    const calls = m.driverApi.getCurrent.mock.calls.length;
+    await act(async () => gps!.emit(position(-23.5601, -46.6559)));
+    await settle();
+
+    expect(m.driverApi.getCurrent.mock.calls.length).toBe(calls + 1); // sem esperar o polling
+    expectNoStrayText(tree);
+    expect(visibleText(tree)).toContain('No embarque • passageiro avisado');
+    expect(visibleText(tree)).not.toContain('CHEGUEI AO EMBARQUE');
   });
 
   it('pede a permissão e envia a posição ao ficar online', async () => {

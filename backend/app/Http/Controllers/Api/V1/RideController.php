@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Ride\Services\ArrivalDetector;
 use App\Domain\Ride\Services\FareCalculator;
 use App\Domain\Ride\Services\RideDispatcher;
 use App\Domain\Ride\Services\RideStateMachine;
@@ -32,6 +33,7 @@ class RideController extends Controller
         private RideDispatcher $dispatcher,
         private RideStateMachine $stateMachine,
         private RidePresenter $presenter,
+        private ArrivalDetector $arrivals,
     ) {}
 
     /**
@@ -197,27 +199,81 @@ class RideController extends Controller
 
     /**
      * Motorista avisa que chegou ao embarque (o passageiro recebe um push).
-     * Repetir o aviso não reenvia a notificação.
+     * Só vale perto do embarque (até ArrivalDetector::MANUAL_MAX_METERS): o app
+     * manda a posição atual; sem ela, usa a última recebida, se for recente.
+     * Repetir o aviso não reenvia a notificação. Normalmente a chegada já é
+     * marcada sozinha pelo /driver/location.
      */
     public function arrived(Request $request, $id)
     {
         $user = $request->user();
+        $v = $request->validate([
+            'latitude' => 'nullable|required_with:longitude|numeric|between:-90,90',
+            'longitude' => 'nullable|required_with:latitude|numeric|between:-180,180',
+        ]);
 
-        return DB::transaction(function () use ($id, $user) {
+        return DB::transaction(function () use ($id, $user, $v) {
             $ride = Ride::lockForUpdate()->findOrFail($id);
             if (!$this->isAssignedDriver($ride, $user)) {
                 return $this->forbidden();
             }
 
-            if ($ride->status === 'DRIVER_EN_ROUTE') {
-                $this->stateMachine->transition($ride, 'DRIVER_ARRIVED', $user->id);
-                SendRideStatusPush::dispatch($ride->id, SendRideStatusPush::ARRIVED)->afterCommit();
-            } elseif ($ride->status !== 'DRIVER_ARRIVED') {
+            if ($ride->status === 'DRIVER_ARRIVED') {
+                return response()->json($this->presenter->present($ride->fresh(), $user));
+            }
+            if ($ride->status !== 'DRIVER_EN_ROUTE') {
                 return $this->error('A corrida não está a caminho do embarque.', 'INVALID_STATE', 409);
             }
 
+            $driver = $ride->driver;
+            if (isset($v['latitude'])) {
+                // A posição enviada também atualiza a do motorista (despacho e mapa)
+                $driver->forceFill([
+                    'current_latitude' => $v['latitude'],
+                    'current_longitude' => $v['longitude'],
+                    'last_location_at' => Carbon::now(),
+                ])->save();
+                [$lat, $lng] = [(float) $v['latitude'], (float) $v['longitude']];
+            } elseif (
+                $driver->last_location_at
+                && $driver->last_location_at->gt(Carbon::now()->subSeconds(ArrivalDetector::POSITION_MAX_AGE_SECONDS))
+                && $driver->current_latitude !== null
+            ) {
+                [$lat, $lng] = [(float) $driver->current_latitude, (float) $driver->current_longitude];
+            } else {
+                return $this->error(
+                    'Não foi possível confirmar sua localização. Ative o GPS e tente de novo, ou valide o PIN com o passageiro.',
+                    'LOCATION_REQUIRED',
+                    422,
+                );
+            }
+
+            $meters = $this->arrivals->distanceToPickup($ride, $lat, $lng);
+            if ($meters !== null && $meters > ArrivalDetector::MANUAL_MAX_METERS) {
+                return response()->json([
+                    'message' => sprintf(
+                        'Você está a %s do embarque. Avise a chegada quando estiver a até %d m.',
+                        self::formatDistance($meters),
+                        ArrivalDetector::MANUAL_MAX_METERS,
+                    ),
+                    'error' => 'TOO_FAR_FROM_PICKUP',
+                    'distanceMeters' => (int) round($meters),
+                    'maxDistanceMeters' => ArrivalDetector::MANUAL_MAX_METERS,
+                ], 422);
+            }
+
+            $this->arrivals->markArrived($ride, $user->id, 'manual', $meters);
+
             return response()->json($this->presenter->present($ride->fresh(), $user));
         });
+    }
+
+    /** "450 m" ou "1,2 km". */
+    private static function formatDistance(float $meters): string
+    {
+        return $meters < 1000
+            ? ((int) round($meters / 10) * 10) . ' m'
+            : number_format($meters / 1000, 1, ',', '.') . ' km';
     }
 
     /**

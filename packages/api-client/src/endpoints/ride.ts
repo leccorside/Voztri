@@ -33,9 +33,16 @@ export class RideApi {
     return res.data;
   }
 
-  /** Motorista avisa que chegou ao embarque (o passageiro recebe um push). Idempotente. */
-  async markArrived(rideId: string): Promise<Ride> {
-    const res = await this.client.post<Ride>(`/rides/${rideId}/arrived`);
+  /**
+   * Motorista avisa que chegou ao embarque (o passageiro recebe um push). Só vale
+   * a até 300 m do embarque (422 `TOO_FAR_FROM_PICKUP`); sem a posição, a API usa a
+   * última recebida se for recente (senão 422 `LOCATION_REQUIRED`). Idempotente.
+   */
+  async markArrived(rideId: string, position?: { latitude: number; longitude: number }): Promise<Ride> {
+    const res = await this.client.post<Ride>(
+      `/rides/${rideId}/arrived`,
+      position ? { latitude: position.latitude, longitude: position.longitude } : {},
+    );
     return res.data;
   }
 

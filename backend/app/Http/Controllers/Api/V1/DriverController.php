@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Ride\Services\ArrivalDetector;
 use App\Domain\Ride\Services\FareCalculator;
 use App\Domain\Ride\Services\RideDispatcher;
 use App\Http\Controllers\Controller;
@@ -192,7 +193,7 @@ class DriverController extends Controller
     /**
      * Atualiza localização GPS do motorista em tempo real
      */
-    public function updateLocation(Request $request)
+    public function updateLocation(Request $request, ArrivalDetector $arrivals)
     {
         $user = $request->user();
         $driver = Driver::where('user_id', $user->id)->firstOrFail();
@@ -221,7 +222,15 @@ class DriverController extends Controller
             // Continua
         }
 
-        return response()->json(['success' => true]);
+        // Chegada automática: a caminho do embarque e a até 100 m dele. Vale também
+        // para o envio do serviço nativo com o app em segundo plano.
+        $arrived = $arrivals->onDriverLocation($driver, (float) $validated['latitude'], (float) $validated['longitude']);
+
+        return response()->json([
+            'success' => true,
+            'arrivedAtPickup' => $arrived !== null,
+            'rideId' => $arrived?->id,
+        ]);
     }
 
     /**

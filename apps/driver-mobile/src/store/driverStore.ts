@@ -26,6 +26,9 @@ export type BackgroundMode = 'off' | 'native' | 'ios' | 'foreground-only';
 
 export type BackgroundPermission = 'unknown' | 'granted' | 'denied';
 
+/** Última leitura do GPS aceita no aviso de chegada quando a leitura na hora falha. */
+const ARRIVAL_POSITION_MAX_AGE_MS = 60_000;
+
 const PERMISSION_MESSAGE: Record<Exclude<LocationPermission, 'granted'>, string> = {
   denied: 'Permita o acesso à localização para ficar online e receber corridas próximas.',
   blocked: 'A localização está bloqueada para o VOZTRI Driver. Libere nas configurações do aparelho para ficar online.',
@@ -257,12 +260,14 @@ export const useDriverStore = create<DriverState>((set, get) => {
 
       set({ lastSentLocation: { at: now, position } });
       try {
-        await driverApi.updateLocation({
+        const res = await driverApi.updateLocation({
           latitude: position.latitude,
           longitude: position.longitude,
           ...(position.heading != null ? { heading: position.heading } : {}),
           ...(position.speed != null ? { speed: position.speed } : {}),
         });
+        // Esta posição marcou a chegada ao embarque (a até 100 m): atualiza a tela já
+        if (res?.arrivedAtPickup) void get().refresh();
       } catch (err) {
         set({ lastSentLocation: null }); // tenta de novo na próxima leitura
         set({ connectionError: errorMessage(err) });
@@ -316,7 +321,19 @@ export const useDriverStore = create<DriverState>((set, get) => {
     markArrived: async () => {
       const ride = get().currentRide;
       if (!ride) return false;
-      const updated = await run(() => rideApi.markArrived(ride.id));
+      // A API só aceita perto do embarque: manda a posição de agora (ou a última
+      // leitura recente); sem nenhuma, a API usa a última que recebeu.
+      const updated = await run(async () => {
+        let position: DevicePosition | null = null;
+        try {
+          position = await getCurrentPosition();
+        } catch {
+          const last = get().lastPosition;
+          position = last && Date.now() - last.timestamp <= ARRIVAL_POSITION_MAX_AGE_MS ? last : null;
+        }
+        const coords = position ? { latitude: position.latitude, longitude: position.longitude } : undefined;
+        return rideApi.markArrived(ride.id, coords);
+      });
       if (!updated) return false;
       set({ currentRide: updated });
       return true;

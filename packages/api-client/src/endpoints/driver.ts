@@ -15,8 +15,21 @@ export class DriverApi {
     return res.data;
   }
 
-  async updateLocation(params: { latitude: number; longitude: number; heading?: number; speed?: number }): Promise<void> {
-    await this.client.post('/driver/location', params);
+  /**
+   * Envia a posição do GPS. `arrivedAtPickup` indica que esta posição marcou a
+   * chegada ao embarque (a até 100 m dele, com a corrida a caminho).
+   */
+  async updateLocation(params: {
+    latitude: number;
+    longitude: number;
+    heading?: number;
+    speed?: number;
+  }): Promise<{ success: boolean; arrivedAtPickup: boolean; rideId: string | null }> {
+    const res = await this.client.post<{ success: boolean; arrivedAtPickup?: boolean; rideId?: string | null }>(
+      '/driver/location',
+      params,
+    );
+    return { success: res.data.success, arrivedAtPickup: res.data.arrivedAtPickup ?? false, rideId: res.data.rideId ?? null };
   }
 
   async getEarnings(): Promise<DriverEarningsSummary> {
