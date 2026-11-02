@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { VoztriColors } from '@voztri/design-tokens';
 import { AddressLocation } from '@voztri/shared-types';
 import { usePassengerStore } from '../store/passengerStore.js';
-import { Button } from '../ui/kit.js';
+import { Button } from '@voztri/mobile-core';
 
 interface Props {
   onBack: () => void;

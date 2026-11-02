@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { usePassengerStore } from '../store/passengerStore.js';
-import { Button, shadow } from '../ui/kit.js';
+import { Button, shadow } from '@voztri/mobile-core';
 
 interface Props {
   onOpenChat: () => void;

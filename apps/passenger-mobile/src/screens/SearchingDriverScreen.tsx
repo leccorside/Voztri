@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { formatCountdown, searchDurationMs, useSearchCountdown } from '../hooks/useSearchCountdown.js';
 import { usePassengerStore } from '../store/passengerStore.js';
-import { Button, shadow } from '../ui/kit.js';
+import { Button, shadow } from '@voztri/mobile-core';
 
 interface Props {
   onCancel: () => void;

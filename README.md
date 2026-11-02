@@ -230,7 +230,7 @@ voztri/
 │   ├── shared-types/               # Tipos compartilhados
 │   ├── validation/                 # Esquemas Zod
 │   ├── localization/               # pt-BR, en-US, es-ES
-│   ├── mobile-core/                # Código comum dos apps React Native (push, sessão e API)
+│   ├── mobile-core/                # Código comum dos apps React Native (push, API, usePolling e kit de UI)
 │   └── api-client/                 # Cliente HTTP
 ├── infrastructure/
 │   ├── docker/

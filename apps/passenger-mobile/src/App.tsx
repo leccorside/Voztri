@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { POLL_INTERVAL_MS } from './config.js';
-import { usePolling } from './hooks/usePolling.js';
+import { Banner, usePolling } from '@voztri/mobile-core';
 import { usePassengerStore } from './store/passengerStore.js';
 import { LoginScreen } from './screens/LoginScreen.js';
 import { HomeScreen } from './screens/HomeScreen.js';
@@ -12,7 +12,6 @@ import { DriverEnRouteScreen } from './screens/DriverEnRouteScreen.js';
 import { ChatModal } from './screens/ChatModal.js';
 import { SosModal } from './screens/SosModal.js';
 import { TripCompletedModal } from './screens/TripCompletedModal.js';
-import { Banner } from './ui/kit.js';
 
 export const App: React.FC = () => {
   const {

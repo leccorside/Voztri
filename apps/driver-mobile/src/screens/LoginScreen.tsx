@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { useDriverStore } from '../store/driverStore.js';
-import { Button, shadow } from '../ui/kit.js';
+import { Button, shadow } from '@voztri/mobile-core';
 
 /** Login do motorista por código SMS (OTP). */
 export const LoginScreen: React.FC = () => {

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { useDriverStore } from '../store/driverStore.js';
-import { Button, formatBRL, shadow } from '../ui/kit.js';
+import { Button, formatBRL, shadow } from '@voztri/mobile-core';
 
 interface Props {
   onOpenPinModal: () => void;

@@ -98,9 +98,11 @@ docker compose exec app php artisan migrate --seed
 - `@voztri/shared-types`: Definições TypeScript rigorosas para `User`, `Passenger`, `Driver`, `Ride`, `RideStatus`, `FareEstimate`, `PaymentMethod`, `LedgerTransaction` e `Location`.
 - `@voztri/validation`: Esquemas de validação Zod para autenticação, solicitação de corridas, cadastro de CNH/veículo e dados bancários.
 - `@voztri/localization`: Módulos de internacionalização com suporte a Português do Brasil (`pt-BR`), Inglês (`en-US`) e Espanhol (`es-ES`).
-- `@voztri/mobile-core`: Código compartilhado pelos apps React Native. Pacote só de código-fonte (sem build), com `@react-native-firebase/*` e `react-native` como `peerDependencies`; não deve ser importado pelo admin-web.
+- `@voztri/mobile-core`: Código compartilhado pelos apps React Native. Pacote só de código-fonte (sem build), com `@react-native-firebase/*`, `react` e `react-native` como `peerDependencies`; não deve ser importado pelo admin-web.
   - `createPushController(deviceApi)`: notificações push (Firebase opcional, permissão, registro e renovação do token, ouvintes de mensagem, proteção contra logout no meio do registro e revogação); cada app só filtra as mensagens que lhe interessam no seu `src/push.ts`.
   - `createMobileApi({ baseURL, storage, tokenKey, clearKeys?, onClockSample? })`: sessão (token em memória + AsyncStorage injetado, com `current()` para o serviço nativo e chaves extras apagadas no logout), `VoztriApiClient` autenticado, handler de 401 substituível (`onUnauthorized`) e `errorMessage` com o endereço da API. Também exporta `createSession`, `apiErrorCode`, `httpStatus`, `errorBody` e `errorMessageFor`. Cada app monta no seu `src/api.ts` só as APIs que usa (`AuthApi`, `RideApi`...) e o que é dele (ex.: `activeRideMemory` do passageiro).
+  - `usePolling(fn, intervalMs, enabled)`: executa `fn` na hora e depois a cada intervalo, sem sobrepor chamadas e pausando com o app em segundo plano.
+  - Kit de UI: `Button` (`Pressable` com feedback e acessibilidade), `BottomSheetModal` (folha inferior; "voltar" do Android fecha), `Banner` (aviso de erro ou de conexão), `shadow()` (sombra iOS + `elevation` Android) e `formatBRL()` (centavos em reais, sem `Intl`).
 - `@voztri/api-client`: Cliente HTTP construído sobre Axios com renovação de token JWT/Sanctum, retry automático, tratamento de offline e injeção de `Idempotency-Key`.
 
 ---

@@ -11,9 +11,8 @@ import {
 } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { POLL_INTERVAL_MS } from '../config.js';
-import { usePolling } from '../hooks/usePolling.js';
+import { Button, shadow, usePolling } from '@voztri/mobile-core';
 import { usePassengerStore } from '../store/passengerStore.js';
-import { Button, shadow } from '../ui/kit.js';
 
 interface Props {
   onClose: () => void;

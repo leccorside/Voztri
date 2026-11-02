@@ -3,11 +3,6 @@
  * mock do módulo: AsyncStorage pelo mock oficial e respostas por um adapter falso
  * do axios.
  */
-// O índice do @voztri/mobile-core também exporta o push: o RNFB (ESM, não transformado
-// pelo Jest) fica simulado aqui, como nos testes de push; estes testes não usam push.
-jest.mock('@react-native-firebase/app', () => ({ __esModule: true, default: { apps: [] } }));
-jest.mock('@react-native-firebase/messaging', () => ({ __esModule: true, default: () => ({}) }));
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { activeRideMemory, apiErrorCode, errorBody, errorMessage, rideApi, session } from '../src/api';

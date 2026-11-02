@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
-import { BottomSheetModal, Button, shadow } from '../ui/kit.js';
+import { BottomSheetModal, Button, shadow } from '@voztri/mobile-core';
 
 interface Props {
   /** Valida o PIN na API; resolve false quando o PIN está errado. */

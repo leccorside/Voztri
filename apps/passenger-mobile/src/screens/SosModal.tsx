@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { usePassengerStore } from '../store/passengerStore.js';
-import { Button, shadow } from '../ui/kit.js';
+import { Button, shadow } from '@voztri/mobile-core';
 
 interface Props {
   onClose: () => void;

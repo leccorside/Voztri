@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { usePassengerStore } from '../store/passengerStore.js';
-import { Button, shadow } from '../ui/kit.js';
+import { Button, shadow } from '@voztri/mobile-core';
 
 interface Props {
   onFinish: (evaluation: { rating: number; tipCents?: number; tags?: string[] }) => Promise<void>;

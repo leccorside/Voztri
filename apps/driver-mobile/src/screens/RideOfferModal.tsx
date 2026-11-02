@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import type { DriverRideOffer } from '@voztri/shared-types';
 import { useDriverStore } from '../store/driverStore.js';
-import { BottomSheetModal, Button, formatBRL, shadow } from '../ui/kit.js';
+import { BottomSheetModal, Button, formatBRL, shadow } from '@voztri/mobile-core';
 
 interface Props {
   offer: DriverRideOffer;

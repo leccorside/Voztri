@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { PassengerState, usePassengerStore } from '../store/passengerStore.js';
-import { BottomSheetModal, Button, shadow } from '../ui/kit.js';
+import { BottomSheetModal, Button, shadow } from '@voztri/mobile-core';
 
 interface Props {
   onBack: () => void;

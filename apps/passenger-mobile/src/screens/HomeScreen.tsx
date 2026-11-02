@@ -2,7 +2,7 @@ import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { usePassengerStore } from '../store/passengerStore.js';
-import { shadow } from '../ui/kit.js';
+import { shadow } from '@voztri/mobile-core';
 
 interface Props {
   onOpenSearch: () => void;

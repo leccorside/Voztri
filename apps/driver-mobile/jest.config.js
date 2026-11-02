@@ -13,6 +13,7 @@ module.exports = {
   preset: 'react-native',
   rootDir: __dirname,
   testMatch: ['<rootDir>/__tests__/**/*.test.[jt]s?(x)'],
+  setupFiles: ['<rootDir>/jest.setup.js'],
   transform: {
     '^.+\.(js|jsx|ts|tsx)$': ['babel-jest', { configFile: path.join(__dirname, 'babel.config.js') }],
   },

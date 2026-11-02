@@ -2,7 +2,7 @@ import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { useDriverStore } from '../store/driverStore.js';
-import { Button, formatBRL, shadow } from '../ui/kit.js';
+import { Button, formatBRL, shadow } from '@voztri/mobile-core';
 
 interface Props {
   onOpenEarnings: () => void;
