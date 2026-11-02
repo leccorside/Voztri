@@ -233,6 +233,71 @@ class PushNotificationTest extends TestCase
         $this->assertCount(1, $this->push->messagesFor($passenger));
     }
 
+    // ------------------------------------------------------------ cancelamento e conclusão
+
+    public function test_driver_cancellation_pushes_passenger_without_reason(): void
+    {
+        [$driver, $passenger, $rideId] = $this->rideEnRoute();
+
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/cancel", ['reason' => 'Pneu furou na Rebouças'])
+            ->assertOk()->assertJsonPath('status', 'CANCELLED');
+
+        $messages = $this->push->messagesFor($passenger);
+        $this->assertCount(2, $messages);
+        $msg = $messages[1];
+        $this->assertSame('Corrida cancelada pelo motorista', $msg->title);
+        $this->assertSame('Motorista cancelou a corrida. Toque para pedir outro motorista.', $msg->body);
+        $this->assertStringNotContainsString('Pneu', $msg->body, 'O motivo digitado não vai na notificação.');
+        $this->assertSame(['type' => 'ride_status', 'rideId' => $rideId, 'status' => 'CANCELLED'], $msg->data);
+        $this->assertSame($messages[0]->tag, $msg->tag, 'Substitui o "a caminho".');
+        $this->assertTrue($msg->urgent);
+        $this->assertSame(1800, $msg->ttlSeconds);
+        // O motorista só recebeu a oferta; o cancelamento dele não gera push para ele
+        $this->assertSame(['ride_offer'], array_map(fn ($m) => $m->data['type'], $this->push->messagesFor($driver)));
+    }
+
+    public function test_passenger_cancellation_does_not_push(): void
+    {
+        [, $passenger, $rideId] = $this->rideEnRoute();
+
+        $this->actingAs($passenger, 'sanctum')->postJson("/api/v1/rides/{$rideId}/cancel", ['reason' => 'Mudei de ideia'])->assertOk();
+        $this->assertCount(1, $this->push->messagesFor($passenger), 'Só o "a caminho".');
+
+        // Mesmo que o job rode (ex.: disparado por engano), ele confere quem cancelou
+        (new SendRideStatusPush($rideId, SendRideStatusPush::CANCELLED))->handle($this->push, app(\App\Domain\Ride\Services\FareCalculator::class));
+        $this->assertCount(1, $this->push->messagesFor($passenger));
+    }
+
+    public function test_completion_pushes_total_and_rating_invite(): void
+    {
+        [$driver, $passenger, $rideId] = $this->rideEnRoute();
+        $ride = \App\Models\Ride::findOrFail($rideId);
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/validate-pin", ['pin' => $ride->boarding_pin])->assertOk();
+
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/complete")->assertOk();
+
+        $messages = $this->push->messagesFor($passenger);
+        $this->assertCount(2, $messages, 'A caminho e concluída (o embarque não gera push).');
+        $msg = $messages[1];
+        $total = \App\Domain\Ride\Services\FareCalculator::format((int) $ride->final_price_cents);
+        $this->assertSame('Viagem concluída', $msg->title);
+        $this->assertSame("Total: {$total} no Pix. Toque para avaliar Motorista.", $msg->body);
+        $this->assertSame('COMPLETED', $msg->data['status']);
+        $this->assertFalse($msg->urgent, 'Conclusão em prioridade normal.');
+        $this->assertSame(86400, $msg->ttlSeconds);
+        $this->assertSame("ride_{$rideId}", $msg->tag);
+    }
+
+    public function test_completion_body_uses_payment_preposition(): void
+    {
+        [$driver, $passenger, $rideId] = $this->rideEnRoute();
+        \App\Models\Ride::whereKey($rideId)->update(['status' => 'COMPLETED', 'payment_method' => 'cash']);
+
+        (new SendRideStatusPush($rideId, SendRideStatusPush::COMPLETED))->handle($this->push, app(\App\Domain\Ride\Services\FareCalculator::class));
+
+        $this->assertStringContainsString(' em dinheiro. Toque para avaliar Motorista.', $this->push->messagesFor($passenger)[1]->body);
+    }
+
     // ------------------------------------------------------------ chegada pela posição
 
     /** Embarque dos testes: Av. Paulista, 1578 (-23.561414, -46.655881); 0,001° de latitude ≈ 111 m. */

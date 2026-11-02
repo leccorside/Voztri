@@ -19,9 +19,11 @@ use Illuminate\Support\Facades\DB;
  *
  * - DRIVER_EN_ROUTE: o motorista aceitou e está indo ao embarque (o aceite já
  *   coloca a corrida a caminho, então é uma notificação só, e não duas);
- * - DRIVER_ARRIVED: o motorista avisou que chegou ao embarque.
+ * - DRIVER_ARRIVED: o motorista chegou ao embarque;
+ * - CANCELLED: só quando quem cancelou foi o motorista (o passageiro que cancela já sabe);
+ * - COMPLETED: viagem concluída, com o total e o convite para avaliar.
  *
- * As duas usam a mesma tag: a de chegada substitui a de "a caminho".
+ * Todas usam a mesma tag por corrida: cada aviso substitui o anterior.
  */
 class SendRideStatusPush implements ShouldQueue
 {
@@ -29,9 +31,24 @@ class SendRideStatusPush implements ShouldQueue
 
     public const EN_ROUTE = 'DRIVER_EN_ROUTE';
     public const ARRIVED = 'DRIVER_ARRIVED';
+    public const CANCELLED = 'CANCELLED';
+    public const COMPLETED = 'COMPLETED';
 
     /** Depois disso o aviso perde o sentido (a corrida já andou ou foi cancelada). */
-    private const TTL_SECONDS = [self::EN_ROUTE => 900, self::ARRIVED => 600];
+    private const TTL_SECONDS = [
+        self::EN_ROUTE => 900,
+        self::ARRIVED => 600,
+        self::CANCELLED => 1800,
+        self::COMPLETED => 86400, // o convite para avaliar vale até o dia seguinte
+    ];
+
+    /** Já com a preposição: "Total: R$ 30,52 em dinheiro". */
+    private const PAYMENT_LABEL = [
+        'pix' => 'no Pix',
+        'credit_card' => 'no cartão',
+        'cash' => 'em dinheiro',
+        'wallet' => 'com o saldo da carteira',
+    ];
 
     public int $tries = 2;
 
@@ -42,6 +59,10 @@ class SendRideStatusPush implements ShouldQueue
         $ride = Ride::with(['passenger.user', 'driver.user', 'driver.activeVehicle'])->find($this->rideId);
         // A corrida mudou antes de o job rodar (cancelada, já embarcou...): não avisar
         if (!$ride || $ride->status !== $this->status || !$ride->passenger?->user || !$ride->driver) {
+            return;
+        }
+        // Cancelada pelo próprio passageiro (ou pelo sistema): não há o que avisar
+        if ($this->status === self::CANCELLED && $ride->cancelled_by !== $ride->driver->user_id) {
             return;
         }
 
@@ -56,11 +77,20 @@ class SendRideStatusPush implements ShouldQueue
                 $car,
                 $eta !== null ? "chega em ~{$eta} min" : 'motorista confirmado',
             ]));
-        } else {
+        } elseif ($this->status === self::ARRIVED) {
             $title = 'Seu motorista chegou';
             $body = $car
                 ? "{$driverName} está no embarque: {$car}. Confira a placa antes de entrar."
                 : "{$driverName} está no embarque. Confira o carro antes de entrar.";
+        } elseif ($this->status === self::CANCELLED) {
+            // O motivo digitado pelo motorista não vai na notificação (texto livre na tela bloqueada)
+            $title = 'Corrida cancelada pelo motorista';
+            $body = "{$driverName} cancelou a corrida. Toque para pedir outro motorista.";
+        } else {
+            $total = FareCalculator::format((int) $ride->final_price_cents);
+            $payment = self::PAYMENT_LABEL[$ride->payment_method] ?? $ride->payment_method;
+            $title = 'Viagem concluída';
+            $body = trim("Total: {$total} {$payment}") . ". Toque para avaliar {$driverName}.";
         }
 
         $push->sendToUser($ride->passenger->user, new PushMessage(
@@ -70,7 +100,8 @@ class SendRideStatusPush implements ShouldQueue
             ttlSeconds: self::TTL_SECONDS[$this->status],
             androidChannel: 'ride_updates',
             tag: "ride_{$ride->id}",
-            urgent: true,
+            // A conclusão não precisa acordar o aparelho; os outros avisos exigem ação
+            urgent: $this->status !== self::COMPLETED,
         ));
     }
 

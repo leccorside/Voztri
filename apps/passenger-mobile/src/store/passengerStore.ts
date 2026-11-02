@@ -92,6 +92,8 @@ const DEFAULT_ORIGIN: AddressLocation = {
   state: 'SP',
 };
 
+const DRIVER_CANCELLED_MESSAGE = 'O motorista cancelou a corrida. Peça um novo motorista quando quiser.';
+
 const OPEN_STATUSES: RideStatus[] = ['REQUESTED', 'SEARCHING', 'OFFERED', 'ACCEPTED', 'DRIVER_EN_ROUTE', 'DRIVER_ARRIVED', 'IN_PROGRESS'];
 
 /** Etapa da interface correspondente ao status da corrida na API. */
@@ -372,7 +374,14 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
       // Sem corrida na tela (ex.: app aberto pela notificação): passa a acompanhar esta
       try {
         const ride = await rideApi.getRide(rideId);
-        if (get().activeRide || !OPEN_STATUSES.includes(ride.status)) return;
+        if (get().activeRide) return;
+        if (ride.status === 'CANCELLED') {
+          // Só o cancelamento pelo motorista gera push: avisa por que a corrida sumiu
+          set({ error: DRIVER_CANCELLED_MESSAGE, connectionError: null });
+          return;
+        }
+        // Concluída: o aviso convida a avaliar (avaliação repetida é tratada no envio)
+        if (!OPEN_STATUSES.includes(ride.status) && ride.status !== 'COMPLETED') return;
         await activeRideMemory.save(ride.id);
         set({ activeRide: ride, currentStep: stepForStatus(ride.status), connectionError: null });
       } catch (err) {

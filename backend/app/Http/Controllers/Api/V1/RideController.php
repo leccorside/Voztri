@@ -359,6 +359,7 @@ class RideController extends Controller
 
         DB::transaction(function () use ($ride, $user) {
             $this->stateMachine->transition($ride, 'COMPLETED', $user->id);
+            SendRideStatusPush::dispatch($ride->id, SendRideStatusPush::COMPLETED)->afterCommit();
 
             $totalCents = (int) $ride->final_price_cents;
             $driverNetCents = $this->fares->driverNetCents($totalCents);
@@ -414,6 +415,10 @@ class RideController extends Controller
             RideOffer::where('ride_id', $ride->id)->where('status', 'sent')->update(['status' => 'expired']);
             $ride->cancellation_reason = $v['reason'];
             $this->stateMachine->transition($ride, 'CANCELLED', $user->id);
+            // Só o cancelamento pelo motorista gera push (o job confere quem cancelou)
+            if ($this->isAssignedDriver($ride, $user)) {
+                SendRideStatusPush::dispatch($ride->id, SendRideStatusPush::CANCELLED)->afterCommit();
+            }
         });
 
         return response()->json($this->presenter->present($ride->fresh(), $user));

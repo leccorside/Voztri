@@ -460,13 +460,58 @@ describe('passenger-mobile integrado à API', () => {
       expect(visibleText(tree)).toContain('Seu motorista está a caminho');
     });
 
-    it('ignora aviso de corrida já encerrada ou diferente da que está na tela', async () => {
+    it('com a corrida na tela, o push de cancelamento pelo motorista volta ao início com aviso', async () => {
+      serverRide = ride('DRIVER_EN_ROUTE');
+      await renderLoggedIn('ride-1');
+      serverRide = ride('CANCELLED');
+      await act(async () => deliverPush!('ride-1'));
+      await settle();
+      expectNoStrayText(tree);
+      expect(visibleText(tree)).toContain('A corrida foi cancelada.');
+      expect(visibleText(tree)).toContain('Para onde vamos hoje?');
+      expect(m.activeRideMemory.clear).toHaveBeenCalled();
+    });
+
+    it('com a viagem na tela, o push de conclusão abre a avaliação', async () => {
+      serverRide = ride('IN_PROGRESS');
+      await renderLoggedIn('ride-1');
+      serverRide = ride('COMPLETED');
+      await act(async () => deliverPush!('ride-1'));
+      await settle();
+      expectNoStrayText(tree);
+      expect(visibleText(tree)).toContain('Como foi a viagem com Carlos?');
+    });
+
+    it('aberto pela notificação de conclusão, sem corrida na tela, abre a avaliação', async () => {
       await renderLoggedIn(null);
       serverRide = ride('COMPLETED');
       await act(async () => deliverPush!('ride-1'));
       await settle();
+      expect(m.activeRideMemory.save).toHaveBeenCalledWith('ride-1');
+      expectNoStrayText(tree);
+      expect(visibleText(tree)).toContain('Como foi a viagem com Carlos?');
+    });
+
+    it('aberto pela notificação de cancelamento, sem corrida na tela, explica o que houve', async () => {
+      await renderLoggedIn(null);
+      serverRide = ride('CANCELLED');
+      await act(async () => deliverPush!('ride-1'));
+      await settle();
       expect(m.activeRideMemory.save).not.toHaveBeenCalled();
       expect(usePassengerStore.getState().activeRide).toBeNull();
+      expectNoStrayText(tree);
+      expect(visibleText(tree)).toContain('O motorista cancelou a corrida. Peça um novo motorista quando quiser.');
+      expect(visibleText(tree)).toContain('Para onde vamos hoje?');
+    });
+
+    it('ignora aviso de corrida sem motorista ou diferente da que está na tela', async () => {
+      await renderLoggedIn(null);
+      serverRide = ride('NO_DRIVER_AVAILABLE');
+      await act(async () => deliverPush!('ride-1'));
+      await settle();
+      expect(m.activeRideMemory.save).not.toHaveBeenCalled();
+      expect(usePassengerStore.getState().activeRide).toBeNull();
+      expect(usePassengerStore.getState().error).toBeNull();
 
       // Com outra corrida em andamento, aviso antigo não troca a corrida
       serverRide = ride('DRIVER_EN_ROUTE');
