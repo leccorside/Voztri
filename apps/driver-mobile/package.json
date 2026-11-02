@@ -18,6 +18,7 @@
     "@voztri/api-client": "*",
     "@voztri/design-tokens": "*",
     "@voztri/localization": "*",
+    "@voztri/mobile-core": "*",
     "@voztri/shared-types": "*",
     "@voztri/validation": "*",
     "react": "18.2.0",

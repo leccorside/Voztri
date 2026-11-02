@@ -8,6 +8,7 @@
       "@voztri/api-client": ["../../packages/api-client/src/index.ts"],
       "@voztri/design-tokens": ["../../packages/design-tokens/src/index.ts"],
       "@voztri/localization": ["../../packages/localization/src/index.ts"],
+      "@voztri/mobile-core": ["../../packages/mobile-core/src/index.ts"],
       "@voztri/shared-types": ["../../packages/shared-types/src/index.ts"],
       "@voztri/validation": ["../../packages/validation/src/index.ts"]
     }

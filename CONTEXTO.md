@@ -45,7 +45,8 @@ voztri/
 │   ├── shared-types/           # DTOs e Interfaces TypeScript compartilhadas
 │   ├── api-client/             # Cliente HTTP Axios resiliente com interceptors e autenticação
 │   ├── validation/             # Esquemas de validação Zod para todas as entidades
-│   └── localization/           # i18n (pt-BR, en-US, es-ES)
+│   ├── localization/           # i18n (pt-BR, en-US, es-ES)
+│   └── mobile-core/            # Código comum dos apps React Native (push), só fonte, sem build
 ├── infrastructure/
 │   ├── docker/                 # Dockerfiles para PHP-FPM, Nginx, Reverb, Worker
 │   ├── nginx/                  # Configuração de proxy reverso e SSL
@@ -191,6 +192,12 @@ voztri/
   - **passenger-mobile:** saiu o `SEARCH_TIMEOUT_MS` do `config.ts`. O `useSearchCountdown(ride)` usa o `searchExpiresAt` (corrigido pelo `serverClock`) e devolve `remainingSeconds` e `totalSeconds` (`searchExpiresAt - createdAt`, para a barra); `searchDurationMs()` dá a duração do aviso de busca encerrada, com singular/plural ("em 1 minuto"). Sem o campo (API antiga), não há contador e o aviso omite a duração. A fábrica `ride()` dos testes passou a imitar a API (prazo = `createdAt` + 3 min nos status de busca).
   - **Validação:** backend 66/66 (+2: o prazo é `createdAt` + 180 s no mesmo formato, segue com oferta em andamento e vira `null` após o aceite; mantido no `NO_DRIVER_AVAILABLE`). Jest do passenger 45/45 (os 4 testes que dependiam da constante passaram a usar o campo da API; +2: o contador segue o prazo da API (busca de 1 min → 0:37 e "em 1 minuto"), e sem o campo não há contador nem duração). Driver 40/40; typecheck e build da raiz sem erros; bundle do passenger gerado.
 
+- **2026-11-02 — `src/push.ts` dos apps extraído para o pacote `packages/mobile-core`.** As duas versões só diferiam em qual mensagem interessa (driver: `type: ride_offer`; passenger: `type: ride_status` com `rideId`).
+  - **Pacote `@voztri/mobile-core`:** `createPushController(deviceApi)` com toda a lógica comum (Firebase opcional por `firebase.apps.length`, permissão, registro e renovação do token, `onMessage`/`onNotificationOpenedApp`/`getInitialNotification`, contador de geração contra o logout no meio do registro, revogação com `deleteToken()`); `enablePush(onData)` entrega o `data` de cada mensagem. O `deviceApi` é **injetado** (o pacote não depende do `api.ts` de nenhum app). Estado por controlador, não por módulo.
+  - **Decisões:** (1) **só código-fonte, sem `build`**: o pacote só roda em React Native, e o Metro (campo `"react-native"`) e o Jest (`moduleNameMapper` de `@voztri/*`) já usam o `src`; tem só `typecheck` (entra no `npm run typecheck` da raiz). (2) `@react-native-firebase/app`, `messaging` e `react-native` como **`peerDependencies`** (a versão nativa é a dos apps). (3) Os `src/push.ts` dos apps viraram **adaptadores finos** com a mesma API pública (`enablePush`, `disablePush`, `isPushAvailable`, `registerBackgroundHandler`, `PushStatus`): stores e testes não mudaram de import, e os testes de push de cada app passaram a exercitar o pacote de verdade (o mock do RNFB vale para os dois, porque o módulo resolve para o mesmo `node_modules` da raiz).
+  - **Configuração:** dependência `@voztri/mobile-core: "*"` e `paths` no `tsconfig` dos dois apps; `npm install` criou o link do workspace. Sem código nativo, o autolinking não muda.
+  - **Validação:** typecheck da raiz com 9 workspaces sem erros; Jest do driver 40/40 e do passenger 45/45 (sem alterar nenhum teste); bundles de release dos dois apps gerados com o `createPushController` vindo do pacote; `react-native config` dos dois apps com as mesmas 4 dependências nativas; build da raiz sem erros.
+
 ## 7. Pendências Técnicas Conhecidas
 
 - **Apps mobile ainda não foram executados em emulador ou aparelho:** o port para React Native foi validado com typecheck, testes Jest do fluxo completo e bundle Hermes de release, mas não com o app rodando de verdade (layout real, teclado, safe area, sombras no Android).
@@ -202,7 +209,6 @@ voztri/
 - **Embarque informado longe da rua:** se o ponto de embarque cair no meio de um quarteirão grande (ex.: shopping, condomínio), o motorista pode parar a mais de 300 m e não conseguir avisar a chegada; nesse caso, o PIN continua iniciando a viagem.
 - **Sem push de início da viagem:** o embarque acontece com o passageiro no carro (PIN).
 - **Avaliação aberta por notificação antiga:** tocar numa notificação de conclusão de uma corrida já avaliada abre a avaliação de novo; ao enviar, o `ALREADY_RATED` é tratado e o app só segue para o início. A API não informa se a corrida já foi avaliada.
-- **`src/push.ts` duplicado entre os apps:** só muda o tipo de mensagem e o callback. Candidato ao mesmo pacote `packages/mobile-core` dos outros duplicados.
 - **Tokens órfãos:** se a sessão expira sem rede, o `deleteToken()` pode falhar e o token continua ligado à conta antiga até o próximo login no aparelho (que transfere o token) ou até o FCM devolver `UNREGISTERED`.
 - **Módulo nativo iOS (`VoztriLocationTracking.m`) não foi compilado:** foi escrito e registrado no `project.pbxproj` sem Xcode (a máquina é Windows). Validar no macOS: `pod install`, build, ficar online, minimizar e parar o simulador num ponto (*Features → Location*), conferindo `last_location_at` em `drivers` a cada ~10 s e a chegada automática. Se o Xcode reclamar do projeto, adicionar o arquivo pelo próprio Xcode (*Add Files to "VoztriDriver"*, target do app).
 - **Consumo de bateria no iOS:** com `kCLLocationAccuracyBest` e sem filtro de distância, o GPS fica ligado o turno inteiro (~1 leitura/s; o envio continua limitado a 10 s / 200 m). É o perfil de apps de navegação, mas vale medir num aparelho e, se preciso, reduzir a precisão longe do embarque.
@@ -218,7 +224,7 @@ voztri/
 - **"Tentar de novo" cobra o valor da nova estimativa:** a API recalcula o preço na solicitação; com a mesma rota e sem tarifa dinâmica o valor é o mesmo, mas o resumo mostra o preço da busca encerrada até a nova corrida chegar. Sem o `worker`, o timeout só acontece quando alguém faz polling da corrida (passageiro com o app aberto ou motorista que recebeu a oferta). Quem recusou ou deixou expirar uma oferta não recebe a mesma corrida de novo dentro da busca.
 - **`onlineHours` é `null`:** a API não registra sessões online; o painel do motorista mostra "—".
 - **`DispatchEngine` (Redis GEO) está sem uso:** foi substituído pelo `RideDispatcher` (banco de dados). Remover ou reaproveitar quando o rastreamento em tempo real existir.
-- **Código compartilhado duplicado entre os apps:** `src/ui/kit.tsx`, `src/hooks/usePolling.ts`, `src/config.ts`, a infraestrutura de `src/api.ts` e a tela de login quase iguais nos dois apps. Candidatos a um pacote `packages/mobile-core`.
+- **Código compartilhado ainda duplicado entre os apps:** `src/ui/kit.tsx`, `src/hooks/usePolling.ts`, `src/config.ts`, a infraestrutura de `src/api.ts` e a tela de login quase iguais nos dois apps. Candidatos ao `packages/mobile-core`, que já existe (hoje só com o push).
 - **Kit de UI duplicado:** `src/ui/kit.tsx` é idêntico nos dois apps. Se crescer, extrair para um pacote `packages/mobile-ui`, com `react-native` como peer dependency, fora do alcance do admin-web.
 - **Permissões Android x iOS do driver não batem:** o `Info.plist` do driver pede câmera (fotos de CNH/CRLV), mas o `AndroidManifest.xml` original não tinha `CAMERA`. A permissão foi mantida como estava, por pedido; adicionar `CAMERA` quando o envio de documentos for implementado.
 - **Build iOS não validado:** o projeto Xcode foi gerado pelo template oficial, mas não foi compilado, porque a máquina de desenvolvimento é Windows. Validar no macOS com `bundle exec pod install` e `run-ios`.

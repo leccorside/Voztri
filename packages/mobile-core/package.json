@@ -1,0 +1,20 @@
+{
+  "name": "@voztri/mobile-core",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Código compartilhado pelos apps React Native (driver-mobile e passenger-mobile). Só código-fonte: usado pelo Metro e pelo Jest via src, sem build.",
+  "main": "./src/index.ts",
+  "react-native": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@react-native-firebase/app": "20.5.0",
+    "@react-native-firebase/messaging": "20.5.0",
+    "react-native": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
