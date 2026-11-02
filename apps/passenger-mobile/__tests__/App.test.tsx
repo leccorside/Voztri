@@ -24,6 +24,7 @@ jest.mock('../src/api', () => ({
   activeRideMemory: { load: jest.fn(), save: jest.fn(), clear: jest.fn() },
   onUnauthorized: jest.fn(),
   authApi: { requestOtp: jest.fn(), verifyOtp: jest.fn(), getMe: jest.fn() },
+  geoApi: { reverse: jest.fn() },
   rideApi: {
     getEstimates: jest.fn(),
     requestRide: jest.fn(),
@@ -76,6 +77,7 @@ const m = api as unknown as {
     'getEstimates' | 'requestRide' | 'getRide' | 'cancelRide' | 'getChatMessages' | 'sendChatMessage' | 'triggerSos' | 'cancelSos'
   >;
   billingApi: Mocks<'submitRating'>;
+  geoApi: Mocks<'reverse'>;
 };
 const loc = location as unknown as Mocks<'requestLocationPermission' | 'getCurrentPosition'>;
 const pushMock = push as unknown as Mocks<'enablePush' | 'disablePush'>;
@@ -177,6 +179,8 @@ beforeEach(() => {
   m.activeRideMemory.save.mockResolvedValue(undefined);
   m.activeRideMemory.clear.mockResolvedValue(undefined);
   m.rideApi.getEstimates.mockResolvedValue(ESTIMATES);
+  // Geocodificação reversa indisponível por padrão: o embarque fica com a coordenada
+  m.geoApi.reverse.mockRejectedValue({ message: 'GEOCODING_UNAVAILABLE' });
   // Praça da Sé: diferente da origem padrão, para provar que a estimativa usa o GPS
   loc.requestLocationPermission.mockResolvedValue('granted');
   loc.getCurrentPosition.mockResolvedValue(gpsAt(-23.55052, -46.633308));
@@ -443,6 +447,102 @@ describe('passenger-mobile integrado à API', () => {
     expect(m.session.clear).toHaveBeenCalled();
     expect(visibleText(tree)).toContain('Entrar na VOZTRI');
     alertSpy.mockRestore();
+  });
+
+  describe('endereço do embarque pelo GPS (geocodificação reversa)', () => {
+    const SE = { address: 'Praça da Sé - Sé, São Paulo - SP', shortAddress: 'Praça da Sé', city: 'São Paulo', state: 'SP' };
+
+    it('troca a coordenada pelo endereço e o envia na solicitação, junto com a posição do GPS', async () => {
+      m.geoApi.reverse.mockResolvedValue(SE);
+      await renderLoggedIn();
+
+      expect(m.geoApi.reverse).toHaveBeenCalledWith(-23.55052, -46.633308);
+      expectNoStrayText(tree);
+      expect(visibleText(tree)).toContain('Praça da Sé (±12 m)');
+      expect(visibleText(tree)).not.toContain('Sua localização atual');
+
+      await requestBlackRide();
+      expect(m.rideApi.requestRide).toHaveBeenCalledWith(
+        expect.objectContaining({
+          origin: expect.objectContaining({
+            address: 'Praça da Sé - Sé, São Paulo - SP',
+            shortAddress: 'Praça da Sé',
+            latitude: -23.55052,
+            longitude: -46.633308,
+          }),
+        }),
+      );
+    });
+
+    it('sem endereço (ou provedor fora do ar), mantém a coordenada e o app segue normal', async () => {
+      m.geoApi.reverse.mockRejectedValue({ code: 'ADDRESS_NOT_FOUND', message: 'Endereço não encontrado.' });
+      await renderLoggedIn();
+      expect(visibleText(tree)).toContain('Sua localização atual (±12 m)');
+      expect(usePassengerStore.getState().error).toBeNull(); // falha silenciosa
+
+      await requestBlackRide();
+      expect(m.rideApi.requestRide).toHaveBeenCalledWith(
+        expect.objectContaining({ origin: expect.objectContaining({ address: 'Localização GPS (-23.55052, -46.63331)' }) }),
+      );
+    });
+
+    it('a solicitação espera o endereço que ainda está chegando', async () => {
+      let answer: (v: typeof SE) => void = () => undefined;
+      m.geoApi.reverse.mockImplementation(() => new Promise((resolve) => (answer = resolve)));
+      await renderLoggedIn();
+      expect(visibleText(tree)).toContain('Sua localização atual (±12 m)');
+
+      // Toca em solicitar com a geocodificação pendente; o endereço chega em seguida
+      await pressAsync(tree, 'Buscar endereço de destino');
+      await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
+      await pressAsync(tree, /^VozTri Black,/);
+      const request = pressAsync(tree, /^SOLICITAR VOZTRI BLACK/);
+      await act(async () => answer(SE));
+      await request;
+      await settle();
+
+      expect(m.rideApi.requestRide).toHaveBeenCalledWith(
+        expect.objectContaining({ origin: expect.objectContaining({ shortAddress: 'Praça da Sé' }) }),
+      );
+    });
+
+    it('não espera mais que 2,5 s: sem resposta, solicita com a coordenada', async () => {
+      m.geoApi.reverse.mockImplementation(() => new Promise(() => undefined)); // nunca responde
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+      await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
+      await pressAsync(tree, /^VozTri Black,/);
+
+      await pressAsync(tree, /^SOLICITAR VOZTRI BLACK/);
+      expect(m.rideApi.requestRide).not.toHaveBeenCalled(); // ainda esperando o endereço
+      await advanceAsync(2500);
+
+      expect(m.rideApi.requestRide).toHaveBeenCalledWith(
+        expect.objectContaining({ origin: expect.objectContaining({ shortAddress: 'Sua localização atual' }) }),
+      );
+    });
+
+    it('ignora o endereço que chega depois de uma nova leitura do GPS', async () => {
+      const answers: Array<(v: typeof SE) => void> = [];
+      m.geoApi.reverse.mockImplementation(() => new Promise((resolve) => answers.push(resolve)));
+      await renderLoggedIn(); // 1ª leitura: Praça da Sé
+
+      // "Usar minha localização" de novo, já em outro lugar
+      loc.getCurrentPosition.mockResolvedValueOnce(gpsAt(-23.561414, -46.655881));
+      await act(async () => usePassengerStore.getState().locateOrigin());
+      await settle();
+      expect(answers).toHaveLength(2);
+
+      await act(async () => answers[0]!(SE)); // resposta atrasada da 1ª leitura
+      await settle();
+      expect(usePassengerStore.getState().origin.shortAddress).toBe('Sua localização atual');
+
+      await act(async () => answers[1]!({ ...SE, address: 'Av. Paulista, 1578 - Bela Vista, São Paulo - SP', shortAddress: 'Av. Paulista, 1578' }));
+      await settle();
+      expect(usePassengerStore.getState().origin).toEqual(
+        expect.objectContaining({ shortAddress: 'Av. Paulista, 1578', latitude: -23.561414, longitude: -46.655881 }),
+      );
+    });
   });
 
   describe('push do andamento da corrida', () => {

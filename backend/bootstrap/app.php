@@ -29,6 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ? \App\Infrastructure\Push\FcmPushNotifier::fromFile($path)
                 : new \App\Infrastructure\Push\NullPushNotifier();
         },
+        // Geocodificação reversa (endereço do embarque pelo GPS)
+        \App\Infrastructure\Geo\ReverseGeocoder::class => \App\Infrastructure\Geo\PhotonGeocodingService::class,
     ])
     ->withExceptions(function (Exceptions $exceptions) {
         // Formato padronizado de erro JSON

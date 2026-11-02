@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { AddressLocation, ChatMessage, FareEstimate, PaymentMethodType, Ride, RideStatus, User } from '@voztri/shared-types';
 import {
   activeRideMemory,
+  geoApi,
   apiErrorCode,
   authApi,
   billingApi,
@@ -104,6 +105,8 @@ const DEFAULT_ORIGIN: AddressLocation = {
 const DRIVER_CANCELLED_MESSAGE = 'O motorista cancelou a corrida. Peça um novo motorista quando quiser.';
 /** A API encerra a busca depois de 3 min sem motorista (NO_DRIVER_AVAILABLE). */
 const NO_DRIVER_MESSAGE = 'Nenhum motorista disponível no momento. Tente de novo em instantes.';
+/** Quanto a solicitação espera o endereço do embarque antes de seguir com a coordenada. */
+export const ORIGIN_NAMING_WAIT_MS = 2500;
 
 const OPEN_STATUSES: RideStatus[] = ['REQUESTED', 'SEARCHING', 'OFFERED', 'ACCEPTED', 'DRIVER_EN_ROUTE', 'DRIVER_ARRIVED', 'IN_PROGRESS'];
 
@@ -208,6 +211,44 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
 
   // Leitura do GPS em andamento (escolher o destino espera por ela)
   let locating: Promise<void> | null = null;
+  // Geocodificação reversa do embarque em andamento (a solicitação espera um pouco por ela)
+  let naming: Promise<void> | null = null;
+
+  /**
+   * Troca a coordenada do embarque pelo endereço (API → Photon). Só aplica se o
+   * embarque ainda for esta leitura do GPS; sem endereço ou com falha, fica a coordenada.
+   */
+  const nameOrigin = (latitude: number, longitude: number) => {
+    // Dentro de uma promise: nenhum erro da geocodificação (nem síncrono) afeta o GPS
+    naming = Promise.resolve()
+      .then(() => geoApi.reverse(latitude, longitude))
+      .then((place) => {
+        const { origin, originSource } = get();
+        if (originSource !== 'gps' || origin.latitude !== latitude || origin.longitude !== longitude) return;
+        set({
+          origin: {
+            ...origin,
+            address: place.address,
+            shortAddress: place.shortAddress,
+            ...(place.city ? { city: place.city } : {}),
+            ...(place.state ? { state: place.state } : {}),
+          },
+        });
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        naming = null;
+      });
+  };
+
+  /** Espera o endereço do embarque por até ORIGIN_NAMING_WAIT_MS. */
+  const waitForOriginName = async () => {
+    const pending = naming;
+    if (!pending) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([pending, new Promise<void>((resolve) => (timer = setTimeout(resolve, ORIGIN_NAMING_WAIT_MS)))]);
+    if (timer) clearTimeout(timer);
+  };
 
   const startSession = async (user: User) => {
     set({ ...signedOut, sessionStatus: 'authenticated', user });
@@ -308,7 +349,7 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
           const coords = `${position.latitude.toFixed(5)}, ${position.longitude.toFixed(5)}`;
           set({
             origin: {
-              // Sem geocodificação reversa ainda: o endereço é a coordenada
+              // Na hora, a coordenada; o endereço chega pela geocodificação reversa
               address: `Localização GPS (${coords})`,
               shortAddress: 'Sua localização atual',
               latitude: position.latitude,
@@ -318,6 +359,7 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
             originAccuracy: position.accuracy,
             originWarning: null,
           });
+          nameOrigin(position.latitude, position.longitude);
         } catch (err) {
           set({
             origin: DEFAULT_ORIGIN,
@@ -360,6 +402,9 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
     selectPaymentMethod: (method) => set({ selectedPaymentMethod: method }),
 
     confirmRideRequest: async () => {
+      if (!get().destination) return;
+      // O motorista vê o endereço do embarque: espera a geocodificação por um instante
+      await waitForOriginName();
       const { origin, destination, selectedCategory, selectedPaymentMethod } = get();
       if (!destination) return;
       await requestWith({ origin, destination, category: selectedCategory, paymentMethod: selectedPaymentMethod });

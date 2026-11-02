@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\DriverController;
 use App\Http\Controllers\Api\V1\BillingController;
 use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\DeviceController;
+use App\Http\Controllers\Api\V1\GeoController;
 
 Route::prefix('v1')->group(function () {
     // Health Check
@@ -38,6 +39,9 @@ Route::prefix('v1')->group(function () {
         // Usuário & Perfil
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+
+        // Endereço da coordenada do GPS (embarque do passageiro); limite por usuário
+        Route::get('/geo/reverse', [GeoController::class, 'reverse'])->middleware('throttle:30,1');
 
         // Aparelhos para notificações push
         Route::post('/devices', [DeviceController::class, 'store']);
