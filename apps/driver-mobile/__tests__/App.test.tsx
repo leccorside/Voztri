@@ -7,6 +7,7 @@ import { useDriverStore } from '../src/store/driverStore';
 import * as api from '../src/api';
 import * as location from '../src/location';
 import { backgroundTracking } from '../src/backgroundTracking';
+import * as push from '../src/push';
 import { Alert } from 'react-native';
 import type { DevicePosition } from '../src/location';
 import {
@@ -45,6 +46,13 @@ jest.mock('../src/api', () => ({
 // Serviço nativo de rastreamento (Android); supported=false simula o iOS
 jest.mock('../src/backgroundTracking', () => ({
   backgroundTracking: { supported: false, start: jest.fn(), stop: jest.fn(), status: jest.fn() },
+}));
+
+// Push simulado: o teste guarda o callback de oferta para "entregar" uma mensagem
+jest.mock('../src/push', () => ({
+  enablePush: jest.fn(),
+  disablePush: jest.fn(),
+  registerBackgroundHandler: jest.fn(),
 }));
 
 // GPS e permissões simulados: o teste controla a permissão e emite posições
@@ -91,6 +99,9 @@ const loc = location as unknown as Record<
   jest.Mock
 >;
 const bg = backgroundTracking as unknown as { supported: boolean } & Record<'start' | 'stop' | 'status', jest.Mock>;
+const pushMock = push as unknown as Record<'enablePush' | 'disablePush', jest.Mock>;
+/** Callback que o store passou ao enablePush (simula a chegada de um push de oferta). */
+let deliverPush: (() => void) | null = null;
 let alertSpy: jest.SpyInstance;
 
 const position = (latitude: number, longitude: number, over: Partial<DevicePosition> = {}): DevicePosition => ({
@@ -198,6 +209,13 @@ beforeEach(() => {
   });
   m.driverApi.rejectOffer.mockResolvedValue({ success: true });
   m.driverApi.updateLocation.mockResolvedValue(undefined);
+
+  deliverPush = null;
+  pushMock.enablePush.mockImplementation(async (onOffer: () => void) => {
+    deliverPush = onOffer;
+    return 'enabled';
+  });
+  pushMock.disablePush.mockResolvedValue(undefined);
 
   gps = null;
   bg.supported = false;
@@ -586,5 +604,52 @@ describe('driver-mobile integrado à API', () => {
     expect(m.driverApi.setOnlineStatus).toHaveBeenCalledWith(false);
     expect(m.session.clear).toHaveBeenCalled();
     expect(visibleText(tree)).toContain('Entrar como motorista');
+  });
+
+  describe('push de novas ofertas', () => {
+    it('ativa o push ao entrar e mostra a oferta assim que a mensagem chega', async () => {
+      await renderLoggedIn();
+      expect(pushMock.enablePush).toHaveBeenCalledTimes(1);
+      expect(useDriverStore.getState().pushStatus).toBe('enabled');
+      expect(visibleText(tree)).not.toContain('Av. Paulista, 1578');
+
+      // A oferta chega pelo push antes do próximo ciclo do polling
+      server.offer = OFFER;
+      const calls = m.driverApi.getCurrent.mock.calls.length;
+      await act(async () => deliverPush!());
+      await settle();
+      expect(m.driverApi.getCurrent.mock.calls.length).toBe(calls + 1);
+      expect(visibleText(tree)).toContain('Av. Paulista, 1578');
+    });
+
+    it('sem Firebase configurado o app segue só com o polling', async () => {
+      pushMock.enablePush.mockResolvedValue('unavailable');
+      await renderLoggedIn();
+
+      expect(useDriverStore.getState().pushStatus).toBe('unavailable');
+      expect(visibleText(tree)).toContain('Painel Operacional');
+    });
+
+    it('remove o token antes de limpar a sessão no logout', async () => {
+      const order: string[] = [];
+      pushMock.disablePush.mockImplementation(async () => void order.push('push'));
+      m.session.clear.mockImplementation(async () => void order.push('session'));
+      await renderLoggedIn();
+
+      await pressAsync(tree, 'Sair da conta');
+
+      expect(pushMock.disablePush).toHaveBeenCalledWith();
+      expect(order).toEqual(['push', 'session']);
+    });
+
+    it('sessão expirada invalida o token do aparelho', async () => {
+      await renderLoggedIn();
+      const handler = m.onUnauthorized.mock.calls[0]![0] as () => void;
+
+      await act(async () => handler());
+
+      expect(pushMock.disablePush).toHaveBeenCalledWith({ revoke: true });
+      expect(useDriverStore.getState().pushStatus).toBe('off');
+    });
   });
 });

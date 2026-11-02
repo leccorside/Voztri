@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\RideController;
 use App\Http\Controllers\Api\V1\DriverController;
 use App\Http\Controllers\Api\V1\BillingController;
 use App\Http\Controllers\Api\V1\AdminController;
+use App\Http\Controllers\Api\V1\DeviceController;
 
 Route::prefix('v1')->group(function () {
     // Health Check
@@ -37,6 +38,10 @@ Route::prefix('v1')->group(function () {
         // Usuário & Perfil
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+
+        // Aparelhos para notificações push
+        Route::post('/devices', [DeviceController::class, 'store']);
+        Route::delete('/devices', [DeviceController::class, 'destroy']);
 
         // Passageiro & Corridas
         Route::prefix('rides')->group(function () {

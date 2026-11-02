@@ -2,6 +2,7 @@
 
 namespace App\Domain\Ride\Services;
 
+use App\Jobs\SendRideOfferPush;
 use App\Models\Driver;
 use App\Models\Ride;
 use App\Models\RideOffer;
@@ -106,6 +107,9 @@ class RideDispatcher
         ]);
 
         $this->stateMachine->transition($ride, 'OFFERED', null, ['driver_id' => $best->id, 'offer_id' => $offer->id]);
+
+        // Push para o motorista: só depois do commit (a oferta precisa existir) e fora da requisição
+        SendRideOfferPush::dispatch($offer->id)->afterCommit();
 
         return $offer;
     }

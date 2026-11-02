@@ -24,6 +24,12 @@ backend/bootstrap/cache/*
 backend/.phpunit.result.cache
 backend/.phpunit.cache/
 backend/database/*.sqlite
+# Conta de serviço do Firebase (push via FCM)
+backend/storage/app/firebase/
+
+# Configuração do Firebase nos apps (cada ambiente coloca a sua)
+google-services.json
+GoogleService-Info.plist
 
 # Mobile / Android / iOS
 .expo/

@@ -6,4 +6,8 @@
     <string name="tracking_channel_description">Aviso fixo enquanto o VOZTRI Driver envia sua localização para receber corridas próximas.</string>
     <string name="tracking_notification_title">Você está online no VOZTRI Driver</string>
     <string name="tracking_notification_text">Enviando sua localização para receber corridas próximas.</string>
+
+    <!-- Push de novas ofertas de corrida (FCM, canal ride_offers) -->
+    <string name="offers_channel_name">Novas corridas</string>
+    <string name="offers_channel_description">Avisa quando chega uma oferta de corrida. A oferta expira em poucos segundos.</string>
 </resources>

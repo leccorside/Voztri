@@ -20,6 +20,16 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\CheckRole::class,
         ]);
     })
+    ->withSingletons([
+        // Push: FCM quando a chave da conta de serviço existe; senão, desligado (só log)
+        \App\Infrastructure\Push\PushNotifier::class => function () {
+            $path = config('services.fcm.credentials');
+
+            return $path && is_file($path)
+                ? \App\Infrastructure\Push\FcmPushNotifier::fromFile($path)
+                : new \App\Infrastructure\Push\NullPushNotifier();
+        },
+    ])
     ->withExceptions(function (Exceptions $exceptions) {
         // Formato padronizado de erro JSON
     })->create();

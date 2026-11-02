@@ -121,7 +121,21 @@ docker compose exec app php artisan migrate --seed
 1. O passageiro solicita: a corrida é oferecida ao motorista **online, aprovado, livre e da mesma categoria mais próximo** do embarque (`ride_offers`, validade de **15 s**).
 2. O app do motorista consulta `GET /driver/rides/current` a cada 3 s e mostra a oferta.
 3. Aceite → `DRIVER_EN_ROUTE`. Recusa ou expiração → volta para `SEARCHING` e vai ao próximo motorista (quem já recebeu essa corrida não a recebe de novo). Sem motoristas, fica em `SEARCHING` até o passageiro cancelar.
-4. Não há worker: ofertas vencidas são tratadas no polling do passageiro (`GET /rides/{id}`) e do motorista.
+4. O despacho não depende de worker: ofertas vencidas são tratadas no polling do passageiro (`GET /rides/{id}`) e do motorista.
+5. Cada oferta nova também gera um **push** para o motorista (job `SendRideOfferPush` na fila, depois do commit; ver abaixo). Só o push precisa do contêiner `worker`.
+
+### Notificações push (novas ofertas)
+
+- Envio pela **API HTTP v1 do Firebase Cloud Messaging** para Android e iOS. No iOS o FCM repassa ao APNs com a chave `.p8` cadastrada no console do Firebase; o backend não fala com o APNs diretamente.
+- **Ativação:** `FCM_CREDENTIALS` no `.env` com o caminho, dentro do contêiner, do JSON da conta de serviço (sugestão: `backend/storage/app/firebase/service-account.json`, fora do git). Sem a variável, ou com o arquivo ausente, o backend usa o `NullPushNotifier`: só registra no log e o despacho segue igual.
+- **Mensagem:** título "Nova corrida: R$ X" (ganho líquido), corpo "Embarque: {endereço} • X km • responda em N s" e `data = { type: "ride_offer", rideId, expiresAt }`. A validade acompanha a oferta: `android.ttl` e `apns-expiration` iguais aos segundos restantes, para não chegar uma oferta vencida. No Android, prioridade `HIGH` e canal `ride_offers`; no iOS, `apns-priority: 10`, `interruption-level: time-sensitive` e `apns-collapse-id` (uma oferta substitui a anterior).
+- **Tokens:** o token de acesso OAuth (JWT RS256 da conta de serviço) fica em cache por 55 min. Token respondido como `UNREGISTERED`, `SENDER_ID_MISMATCH` ou 404 é apagado de `user_devices`; falhas temporárias (503, `INVALID_ARGUMENT`) não apagam.
+- **App do motorista:** registra o token ao entrar, remove no logout e invalida no Firebase quando a sessão expira. Com o app aberto a notificação não aparece; a mensagem só antecipa o polling. Ao tocar na notificação, o app abre e busca a oferta.
+
+### Aparelhos (push)
+
+- `POST /api/v1/devices`: Body `{ "token": "<token FCM>", "platform": "android" | "ios", "deviceId"?: "..." }`. Registra ou atualiza o aparelho do usuário logado (`201 { id, platform }`). O token é único: se outra conta entrar no mesmo aparelho, ele passa para ela.
+- `DELETE /api/v1/devices`: Body `{ "token": "..." }`. Remove o token da conta (logout). `204`.
 
 ### Motorista
 - `POST /api/v1/driver/register`: Cadastro de dados complementares e veículo.

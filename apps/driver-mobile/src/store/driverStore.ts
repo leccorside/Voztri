@@ -10,6 +10,7 @@ import {
   LocationPermission,
   requestLocationPermission,
 } from '../location.js';
+import { disablePush, enablePush, PushStatus } from '../push.js';
 
 export type SessionStatus = 'checking' | 'anonymous' | 'authenticated';
 
@@ -57,6 +58,8 @@ export interface DriverState {
   backgroundPermission: BackgroundPermission;
   /** O aviso sobre a localização em segundo plano já apareceu nesta sessão. */
   backgroundPromptShown: boolean;
+  /** Push de novas ofertas (off: ainda não ativado nesta sessão). */
+  pushStatus: PushStatus | 'off';
 
   bootstrap: () => Promise<void>;
   requestCode: (phone: string) => Promise<string | null>;
@@ -100,6 +103,7 @@ const signedOut = {
   backgroundMode: 'off' as BackgroundMode,
   backgroundPermission: 'unknown' as BackgroundPermission,
   backgroundPromptShown: false,
+  pushStatus: 'off' as PushStatus | 'off',
 };
 
 
@@ -119,6 +123,13 @@ export const useDriverStore = create<DriverState>((set, get) => {
 
   const startSession = async (user: User) => {
     set({ ...signedOut, sessionStatus: 'authenticated', user });
+    // Push em paralelo: avisa de novas ofertas com o app em segundo plano; com o app
+    // aberto (ou ao tocar na notificação) só antecipa o polling.
+    void enablePush(() => {
+      if (get().sessionStatus === 'authenticated') void get().refresh();
+    }).then((pushStatus) => {
+      if (get().user?.id === user.id) set({ pushStatus });
+    });
     await Promise.all([get().refresh(), get().refreshEarnings()]);
   };
 
@@ -129,6 +140,8 @@ export const useDriverStore = create<DriverState>((set, get) => {
     bootstrap: async () => {
       onUnauthorized(() => {
         void session.clear();
+        // Sem sessão não dá para chamar DELETE /devices: invalida o token no Firebase
+        void disablePush({ revoke: true });
         set({ ...signedOut, error: 'Sua sessão expirou. Entre novamente.' });
       });
 
@@ -173,6 +186,8 @@ export const useDriverStore = create<DriverState>((set, get) => {
         // Melhor esforço: não continuar recebendo ofertas depois de sair
         await driverApi.setOnlineStatus(false).catch(() => undefined);
       }
+      // Antes de limpar a sessão: o DELETE /devices precisa do token da API
+      await disablePush();
       await session.clear();
       set({ ...signedOut });
     },

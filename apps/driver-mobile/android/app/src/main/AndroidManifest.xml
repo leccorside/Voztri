@@ -48,5 +48,11 @@
         android:enabled="true"
         android:exported="false"
         android:foregroundServiceType="location" />
+
+      <!-- Push (FCM): ícone padrão das notificações. O canal padrão (ride_offers) vem do
+           firebase.json; o canal em si é criado em MainApplication.onCreate. -->
+      <meta-data
+        android:name="com.google.firebase.messaging.default_notification_icon"
+        android:resource="@drawable/ic_stat_offer" />
     </application>
 </manifest>
