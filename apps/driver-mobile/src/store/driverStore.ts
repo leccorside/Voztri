@@ -58,6 +58,13 @@ export interface DriverState {
   locationWarning: string | null;
   /** Último envio a /driver/location (controla o intervalo mínimo). */
   lastSentLocation: { at: number; position: DevicePosition } | null;
+  /**
+   * Leitura segurada pelo intervalo mínimo (ou cujo envio falhou), enviada quando
+   * o intervalo vence. Parado, o GPS do JS (filtro de 25 m) não entrega leitura
+   * nova: sem isso, a última posição antes de parar podia nunca chegar à API (e a
+   * chegada automática ao embarque não aconteceria no modo foreground-only).
+   */
+  pendingLocation: DevicePosition | null;
   backgroundMode: BackgroundMode;
   backgroundPermission: BackgroundPermission;
   /** O aviso sobre a localização em segundo plano já apareceu nesta sessão. */
@@ -106,6 +113,7 @@ const signedOut = {
   lastPosition: null,
   locationWarning: null,
   lastSentLocation: null,
+  pendingLocation: null,
   backgroundMode: 'off' as BackgroundMode,
   backgroundPermission: 'unknown' as BackgroundPermission,
   backgroundPromptShown: false,
@@ -127,7 +135,31 @@ export const useDriverStore = create<DriverState>((set, get) => {
     }
   };
 
+  // Timer do envio pendente. Sempre recriado (nunca reaproveitado), para um handle
+  // velho não impedir o agendamento; o disparo confere sessão, turno e modo.
+  let pendingTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const cancelPending = () => {
+    if (pendingTimer) clearTimeout(pendingTimer);
+    pendingTimer = null;
+    if (get().pendingLocation) set({ pendingLocation: null });
+  };
+
+  /** Guarda a leitura e envia daqui a `delayMs` (a mais nova substitui a anterior). */
+  const schedulePending = (position: DevicePosition, delayMs: number) => {
+    if (pendingTimer) clearTimeout(pendingTimer);
+    set({ pendingLocation: position });
+    pendingTimer = setTimeout(() => {
+      pendingTimer = null;
+      const pending = get().pendingLocation;
+      if (!pending) return;
+      set({ pendingLocation: null });
+      void get().reportPosition(pending);
+    }, Math.max(500, delayMs));
+  };
+
   const startSession = async (user: User) => {
+    cancelPending();
     set({ ...signedOut, sessionStatus: 'authenticated', user });
     // Push em paralelo: avisa de novas ofertas com o app em segundo plano; com o app
     // aberto (ou ao tocar na notificação) só antecipa o polling.
@@ -148,6 +180,7 @@ export const useDriverStore = create<DriverState>((set, get) => {
         void session.clear();
         // Sem sessão não dá para chamar DELETE /devices: invalida o token no Firebase
         void disablePush({ revoke: true });
+        cancelPending();
         set({ ...signedOut, error: 'Sua sessão expirou. Entre novamente.' });
       });
 
@@ -195,6 +228,7 @@ export const useDriverStore = create<DriverState>((set, get) => {
       // Antes de limpar a sessão: o DELETE /devices precisa do token da API
       await disablePush();
       await session.clear();
+      cancelPending();
       set({ ...signedOut });
     },
 
@@ -240,15 +274,16 @@ export const useDriverStore = create<DriverState>((set, get) => {
           if (err instanceof LocationError) get().onLocationError(err);
         }
       } else {
+        cancelPending();
         set({ locationStatus: 'off', locationWarning: null, lastSentLocation: null });
       }
     },
 
     reportPosition: async (position, force = false) => {
       set({ lastPosition: position, locationStatus: 'tracking', locationWarning: null });
-      if (!get().isOnline || get().sessionStatus !== 'authenticated') return;
+      if (!get().isOnline || get().sessionStatus !== 'authenticated') return cancelPending();
       // Com o serviço nativo ativo, ele é quem envia (inclusive em segundo plano)
-      if (get().backgroundMode === 'native') return;
+      if (get().backgroundMode === 'native') return cancelPending();
 
       const now = Date.now();
       const lastSent = get().lastSentLocation;
@@ -257,8 +292,13 @@ export const useDriverStore = create<DriverState>((set, get) => {
         !lastSent ||
         now - lastSent.at >= LOCATION_SEND_INTERVAL_MS ||
         distanceMeters(lastSent.position, position) >= LOCATION_SEND_DISTANCE_M;
-      if (!due) return;
+      if (!due) {
+        // Segura a leitura e envia quando o intervalo vencer (a última antes de parar)
+        schedulePending(position, LOCATION_SEND_INTERVAL_MS - (now - lastSent!.at));
+        return;
+      }
 
+      cancelPending();
       set({ lastSentLocation: { at: now, position } });
       try {
         const res = await driverApi.updateLocation({
@@ -272,8 +312,9 @@ export const useDriverStore = create<DriverState>((set, get) => {
         // Esta posição marcou a chegada ao embarque (a até 100 m): atualiza a tela já
         if (res?.arrivedAtPickup) void get().refresh();
       } catch (err) {
-        set({ lastSentLocation: null }); // tenta de novo na próxima leitura
-        set({ connectionError: errorMessage(err) });
+        // Tenta de novo na próxima leitura ou, se nenhuma chegar (parado), daqui a um intervalo
+        set({ lastSentLocation: null, connectionError: errorMessage(err) });
+        if (!get().pendingLocation) schedulePending(position, LOCATION_SEND_INTERVAL_MS);
       }
     },
 
@@ -287,7 +328,10 @@ export const useDriverStore = create<DriverState>((set, get) => {
       }
     },
 
-    setBackgroundMode: (mode) => set({ backgroundMode: mode }),
+    setBackgroundMode: (mode) => {
+      if (mode === 'native' || mode === 'off') cancelPending();
+      set({ backgroundMode: mode });
+    },
 
     setBackgroundPermission: (permission) => set({ backgroundPermission: permission }),
 

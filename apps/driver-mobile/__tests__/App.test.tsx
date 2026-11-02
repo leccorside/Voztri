@@ -552,6 +552,81 @@ describe('driver-mobile integrado à API', () => {
     );
   });
 
+  describe('envio pendente (motorista parado)', () => {
+    it('Android foreground-only: envia a última posição segurada quando o intervalo vence', async () => {
+      const os = jest.replaceProperty(Platform, 'OS', 'android');
+      try {
+        bg.supported = true;
+        bg.start.mockResolvedValue(false); // serviço não iniciou: quem envia é o JS
+        await renderLoggedIn();
+        expect(useDriverStore.getState().backgroundMode).toBe('foreground-only');
+        m.driverApi.updateLocation.mockClear();
+
+        await act(async () => gps!.emit(position(-23.5634, -46.6559))); // ~170 m antes do próximo ponto (abaixo dos 200 m)
+        expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(1);
+
+        // 3 s depois, a ~50 m do embarque, e o carro para: nenhuma leitura nova chega
+        await advanceAsync(3000);
+        await act(async () => gps!.emit(position(-23.5619, -46.6559, { accuracy: 6 })));
+        expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(1); // segurada pelo intervalo
+        expect(useDriverStore.getState().pendingLocation?.latitude).toBe(-23.5619);
+
+        await advanceAsync(7000);
+        expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(2);
+        expect(m.driverApi.updateLocation).toHaveBeenLastCalledWith({ latitude: -23.5619, longitude: -46.6559, heading: 90, accuracy: 6 });
+        expect(useDriverStore.getState().pendingLocation).toBeNull();
+
+        // Parado e sem leitura nova: nada mais a enviar
+        await advanceAsync(30_000);
+        expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(2);
+      } finally {
+        os.restore();
+      }
+    });
+
+    it('a leitura mais nova substitui a pendente', async () => {
+      await renderLoggedIn();
+      m.driverApi.updateLocation.mockClear();
+      await act(async () => gps!.emit(position(-23.5615, -46.6559)));
+
+      await advanceAsync(2000);
+      await act(async () => gps!.emit(position(-23.5617, -46.6559)));
+      await advanceAsync(2000);
+      await act(async () => gps!.emit(position(-23.5619, -46.6559)));
+      await advanceAsync(6000);
+
+      expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(2);
+      expect(m.driverApi.updateLocation).toHaveBeenLastCalledWith(expect.objectContaining({ latitude: -23.5619 }));
+    });
+
+    it('ficar offline descarta a posição pendente', async () => {
+      await renderLoggedIn();
+      m.driverApi.updateLocation.mockClear();
+      await act(async () => gps!.emit(position(-23.5615, -46.6559)));
+      await advanceAsync(2000);
+      await act(async () => gps!.emit(position(-23.5617, -46.6559)));
+
+      await pressAsync(tree, 'Disponibilidade para corridas');
+      expect(useDriverStore.getState().pendingLocation).toBeNull();
+      await advanceAsync(20_000);
+      expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(1);
+    });
+
+    it('falha no envio tenta de novo depois de um intervalo, mesmo sem leitura nova', async () => {
+      await renderLoggedIn();
+      m.driverApi.updateLocation.mockClear();
+      m.driverApi.updateLocation.mockRejectedValueOnce({ message: 'Sem conexão com a API.' });
+
+      await act(async () => gps!.emit(position(-23.5615, -46.6559)));
+      expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(1);
+      expect(visibleText(tree)).toContain('Sem conexão com a API.');
+
+      await advanceAsync(10_000);
+      expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(2);
+      expect(m.driverApi.updateLocation).toHaveBeenLastCalledWith(expect.objectContaining({ latitude: -23.5615 }));
+    });
+  });
+
   it('para o GPS ao ficar offline e avisa quando o sinal falha', async () => {
     await renderLoggedIn();
     const LocationError = (location as unknown as { LocationError: new (m: string, c: string) => Error }).LocationError;
