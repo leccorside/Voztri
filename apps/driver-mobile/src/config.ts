@@ -1,18 +1,9 @@
-import { Platform } from 'react-native';
-
 /**
- * Endereço da API (Nginx do docker-compose na porta 8080).
- * - Emulador Android: 10.0.2.2 é o "localhost" da máquina que roda o emulador.
- * - Simulador iOS: localhost funciona direto.
- * - Aparelho físico: troque pelo IP da máquina na rede, ex.: http://192.168.0.10:8080/api/v1
- *   (o build de release bloqueia HTTP sem TLS; use HTTPS em produção).
+ * Configuração do app do motorista. O endereço da API e o intervalo do polling são
+ * comuns aos dois apps e ficam no @voztri/mobile-core; aqui ficam os valores
+ * próprios do motorista (envio da localização).
  */
-export const API_URL: string =
-  Platform.select({ android: 'http://10.0.2.2:8080/api/v1', default: 'http://localhost:8080/api/v1' }) ??
-  'http://localhost:8080/api/v1';
-
-/** Intervalo do polling de ofertas e da corrida em andamento. */
-export const POLL_INTERVAL_MS = 3000;
+export { API_URL, POLL_INTERVAL_MS } from '@voztri/mobile-core';
 
 /** Envio da posição para /driver/location: no máximo uma vez por intervalo... */
 export const LOCATION_SEND_INTERVAL_MS = 10_000;
