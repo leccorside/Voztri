@@ -5,6 +5,7 @@ Este guia detalha todos os requisitos obrigatórios para aprovação e publicaç
 ## 1. Declaração de Permissão de Localização em Segundo Plano (Background Location)
 - **Justificativa Exigida**: O aplicativo do Motorista necessita de `ACCESS_BACKGROUND_LOCATION` para permitir o despacho de corridas e o rastreamento GPS contínuo enquanto o motorista utiliza navegadores externos (Waze / Google Maps).
 - **Vídeo de Demonstração**: Gravação em dispositivo real demonstrando o app em segundo plano recebendo uma oferta de corrida e transmitindo telemetria.
+- **Passageiro dispensado**: o aplicativo do Passageiro só usa a localização com o app aberto (`ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION`) e **não** declara `ACCESS_BACKGROUND_LOCATION` (conferido no manifest final do build, depois do merge das bibliotecas); não precisa da declaração nem do vídeo. No iOS, o mesmo vale para "Sempre": só `NSLocationWhenInUseUsageDescription`.
 
 ## 2. Segurança de Dados e LGPD (Data Safety Section)
 - **Localização Exata**: Coletada e associada à identidade do usuário para finalidades de funcionalidade do app, segurança e prevenção a fraudes.

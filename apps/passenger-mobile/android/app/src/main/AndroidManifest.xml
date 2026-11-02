@@ -4,10 +4,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Localização em uso e em segundo plano (espelha NSLocation* do Info.plist) -->
+    <!-- Localização só com o app em uso (espelha NSLocationWhenInUseUsageDescription do
+         Info.plist). O passageiro não lê o GPS em segundo plano: sem ACCESS_BACKGROUND_LOCATION -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
     <!-- Câmera para leitura de QR Code Pix e foto de perfil (espelha NSCameraUsageDescription) -->
     <uses-permission android:name="android.permission.CAMERA" />

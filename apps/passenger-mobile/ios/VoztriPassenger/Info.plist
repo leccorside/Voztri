@@ -33,15 +33,15 @@
 		<true/>
 	</dict>
 	<!-- Permissões preservadas do Info.plist original -->
+	<!-- Localização só com o app em uso (authorizationLevel whenInUse em src/location.ts) -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>O VOZTRI utiliza sua localização para exibir o mapa, calcular rotas precisas e conectar você aos motoristas mais próximos.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>O VOZTRI utiliza sua localização em segundo plano durante as corridas para garantir sua segurança e acompanhar o trajeto em tempo real.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>O VOZTRI necessita de acesso à câmera para leitura de QR Code Pix e fotos de perfil.</string>
+	<!-- Sem "location": o passageiro não usa GPS em segundo plano. "remote-notification"
+	     fica: o push (@voztri/mobile-core) registra o setBackgroundMessageHandler -->
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>location</string>
 		<string>remote-notification</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
