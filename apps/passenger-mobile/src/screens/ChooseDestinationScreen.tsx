@@ -1,59 +1,20 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
-import { AddressLocation } from '@voztri/shared-types';
 import { usePassengerStore } from '../store/passengerStore.js';
 import { Button } from '@voztri/mobile-core';
+import { MIN_SEARCH_LENGTH, useDestinationSearch } from '../hooks/useDestinationSearch.js';
 
 interface Props {
   onBack: () => void;
 }
 
-const SAMPLE_DESTINATIONS: AddressLocation[] = [
-  {
-    address: 'Av. Brigadeiro Faria Lima, 3477 - Itaim Bibi, São Paulo - SP',
-    shortAddress: 'Av. Faria Lima, 3477',
-    latitude: -23.585721,
-    longitude: -46.679199,
-    city: 'São Paulo',
-    state: 'SP',
-  },
-  {
-    address: 'Aeroporto de Congonhas - Vila Congonhas, São Paulo - SP',
-    shortAddress: 'Aeroporto de Congonhas',
-    latitude: -23.62611,
-    longitude: -46.656387,
-    city: 'São Paulo',
-    state: 'SP',
-  },
-  {
-    address: 'Shopping Morumbi - Av. Roque Petroni Júnior, 1089',
-    shortAddress: 'Morumbi Shopping',
-    latitude: -23.622591,
-    longitude: -46.698971,
-    city: 'São Paulo',
-    state: 'SP',
-  },
-  {
-    address: 'Parque Ibirapuera - Av. Pedro Álvares Cabral - Moema',
-    shortAddress: 'Parque Ibirapuera (Portão 3)',
-    latitude: -23.587416,
-    longitude: -46.657634,
-    city: 'São Paulo',
-    state: 'SP',
-  },
-];
-
 export const ChooseDestinationScreen: React.FC<Props> = ({ onBack }) => {
   const { origin, setDestination } = usePassengerStore();
   const [query, setQuery] = useState('');
-
-  // Sem serviço de geocodificação ainda: o texto filtra os destinos sugeridos
-  const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-  const term = normalize(query.trim());
-  const suggestions = term
-    ? SAMPLE_DESTINATIONS.filter((d) => normalize(`${d.shortAddress} ${d.address}`).includes(term))
-    : SAMPLE_DESTINATIONS;
+  // Destinos pelo texto (API → Photon), perto do embarque
+  const { status, results, retry } = useDestinationSearch(query, origin);
+  const term = query.trim();
 
   return (
     <View style={styles.screen}>
@@ -75,7 +36,7 @@ export const ChooseDestinationScreen: React.FC<Props> = ({ onBack }) => {
         <View style={styles.fieldRow}>
           <View style={[styles.marker, { borderRadius: 2, backgroundColor: VoztriColors.brand.primary }]} />
           <TextInput
-            placeholder="Digite o destino ou selecione abaixo..."
+            placeholder="Digite o endereço ou o nome do lugar"
             placeholderTextColor="#7B7489"
             value={query}
             onChangeText={setQuery}
@@ -87,31 +48,57 @@ export const ChooseDestinationScreen: React.FC<Props> = ({ onBack }) => {
         </View>
       </View>
 
-      {/* Sugestões */}
+      {/* Resultados da busca */}
       <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
-        <Text style={styles.sectionTitle}>Destinos Recomendados</Text>
-
-        {suggestions.length === 0 && (
-          <Text style={styles.empty}>Nenhum destino sugerido corresponde a “{query.trim()}”.</Text>
+        {status === 'idle' && (
+          <Text style={styles.empty}>Digite pelo menos {MIN_SEARCH_LENGTH} letras do endereço ou do nome do lugar.</Text>
         )}
 
-        {suggestions.map((dest) => (
-          <Pressable
-            key={dest.shortAddress}
-            onPress={() => void setDestination(dest)}
-            accessibilityRole="button"
-            accessibilityLabel={`${dest.shortAddress}, ${dest.address}`}
-            style={({ pressed }) => [styles.suggestion, pressed && { opacity: 0.6 }]}
-          >
-            <View style={styles.pinCircle}>
-              <Text style={styles.pin}>📍</Text>
-            </View>
-            <View style={styles.flex}>
-              <Text style={styles.suggestionTitle}>{dest.shortAddress}</Text>
-              <Text style={styles.suggestionAddress}>{dest.address}</Text>
-            </View>
-          </Pressable>
-        ))}
+        {status === 'loading' && (
+          <View style={styles.loading} accessibilityLiveRegion="polite">
+            <ActivityIndicator color={VoztriColors.brand.primary} />
+            <Text style={styles.empty}>Buscando…</Text>
+          </View>
+        )}
+
+        {status === 'error' && (
+          <View accessibilityLiveRegion="polite">
+            <Text style={styles.empty}>Não foi possível buscar endereços agora.</Text>
+            <Button
+              label="Tentar de novo"
+              onPress={retry}
+              style={styles.retry}
+              textStyle={[styles.retryText, { color: VoztriColors.brand.primary }]}
+            />
+          </View>
+        )}
+
+        {status === 'done' && results.length === 0 && (
+          <Text style={styles.empty} accessibilityLiveRegion="polite">
+            Nenhum endereço encontrado para “{term}”.
+          </Text>
+        )}
+
+        {status === 'done' && results.length > 0 && <Text style={styles.sectionTitle}>Resultados</Text>}
+
+        {status === 'done' &&
+          results.map((dest, i) => (
+            <Pressable
+              key={`${dest.latitude},${dest.longitude},${i}`}
+              onPress={() => void setDestination(dest)}
+              accessibilityRole="button"
+              accessibilityLabel={`${dest.shortAddress}, ${dest.address}`}
+              style={({ pressed }) => [styles.suggestion, pressed && { opacity: 0.6 }]}
+            >
+              <View style={styles.pinCircle}>
+                <Text style={styles.pin}>📍</Text>
+              </View>
+              <View style={styles.flex}>
+                <Text style={styles.suggestionTitle}>{dest.shortAddress}</Text>
+                <Text style={styles.suggestionAddress}>{dest.address}</Text>
+              </View>
+            </Pressable>
+          ))}
       </ScrollView>
     </View>
   );
@@ -198,6 +185,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#7B7489',
     paddingVertical: 16,
+  },
+  loading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  retry: {
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+  },
+  retryText: {
+    fontWeight: '700',
+    fontSize: 14,
   },
   suggestion: {
     flexDirection: 'row',

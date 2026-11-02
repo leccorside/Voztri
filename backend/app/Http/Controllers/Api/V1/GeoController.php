@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Infrastructure\Geo\AddressSearch;
 use App\Infrastructure\Geo\GeocodingUnavailable;
 use App\Infrastructure\Geo\ReverseGeocoder;
 use Illuminate\Http\Request;
@@ -60,5 +61,50 @@ class GeoController extends Controller
         }
 
         return response()->json($result);
+    }
+
+    /** Casas decimais da posição de referência da busca (~1,1 km). */
+    public const SEARCH_NEAR_PRECISION = 2;
+
+    /** Uma busca fica uma hora em cache (texto normalizado + posição arredondada). */
+    private const SEARCH_CACHE_SECONDS = 3600;
+
+    /**
+     * Destinos pelo texto, perto do passageiro (Photon). A posição de referência vai
+     * arredondada a ~1 km: só serve para priorizar e limitar a região da busca.
+     * 503 com o provedor fora do ar; lista vazia quando nada foi encontrado.
+     */
+    public function search(Request $request, AddressSearch $places)
+    {
+        $v = $request->validate([
+            'q' => 'required|string|min:3|max:120',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        $query = preg_replace('/\s+/u', ' ', trim($v['q']));
+        if (mb_strlen($query) < 3) {
+            return response()->json(['message' => 'Digite pelo menos 3 letras.', 'errors' => ['q' => ['Digite pelo menos 3 letras.']]], 422);
+        }
+        $lat = round((float) $v['latitude'], self::SEARCH_NEAR_PRECISION);
+        $lng = round((float) $v['longitude'], self::SEARCH_NEAR_PRECISION);
+        $key = sprintf('geo.search.%s.%.2f.%.2f', md5(mb_strtolower($query)), $lat, $lng);
+
+        $results = Cache::get($key);
+        if ($results === null) {
+            try {
+                $results = $places->search($query, $lat, $lng);
+            } catch (GeocodingUnavailable $e) {
+                Log::warning('Busca de endereços indisponível', ['erro' => $e->getMessage()]);
+
+                return response()->json([
+                    'message' => 'Não foi possível buscar endereços agora.',
+                    'error' => 'GEOCODING_UNAVAILABLE',
+                ], 503);
+            }
+            Cache::put($key, $results, self::SEARCH_CACHE_SECONDS);
+        }
+
+        return response()->json(['results' => $results]);
     }
 }

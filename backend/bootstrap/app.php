@@ -31,6 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
         },
         // Geocodificação reversa (endereço do embarque pelo GPS)
         \App\Infrastructure\Geo\ReverseGeocoder::class => \App\Infrastructure\Geo\PhotonGeocodingService::class,
+        // Busca de destino pelo texto
+        \App\Infrastructure\Geo\AddressSearch::class => \App\Infrastructure\Geo\PhotonGeocodingService::class,
     ])
     ->withExceptions(function (Exceptions $exceptions) {
         // Formato padronizado de erro JSON

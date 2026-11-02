@@ -42,6 +42,8 @@ Route::prefix('v1')->group(function () {
 
         // Endereço da coordenada do GPS (embarque do passageiro); limite por usuário
         Route::get('/geo/reverse', [GeoController::class, 'reverse'])->middleware('throttle:30,1');
+        // Busca de destino pelo texto (o app espera a digitação parar antes de chamar)
+        Route::get('/geo/search', [GeoController::class, 'search'])->middleware('throttle:60,1');
 
         // Aparelhos para notificações push
         Route::post('/devices', [DeviceController::class, 'store']);

@@ -3,15 +3,15 @@
 namespace App\Infrastructure\Geo;
 
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
-use Exception;
 
 /**
  * Geocodificação pelo Photon (OpenStreetMap). A URL vem de services.photon.url
  * (PHOTON_GEOCODING_URL): a instância pública photon.komoot.io em desenvolvimento
  * (uso justo, sem SLA) ou um Photon próprio, trocando só a URL.
  */
-class PhotonGeocodingService implements ReverseGeocoder
+class PhotonGeocodingService implements ReverseGeocoder, AddressSearch
 {
     /** Siglas dos estados (o Photon devolve o nome por extenso). */
     private const UF = [
@@ -23,6 +23,12 @@ class PhotonGeocodingService implements ReverseGeocoder
         'Rondônia' => 'RO', 'Roraima' => 'RR', 'Santa Catarina' => 'SC', 'São Paulo' => 'SP',
         'Sergipe' => 'SE', 'Tocantins' => 'TO',
     ];
+
+    /**
+     * A busca fica restrita a um quadrado de ±SEARCH_RADIUS_DEGREES (~55 km) em volta do
+     * passageiro: sem isso, "congonhas" devolve cidades de Minas Gerais em vez do aeroporto.
+     */
+    public const SEARCH_RADIUS_DEGREES = 0.5;
 
     protected string $baseUrl;
 
@@ -37,10 +43,54 @@ class PhotonGeocodingService implements ReverseGeocoder
      */
     public function reverse(float $latitude, float $longitude): ?array
     {
+        $props = $this->get('reverse', ['lat' => $latitude, 'lon' => $longitude, 'limit' => 1])->json('features.0.properties');
+
+        return is_array($props) ? self::format($props) : null;
+    }
+
+    /**
+     * Destinos pelo texto, perto do passageiro: o nome do lugar como título quando há
+     * ("Morumbi Shopping"), o endereço completo e a coordenada. Sem repetidos.
+     */
+    public function search(string $query, float $nearLatitude, float $nearLongitude, int $limit = 6): array
+    {
+        $r = self::SEARCH_RADIUS_DEGREES;
+        $features = $this->get('api', [
+            'q' => $query,
+            'lat' => $nearLatitude,
+            'lon' => $nearLongitude,
+            // Pede a mais: parte dos resultados repete o mesmo lugar (um por entrada no mapa)
+            'limit' => $limit * 2,
+            'bbox' => implode(',', [$nearLongitude - $r, $nearLatitude - $r, $nearLongitude + $r, $nearLatitude + $r]),
+        ])->json('features') ?? [];
+
+        $results = [];
+        foreach ($features as $f) {
+            $coords = $f['geometry']['coordinates'] ?? null;
+            $place = is_array($f['properties'] ?? null) ? self::formatPlace($f['properties']) : null;
+            if ($place === null || !is_array($coords) || count($coords) < 2) {
+                continue;
+            }
+            $key = mb_strtolower("{$place['shortAddress']}|{$place['address']}");
+            if (isset($results[$key])) {
+                continue;
+            }
+            $results[$key] = $place + ['latitude' => (float) $coords[1], 'longitude' => (float) $coords[0]];
+            if (count($results) >= $limit) {
+                break;
+            }
+        }
+
+        return array_values($results);
+    }
+
+    /** GET no Photon; rede fora ou erro HTTP viram GeocodingUnavailable. */
+    private function get(string $path, array $query): Response
+    {
         try {
             $response = Http::timeout(4)
                 ->withHeaders(['User-Agent' => (string) config('services.photon.user_agent')])
-                ->get("{$this->baseUrl}/reverse", ['lat' => $latitude, 'lon' => $longitude, 'limit' => 1]);
+                ->get("{$this->baseUrl}/{$path}", $query);
         } catch (ConnectionException $e) {
             throw new GeocodingUnavailable('Photon sem resposta: ' . $e->getMessage(), 0, $e);
         }
@@ -49,38 +99,76 @@ class PhotonGeocodingService implements ReverseGeocoder
             throw new GeocodingUnavailable("Photon respondeu {$response->status()}");
         }
 
-        $props = $response->json('features.0.properties');
-
-        return is_array($props) ? self::format($props) : null;
+        return $response;
     }
 
     /**
+     * Endereço de rua (geocodificação reversa): a rua com número é o título.
+     *
      * @param array<string, mixed> $p propriedades de uma feature do Photon
      * @return array{address: string, shortAddress: string, city: ?string, state: ?string}|null
      */
     public static function format(array $p): ?array
     {
+        $street = self::streetLine($p);
+        $name = self::text($p['name'] ?? null);
+
+        // Rua (com número) quando há; senão o nome do lugar (praça, parque, rodovia...)
+        $short = $street ?? $name;
+        if ($short === null) {
+            return null;
+        }
+
+        return self::compose($short, $short, $p);
+    }
+
+    /**
+     * Lugar de uma busca: o nome como título quando há ("Morumbi Shopping"), com o
+     * endereço da rua ("Avenida Roque Petroni Júnior, 1089 - Vila Cordeiro, São Paulo - SP").
+     *
+     * @param array<string, mixed> $p propriedades de uma feature do Photon
+     * @return array{address: string, shortAddress: string, city: ?string, state: ?string}|null
+     */
+    public static function formatPlace(array $p): ?array
+    {
+        $street = self::streetLine($p);
+        $name = self::text($p['name'] ?? null);
+        $title = $name ?? $street;
+        if ($title === null) {
+            return null;
+        }
+
+        // Sem rua, o endereço começa pelo próprio nome (ex.: um parque só com bairro)
+        return self::compose($title, $street ?? $title, $p);
+    }
+
+    /** "Rua, número" ou "Rua"; null sem rua. */
+    private static function streetLine(array $p): ?string
+    {
         $street = self::text($p['street'] ?? null);
         $number = self::text($p['housenumber'] ?? null);
-        $name = self::text($p['name'] ?? null);
+
+        return $street !== null ? ($number !== null ? "{$street}, {$number}" : $street) : null;
+    }
+
+    /**
+     * @return array{address: string, shortAddress: string, city: ?string, state: ?string}
+     */
+    private static function compose(string $short, string $first, array $p): array
+    {
         $district = self::text($p['district'] ?? null) ?? self::text($p['locality'] ?? null);
         $city = self::text($p['city'] ?? null) ?? self::text($p['county'] ?? null);
         $stateName = self::text($p['state'] ?? null);
         $state = $stateName !== null ? (self::UF[$stateName] ?? $stateName) : null;
 
-        // Rua (com número) quando há; senão o nome do lugar (praça, parque, rodovia...)
-        $short = $street !== null ? ($number !== null ? "{$street}, {$number}" : $street) : $name;
-        if ($short === null) {
-            return null;
-        }
-
-        $address = $short;
-        if ($district !== null && $district !== $short) {
+        $address = $first;
+        $hasDistrict = $district !== null && $district !== $first;
+        if ($hasDistrict) {
             $address .= " - {$district}";
         }
         $place = implode(' - ', array_filter([$city, $state], fn ($v) => $v !== null));
         if ($place !== '') {
-            $address .= ($district !== null && $district !== $short ? ', ' : ' - ') . $place;
+            $address .= ($hasDistrict ? ', ' : ' - ') . $place;
         }
 
         return ['address' => $address, 'shortAddress' => $short, 'city' => $city, 'state' => $state];
@@ -91,65 +179,5 @@ class PhotonGeocodingService implements ReverseGeocoder
         $value = is_string($value) ? trim($value) : '';
 
         return $value !== '' ? $value : null;
-    }
-
-    /**
-     * Busca autocompletar de endereços via Photon / OSM
-     */
-    public function searchAddress(string $query, ?float $proximityLat = -23.550520, ?float $proximityLng = -46.633308): array
-    {
-        try {
-            $url = "{$this->baseUrl}/api/?q=" . urlencode($query) . "&lat={$proximityLat}&lon={$proximityLng}&lang=pt&limit=5";
-            $response = Http::timeout(3)->get($url);
-
-            if ($response->successful()) {
-                $features = $response->json('features') ?? [];
-                $results = [];
-
-                foreach ($features as $f) {
-                    $props = $f['properties'] ?? [];
-                    $coords = $f['geometry']['coordinates'] ?? [0, 0];
-
-                    $name = $props['name'] ?? $props['street'] ?? $query;
-                    $city = $props['city'] ?? $props['county'] ?? 'São Paulo';
-                    $state = $props['state'] ?? 'SP';
-
-                    $results[] = [
-                        'address' => "{$name}, {$city} - {$state}",
-                        'shortAddress' => $name,
-                        'latitude' => (float) $coords[1],
-                        'longitude' => (float) $coords[0],
-                        'city' => $city,
-                        'state' => $state,
-                    ];
-                }
-
-                if (!empty($results)) {
-                    return $results;
-                }
-            }
-        } catch (Exception $e) {
-            // Fallback de catálogo local
-        }
-
-        // Sugestões de desenvolvimento resilientes
-        return [
-            [
-                'address' => "Av. Paulista, 1578 - Bela Vista, São Paulo - SP",
-                'shortAddress' => 'Av. Paulista, 1578',
-                'latitude' => -23.561414,
-                'longitude' => -46.655881,
-                'city' => 'São Paulo',
-                'state' => 'SP',
-            ],
-            [
-                'address' => "Aeroporto de Congonhas - Vila Congonhas, São Paulo - SP",
-                'shortAddress' => 'Aeroporto de Congonhas',
-                'latitude' => -23.626110,
-                'longitude' => -46.656387,
-                'city' => 'São Paulo',
-                'state' => 'SP',
-            ],
-        ];
     }
 }

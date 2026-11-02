@@ -24,7 +24,7 @@ jest.mock('../src/api', () => ({
   activeRideMemory: { load: jest.fn(), save: jest.fn(), clear: jest.fn() },
   onUnauthorized: jest.fn(),
   authApi: { requestOtp: jest.fn(), verifyOtp: jest.fn(), getMe: jest.fn() },
-  geoApi: { reverse: jest.fn() },
+  geoApi: { reverse: jest.fn(), search: jest.fn() },
   rideApi: {
     getEstimates: jest.fn(),
     requestRide: jest.fn(),
@@ -77,7 +77,7 @@ const m = api as unknown as {
     'getEstimates' | 'requestRide' | 'getRide' | 'cancelRide' | 'getChatMessages' | 'sendChatMessage' | 'triggerSos' | 'cancelSos'
   >;
   billingApi: Mocks<'submitRating'>;
-  geoApi: Mocks<'reverse'>;
+  geoApi: Mocks<'reverse' | 'search'>;
 };
 const loc = location as unknown as Mocks<'requestLocationPermission' | 'getCurrentPosition'>;
 const pushMock = push as unknown as Mocks<'enablePush' | 'disablePush'>;
@@ -149,10 +149,27 @@ async function renderLoggedIn(storedRideId: string | null = null) {
   await settle();
 }
 
+/** Destino devolvido pela busca (mock da geoApi.search). */
+const FARIA_LIMA = {
+  address: 'Av. Brigadeiro Faria Lima, 3477 - Itaim Bibi, São Paulo - SP',
+  shortAddress: 'Av. Faria Lima, 3477',
+  latitude: -23.585721,
+  longitude: -46.679199,
+  city: 'São Paulo',
+  state: 'SP',
+};
+
+/** Abre a busca, digita o destino, espera a busca (400 ms) e escolhe a Faria Lima. */
+async function chooseFariaLima() {
+  await pressAsync(tree, 'Buscar endereço de destino');
+  await typeAsync(tree, 'Destino', 'Faria Lima');
+  await advanceAsync(400);
+  await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
+}
+
 /** Da tela inicial até a corrida solicitada (Black, dinheiro). */
 async function requestBlackRide() {
-  await pressAsync(tree, 'Buscar endereço de destino');
-  await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
+  await chooseFariaLima();
   await pressAsync(tree, /^VozTri Black,/);
   await pressAsync(tree, /^Forma de pagamento: /);
   await pressAsync(tree, 'Dinheiro em espécie');
@@ -181,6 +198,8 @@ beforeEach(() => {
   m.rideApi.getEstimates.mockResolvedValue(ESTIMATES);
   // Geocodificação reversa indisponível por padrão: o embarque fica com a coordenada
   m.geoApi.reverse.mockRejectedValue({ message: 'GEOCODING_UNAVAILABLE' });
+  // Busca de destino: a Faria Lima, como o Photon devolve
+  m.geoApi.search.mockResolvedValue([FARIA_LIMA]);
   // Praça da Sé: diferente da origem padrão, para provar que a estimativa usa o GPS
   loc.requestLocationPermission.mockResolvedValue('granted');
   loc.getCurrentPosition.mockResolvedValue(gpsAt(-23.55052, -46.633308));
@@ -236,10 +255,9 @@ describe('passenger-mobile integrado à API', () => {
     await renderLoggedIn();
     expect(visibleText(tree)).toContain('Para onde vamos hoje?');
 
-    await pressAsync(tree, 'Buscar endereço de destino');
-    await typeAsync(tree, 'Destino', 'faria');
-    expect(visibleText(tree)).not.toContain('Aeroporto de Congonhas'); // filtro por texto
-    await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
+    // Destino pela busca da API (Photon), perto do embarque
+    await chooseFariaLima();
+    expect(m.geoApi.search).toHaveBeenCalledWith('Faria Lima', expect.objectContaining({ latitude: -23.55052 }));
 
     // Estimativas vêm da API, com a origem do GPS e o destino escolhido
     expect(m.rideApi.getEstimates).toHaveBeenCalledWith(
@@ -389,8 +407,7 @@ describe('passenger-mobile integrado à API', () => {
   it('mostra erro e permite tentar de novo quando a estimativa falha', async () => {
     await renderLoggedIn();
     m.rideApi.getEstimates.mockRejectedValueOnce({ message: 'Sem conexão com a API.' });
-    await pressAsync(tree, 'Buscar endereço de destino');
-    await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
+    await chooseFariaLima();
     expectNoStrayText(tree);
     expect(visibleText(tree)).toContain('Não foi possível calcular os preços.');
     expect(visibleText(tree)).toContain('Sem conexão com a API.');
@@ -429,8 +446,7 @@ describe('passenger-mobile integrado à API', () => {
     expect(visibleText(tree)).toContain('Não foi possível obter a localização a tempo.');
 
     // A estimativa segue funcionando com a origem padrão
-    await pressAsync(tree, 'Buscar endereço de destino');
-    await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
+    await chooseFariaLima();
     expect(m.rideApi.getEstimates).toHaveBeenCalledWith(
       expect.objectContaining({ latitude: -23.561414, longitude: -46.655881 }),
       expect.anything(),
@@ -447,6 +463,93 @@ describe('passenger-mobile integrado à API', () => {
     expect(m.session.clear).toHaveBeenCalled();
     expect(visibleText(tree)).toContain('Entrar na VOZTRI');
     alertSpy.mockRestore();
+  });
+
+  describe('busca de destino (API → Photon)', () => {
+    it('pede ao menos 3 letras e busca perto do embarque depois de 400 ms sem digitar', async () => {
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+      expectNoStrayText(tree);
+      expect(visibleText(tree)).toContain('Digite pelo menos 3 letras do endereço ou do nome do lugar.');
+
+      await typeAsync(tree, 'Destino', 'Fa');
+      await advanceAsync(1000);
+      expect(m.geoApi.search).not.toHaveBeenCalled();
+
+      // Digitação seguida: só a última versão do texto vai para a API
+      await typeAsync(tree, 'Destino', 'Faria');
+      await advanceAsync(200);
+      await typeAsync(tree, 'Destino', 'Faria Lima');
+      expect(visibleText(tree)).toContain('Buscando…');
+      await advanceAsync(400);
+      expect(m.geoApi.search).toHaveBeenCalledTimes(1);
+      // Perto do embarque (GPS do teste: Praça da Sé)
+      expect(m.geoApi.search).toHaveBeenCalledWith('Faria Lima', expect.objectContaining({ latitude: -23.55052, longitude: -46.633308 }));
+
+      expectNoStrayText(tree);
+      const text = visibleText(tree);
+      expect(text).toContain('Resultados');
+      expect(text).toContain('Av. Brigadeiro Faria Lima, 3477 - Itaim Bibi, São Paulo - SP');
+
+      await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
+      expect(m.rideApi.getEstimates).toHaveBeenCalledWith(
+        expect.objectContaining({ latitude: -23.55052 }),
+        expect.objectContaining({ shortAddress: 'Av. Faria Lima, 3477', latitude: -23.585721, longitude: -46.679199 }),
+      );
+    });
+
+    it('nada encontrado', async () => {
+      m.geoApi.search.mockResolvedValue([]);
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+      await typeAsync(tree, 'Destino', 'xyzxyz');
+      await advanceAsync(400);
+      expect(visibleText(tree)).toContain('Nenhum endereço encontrado para “xyzxyz”.');
+    });
+
+    it('falha na busca mostra o aviso e "Tentar de novo" repete', async () => {
+      m.geoApi.search.mockRejectedValueOnce({ code: 'GEOCODING_UNAVAILABLE', message: 'indisponível' });
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+      await typeAsync(tree, 'Destino', 'Faria Lima');
+      await advanceAsync(400);
+      expectNoStrayText(tree);
+      expect(visibleText(tree)).toContain('Não foi possível buscar endereços agora.');
+
+      await pressAsync(tree, 'Tentar de novo');
+      await advanceAsync(400);
+      expect(m.geoApi.search).toHaveBeenCalledTimes(2);
+      expect(visibleText(tree)).toContain('Av. Faria Lima, 3477');
+    });
+
+    it('descarta a resposta atrasada de um texto anterior', async () => {
+      const answers: Array<(v: unknown[]) => void> = [];
+      m.geoApi.search.mockImplementation(() => new Promise((resolve) => answers.push(resolve)));
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+
+      await typeAsync(tree, 'Destino', 'Morumbi');
+      await advanceAsync(400);
+      await typeAsync(tree, 'Destino', 'Faria Lima');
+      await advanceAsync(400);
+      expect(answers).toHaveLength(2);
+
+      await act(async () => answers[1]!([FARIA_LIMA]));
+      await act(async () => answers[0]!([{ ...FARIA_LIMA, shortAddress: 'Morumbi Shopping', address: 'Avenida Roque Petroni Júnior, 1089' }]));
+      await settle();
+
+      const text = visibleText(tree);
+      expect(text).toContain('Av. Faria Lima, 3477');
+      expect(text).not.toContain('Morumbi Shopping');
+    });
+
+    it('a lista fixa de destinos não existe mais', async () => {
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+      const text = visibleText(tree);
+      expect(text).not.toContain('Destinos Recomendados');
+      expect(text).not.toContain('Aeroporto de Congonhas');
+    });
   });
 
   describe('endereço do embarque pelo GPS (geocodificação reversa)', () => {
@@ -493,8 +596,7 @@ describe('passenger-mobile integrado à API', () => {
       expect(visibleText(tree)).toContain('Sua localização atual (±12 m)');
 
       // Toca em solicitar com a geocodificação pendente; o endereço chega em seguida
-      await pressAsync(tree, 'Buscar endereço de destino');
-      await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
+      await chooseFariaLima();
       await pressAsync(tree, /^VozTri Black,/);
       const request = pressAsync(tree, /^SOLICITAR VOZTRI BLACK/);
       await act(async () => answer(SE));
@@ -509,8 +611,7 @@ describe('passenger-mobile integrado à API', () => {
     it('não espera mais que 2,5 s: sem resposta, solicita com a coordenada', async () => {
       m.geoApi.reverse.mockImplementation(() => new Promise(() => undefined)); // nunca responde
       await renderLoggedIn();
-      await pressAsync(tree, 'Buscar endereço de destino');
-      await pressAsync(tree, /^Av\. Faria Lima, 3477,/);
+      await chooseFariaLima();
       await pressAsync(tree, /^VozTri Black,/);
 
       await pressAsync(tree, /^SOLICITAR VOZTRI BLACK/);
