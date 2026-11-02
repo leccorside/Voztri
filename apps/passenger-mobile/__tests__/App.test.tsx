@@ -7,6 +7,7 @@ import { usePassengerStore } from '../src/store/passengerStore';
 import * as api from '../src/api';
 import * as location from '../src/location';
 import * as push from '../src/push';
+import { serverClock } from '../src/serverClock';
 import {
   advanceAsync,
   expectNoStrayText,
@@ -145,6 +146,7 @@ async function requestBlackRide() {
 
 beforeEach(() => {
   useTestTimers();
+  serverClock.reset(); // relógio do aparelho igual ao do servidor, salvo nos testes do deslocamento
   jest.clearAllMocks();
   usePassengerStore.setState(initialState, true);
   serverRide = ride('SEARCHING');
@@ -595,6 +597,32 @@ describe('passenger-mobile integrado à API', () => {
       await advanceAsync(60_000);
       expect(visibleText(tree)).toContain('Encerrando a busca…');
       expect(visibleText(tree)).not.toContain('Prazo da busca');
+    });
+
+    it('corrige o relógio do aparelho atrasado pelo deslocamento medido no header Date', async () => {
+      // Aparelho 2 min atrás do servidor: a corrida foi criada há 23 s no relógio do servidor,
+      // o que no relógio do aparelho parece "daqui a 1:37" (sem correção, o contador travaria em 3:00)
+      const serverNow = Date.now() + 120_000;
+      serverRide = ride('SEARCHING', { createdAt: new Date(serverNow - 23_000).toISOString() });
+      serverClock.record(120_000);
+
+      await renderLoggedIn();
+      await requestBlackRide();
+      expect(visibleText(tree)).toContain('Prazo da busca: 2:37');
+      await advanceAsync(1000);
+      expect(visibleText(tree)).toContain('Prazo da busca: 2:36');
+    });
+
+    it('corrige o relógio do aparelho adiantado', async () => {
+      // Aparelho 2 min à frente: sem correção, o contador já mostraria "Encerrando a busca…"
+      const serverNow = Date.now() - 120_000;
+      serverRide = ride('SEARCHING', { createdAt: new Date(serverNow - 23_000).toISOString() });
+      serverClock.record(-120_000);
+
+      await renderLoggedIn();
+      await requestBlackRide();
+      expect(visibleText(tree)).toContain('Prazo da busca: 2:37');
+      expect(visibleText(tree)).not.toContain('Encerrando a busca');
     });
 
     it('ignora aviso de uma corrida diferente da que está na tela', async () => {

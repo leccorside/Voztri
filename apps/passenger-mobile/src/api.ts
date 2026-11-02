@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthApi, BillingApi, DeviceApi, RideApi, VoztriApiClient } from '@voztri/api-client';
 import { isAxiosError } from 'axios';
 import { API_URL } from './config.js';
+import { serverClock } from './serverClock.js';
 
 const TOKEN_KEY = 'voztri.passenger.token';
 const ACTIVE_RIDE_KEY = 'voztri.passenger.activeRide';
@@ -41,6 +42,8 @@ const client = new VoztriApiClient({
   baseURL: API_URL,
   getToken: () => token,
   onUnauthorized: () => unauthorizedHandler(),
+  // Corrige o relógio do aparelho nos prazos do servidor (contador da busca)
+  onClockSample: (offsetMs) => serverClock.record(offsetMs),
 });
 
 export const authApi = new AuthApi(client);

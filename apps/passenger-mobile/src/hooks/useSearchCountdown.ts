@@ -1,20 +1,24 @@
 import { useEffect, useState } from 'react';
 import { SEARCH_TIMEOUT_MS } from '../config.js';
+import { serverClock } from '../serverClock.js';
 
 /**
  * Segundos restantes do prazo da busca (createdAt + SEARCH_TIMEOUT_MS), atualizados
- * a cada segundo. null sem createdAt válido. Usa o relógio do aparelho: com o
- * relógio adiantado ou atrasado, o contador fica deslocado (quem encerra a busca é
- * a API, então isso só afeta a exibição); o valor fica sempre entre 0 e o prazo.
+ * a cada segundo. null sem createdAt válido.
+ *
+ * O createdAt vem do relógio do servidor, então "agora" também: serverClock.now()
+ * corrige o relógio do aparelho pelo header Date das respostas da API (adiantado ou
+ * atrasado, o contador continua certo). Sem nenhuma medida ainda, usa o relógio do
+ * aparelho. O valor fica sempre entre 0 e o prazo.
  */
 export function useSearchCountdown(createdAt: string | null | undefined): number | null {
   const deadline = createdAt ? Date.parse(createdAt) + SEARCH_TIMEOUT_MS : NaN;
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(() => serverClock.now());
 
   useEffect(() => {
     if (Number.isNaN(deadline)) return undefined;
-    setNow(Date.now());
-    const id = setInterval(() => setNow(Date.now()), 1000);
+    setNow(serverClock.now());
+    const id = setInterval(() => setNow(serverClock.now()), 1000);
     return () => clearInterval(id);
   }, [deadline]);
 
