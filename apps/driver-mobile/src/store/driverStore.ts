@@ -265,6 +265,8 @@ export const useDriverStore = create<DriverState>((set, get) => {
           longitude: position.longitude,
           ...(position.heading != null ? { heading: position.heading } : {}),
           ...(position.speed != null ? { speed: position.speed } : {}),
+          // Precisão do GPS: a chegada automática exige distância + precisão <= 100 m
+          ...(Number.isFinite(position.accuracy) && position.accuracy >= 0 ? { accuracy: position.accuracy } : {}),
         });
         // Esta posição marcou a chegada ao embarque (a até 100 m): atualiza a tela já
         if (res?.arrivedAtPickup) void get().refresh();

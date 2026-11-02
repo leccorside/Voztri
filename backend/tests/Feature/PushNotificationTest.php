@@ -250,9 +250,12 @@ class PushNotificationTest extends TestCase
         return [$driver, $passenger, $rideId];
     }
 
-    private function sendLocation(User $driver, float $lat, float $lng = self::PICKUP_LNG)
+    /** @param float|null $accuracy raio de incerteza do GPS (m); null = não enviado */
+    private function sendLocation(User $driver, float $lat, float $lng = self::PICKUP_LNG, ?float $accuracy = 10)
     {
-        return $this->actingAs($driver, 'sanctum')->postJson('/api/v1/driver/location', ['latitude' => $lat, 'longitude' => $lng])->assertOk();
+        $body = ['latitude' => $lat, 'longitude' => $lng] + ($accuracy !== null ? ['accuracy' => $accuracy] : []);
+
+        return $this->actingAs($driver, 'sanctum')->postJson('/api/v1/driver/location', $body)->assertOk();
     }
 
     private function rideStatus(string $rideId): string
@@ -275,12 +278,41 @@ class PushNotificationTest extends TestCase
         $history = \App\Models\RideStatusHistory::where('ride_id', $rideId)->where('to_status', 'DRIVER_ARRIVED')->firstOrFail();
         $this->assertSame('auto', $history->metadata['source']);
         $this->assertEqualsWithDelta(50, $history->metadata['distance_m'], 3);
+        $this->assertSame(10, $history->metadata['accuracy_m']);
 
         // Posições seguintes (parado no embarque) não repetem a chegada nem o push
         $this->sendLocation($driver, self::PICKUP_LAT - 0.0002)->assertJson(['arrivedAtPickup' => false]);
         $messages = $this->push->messagesFor($passenger);
         $this->assertCount(2, $messages);
         $this->assertSame(['Motorista está a caminho', 'Seu motorista chegou'], array_map(fn ($m) => $m->title, $messages));
+    }
+
+    public function test_auto_arrival_requires_distance_plus_accuracy_within_100m(): void
+    {
+        [$driver, $passenger, $rideId] = $this->rideEnRoute();
+        $near = self::PICKUP_LAT - 0.00045; // ~50 m do embarque
+
+        // 50 m + 60 m de incerteza = 110 m: o motorista pode estar fora do raio
+        $this->sendLocation($driver, $near, accuracy: 60)->assertJson(['arrivedAtPickup' => false]);
+        // Sem precisão não há como garantir; precisão maior que o raio, nunca
+        $this->sendLocation($driver, $near, accuracy: null)->assertJson(['arrivedAtPickup' => false]);
+        $this->sendLocation($driver, self::PICKUP_LAT, accuracy: 150)->assertJson(['arrivedAtPickup' => false]);
+        // No embarque exato, mas com 101 m de incerteza
+        $this->sendLocation($driver, self::PICKUP_LAT, accuracy: 101)->assertJson(['arrivedAtPickup' => false]);
+        $this->assertSame('DRIVER_EN_ROUTE', $this->rideStatus($rideId));
+        $this->assertCount(1, $this->push->messagesFor($passenger));
+
+        // Precisão inválida é recusada pela validação
+        $this->actingAs($driver, 'sanctum')->postJson('/api/v1/driver/location', [
+            'latitude' => $near, 'longitude' => self::PICKUP_LNG, 'accuracy' => -1,
+        ])->assertStatus(422)->assertJsonValidationErrors(['accuracy']);
+
+        // 50 m + 45 m = 95 m: cabe
+        $this->sendLocation($driver, $near, accuracy: 45)->assertJson(['arrivedAtPickup' => true]);
+        $this->assertSame('DRIVER_ARRIVED', $this->rideStatus($rideId));
+        $history = \App\Models\RideStatusHistory::where('ride_id', $rideId)->where('to_status', 'DRIVER_ARRIVED')->firstOrFail();
+        $this->assertSame(45, $history->metadata['accuracy_m']);
+        $this->assertCount(2, $this->push->messagesFor($passenger));
     }
 
     public function test_location_near_pickup_without_ride_en_route_does_nothing(): void

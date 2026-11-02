@@ -226,6 +226,8 @@ class LocationTrackingService : Service() {
     // A API recusa valores fora da faixa; desconhecidos são omitidos
     if (location.hasBearing() && location.bearing in 0f..360f) body.put("heading", location.bearing.toDouble())
     if (location.hasSpeed() && location.speed >= 0f) body.put("speed", location.speed.toDouble())
+    // Raio de incerteza (m): a API só marca a chegada ao embarque se distância + precisão couber em 100 m
+    if (location.hasAccuracy() && location.accuracy >= 0f) body.put("accuracy", location.accuracy.toDouble())
 
     network.execute { post(body) }
   }

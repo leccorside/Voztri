@@ -203,6 +203,8 @@ class DriverController extends Controller
             'longitude' => 'required|numeric|between:-180,180',
             'heading' => 'nullable|numeric|between:0,360',
             'speed' => 'nullable|numeric|min:0',
+            // Raio de incerteza do GPS, em metros (usado na chegada automática)
+            'accuracy' => 'nullable|numeric|min:0',
         ]);
 
         $driver->current_latitude = $validated['latitude'];
@@ -222,9 +224,14 @@ class DriverController extends Controller
             // Continua
         }
 
-        // Chegada automática: a caminho do embarque e a até 100 m dele. Vale também
-        // para o envio do serviço nativo com o app em segundo plano.
-        $arrived = $arrivals->onDriverLocation($driver, (float) $validated['latitude'], (float) $validated['longitude']);
+        // Chegada automática: a caminho do embarque e com distância + precisão do GPS
+        // dentro de 100 m. Vale também para o envio do serviço nativo em segundo plano.
+        $arrived = $arrivals->onDriverLocation(
+            $driver,
+            (float) $validated['latitude'],
+            (float) $validated['longitude'],
+            isset($validated['accuracy']) ? (float) $validated['accuracy'] : null,
+        );
 
         return response()->json([
             'success' => true,

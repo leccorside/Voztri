@@ -503,7 +503,7 @@ describe('driver-mobile integrado à API', () => {
 
     expect(loc.requestLocationPermission).toHaveBeenCalled();
     expect(m.driverApi.setOnlineStatus).toHaveBeenCalledWith(true);
-    expect(m.driverApi.updateLocation).toHaveBeenCalledWith({ latitude: -23.5615, longitude: -46.6559, heading: 45.5, speed: 3.2 });
+    expect(m.driverApi.updateLocation).toHaveBeenCalledWith({ latitude: -23.5615, longitude: -46.6559, heading: 45.5, speed: 3.2, accuracy: 8 });
     expect(loc.watchPosition).toHaveBeenCalled();
     expectNoStrayText(tree);
     expect(visibleText(tree)).toContain('GPS ativo • precisão ±8 m');
@@ -530,7 +530,7 @@ describe('driver-mobile integrado à API', () => {
     // Primeira leitura: enviada (heading e speed desconhecidos não vão para a API)
     await act(async () => gps!.emit(position(-23.5615, -46.6559, { heading: null, speed: null })));
     expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(1);
-    expect(m.driverApi.updateLocation).toHaveBeenLastCalledWith({ latitude: -23.5615, longitude: -46.6559 });
+    expect(m.driverApi.updateLocation).toHaveBeenLastCalledWith({ latitude: -23.5615, longitude: -46.6559, accuracy: 8 });
 
     // Movimento pequeno logo em seguida: segura até o intervalo de 10 s
     await act(async () => gps!.emit(position(-23.5617, -46.6560)));
@@ -543,6 +543,13 @@ describe('driver-mobile integrado à API', () => {
     // Deslocamento grande (> 200 m): envia na hora
     await act(async () => gps!.emit(position(-23.5650, -46.6600)));
     expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(3);
+
+    // Precisão inválida (o iOS usa -1) não vai para a API (sem ela, não há chegada automática)
+    await act(async () => gps!.emit(position(-23.5700, -46.6650, { accuracy: -1 })));
+    expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(4);
+    expect(m.driverApi.updateLocation).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ accuracy: expect.anything() }),
+    );
   });
 
   it('para o GPS ao ficar offline e avisa quando o sinal falha', async () => {

@@ -16,14 +16,17 @@ export class DriverApi {
   }
 
   /**
-   * Envia a posição do GPS. `arrivedAtPickup` indica que esta posição marcou a
-   * chegada ao embarque (a até 100 m dele, com a corrida a caminho).
+   * Envia a posição do GPS. `accuracy` é o raio de incerteza em metros: a
+   * chegada automática ao embarque só é marcada se distância + accuracy couber
+   * em 100 m (sem accuracy, não é marcada). `arrivedAtPickup` indica que esta
+   * posição marcou a chegada.
    */
   async updateLocation(params: {
     latitude: number;
     longitude: number;
     heading?: number;
     speed?: number;
+    accuracy?: number;
   }): Promise<{ success: boolean; arrivedAtPickup: boolean; rideId: string | null }> {
     const res = await this.client.post<{ success: boolean; arrivedAtPickup?: boolean; rideId?: string | null }>(
       '/driver/location',
