@@ -138,4 +138,13 @@ export class AuthApi {
   async removeAvatar(): Promise<void> {
     await this.client.delete('/auth/avatar');
   }
+
+  /**
+   * Exclui a conta (dados pessoais apagados; corridas e ledger ficam anônimos). Exige
+   * a palavra de confirmação (`EXCLUIR`); 409 `RIDE_IN_PROGRESS` com corrida em aberto.
+   * Depois disso o token deixa de valer.
+   */
+  async deleteAccount(confirmation: string): Promise<void> {
+    await this.client.delete('/auth/account', { data: { confirmation } });
+  }
 }

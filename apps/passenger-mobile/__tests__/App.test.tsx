@@ -30,6 +30,7 @@ jest.mock('../src/api', () => ({
     updateProfile: jest.fn(),
     uploadAvatar: jest.fn(),
     removeAvatar: jest.fn(),
+    deleteAccount: jest.fn(),
   },
   // Como o real: caminho da API ganha a origem; endereço completo fica igual
   mediaUrl: (url: string | null | undefined) => (!url ? null : url.startsWith('/') ? `http://api.test${url}` : url),
@@ -85,7 +86,7 @@ type Mocks<K extends string> = Record<K, jest.Mock>;
 const m = api as unknown as {
   session: Mocks<'load' | 'save' | 'clear'>;
   activeRideMemory: Mocks<'load' | 'save' | 'clear'>;
-  authApi: Mocks<'requestOtp' | 'verifyOtp' | 'getMe' | 'updateProfile' | 'uploadAvatar' | 'removeAvatar'>;
+  authApi: Mocks<'requestOtp' | 'verifyOtp' | 'getMe' | 'updateProfile' | 'uploadAvatar' | 'removeAvatar' | 'deleteAccount'>;
   rideApi: Mocks<
     'getEstimates' | 'requestRide' | 'getRide' | 'cancelRide' | 'getChatMessages' | 'sendChatMessage' | 'triggerSos' | 'cancelSos'
   >;
@@ -614,6 +615,43 @@ describe('passenger-mobile integrado à API', () => {
       await pressAsync(tree, 'Voltar');
       expect(tree.root.findAll((n) => n.props.source?.uri)).toHaveLength(0);
       expect(visibleText(tree)).toContain('BL');
+    });
+
+    it('excluir a conta: confirma com EXCLUIR, encerra a sessão e volta ao login', async () => {
+      m.authApi.deleteAccount.mockResolvedValueOnce(undefined);
+      await renderLoggedIn();
+      await openProfile();
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+
+      await pressAsync(tree, 'Excluir conta');
+      expect(visibleText(tree)).toContain('PIN de emergência, contatos de confiança');
+      await typeAsync(tree, 'Digite EXCLUIR para confirmar', 'EXCLUIR');
+      await pressAsync(tree, 'Excluir minha conta');
+      await settle();
+
+      expect(m.authApi.deleteAccount).toHaveBeenCalledWith('EXCLUIR');
+      // A API já apagou os aparelhos: só invalida o token no Firebase
+      expect(pushMock.disablePush).toHaveBeenCalledWith({ revoke: true });
+      expect(m.session.clear).toHaveBeenCalled();
+      expect(alertSpy).toHaveBeenCalledWith('Conta excluída', expect.stringContaining('dados pessoais foram apagados'));
+      expect(usePassengerStore.getState().user).toBeNull();
+      expect(visibleText(tree)).toContain('Entrar na VOZTRI');
+      alertSpy.mockRestore();
+    });
+
+    it('excluir a conta com corrida em andamento: a mensagem da API aparece e a sessão continua', async () => {
+      m.authApi.deleteAccount.mockRejectedValueOnce({
+        message: 'Você tem uma corrida em andamento. Conclua ou cancele a corrida antes de excluir a conta.',
+      });
+      await renderLoggedIn();
+      await openProfile();
+      await pressAsync(tree, 'Excluir conta');
+      await typeAsync(tree, 'Digite EXCLUIR para confirmar', 'excluir');
+      await pressAsync(tree, 'Excluir minha conta');
+
+      expect(visibleText(tree)).toContain('Conclua ou cancele a corrida antes de excluir a conta.');
+      expect(m.session.clear).not.toHaveBeenCalled();
+      expect(usePassengerStore.getState().user?.name).toBe('Beatriz Lima');
     });
 
     it('voltar sem salvar não chama a API', async () => {

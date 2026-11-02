@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { POLL_INTERVAL_MS } from './config.js';
 import { currentToken, mediaUrl } from './api.js';
 import { Banner, ProfileScreen, usePolling } from '@voztri/mobile-core';
@@ -15,6 +15,19 @@ import { SosModal } from './screens/SosModal.js';
 import { TripCompletedModal } from './screens/TripCompletedModal.js';
 import { EmergencyPinScreen } from './screens/EmergencyPinScreen.js';
 
+/** O que sai com a conta do passageiro (texto da tela de exclusão). */
+const PASSENGER_DELETION_DETAILS =
+  'Apagamos seu nome, telefone, e-mail, foto, Casa e Trabalho, destinos recentes, PIN de emergência, contatos de confiança e as mensagens que você enviou no chat.';
+
+/** Exclusão de conta com o aviso de que deu certo (a tela de login já aparece por trás). */
+const confirmAccountDeletion =
+  (deleteAccount: (confirmation: string) => Promise<string | null>) =>
+  async (confirmation: string): Promise<string | null> => {
+    const failure = await deleteAccount(confirmation);
+    if (!failure) Alert.alert('Conta excluída', 'Seus dados pessoais foram apagados. Obrigado por usar o VOZTRI.');
+    return failure;
+  };
+
 export const App: React.FC = () => {
   const {
     sessionStatus,
@@ -25,6 +38,7 @@ export const App: React.FC = () => {
     updateProfile,
     uploadAvatar,
     removeAvatar,
+    deleteAccount,
     busy,
     currentStep,
     activeRide,
@@ -83,6 +97,8 @@ export const App: React.FC = () => {
           photo={{ uri: mediaUrl(user.avatarUrl), token: currentToken() }}
           uploadPhoto={uploadAvatar}
           removePhoto={removeAvatar}
+          deleteAccount={confirmAccountDeletion(deleteAccount)}
+          deletionDetails={PASSENGER_DELETION_DETAILS}
         />
       </SafeAreaView>
     );

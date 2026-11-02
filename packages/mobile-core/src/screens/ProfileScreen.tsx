@@ -26,7 +26,17 @@ export interface ProfileScreenProps {
   uploadPhoto: (photo: PickedPhoto) => Promise<string | null>;
   /** Tira a foto; devolve null ou a mensagem de erro. */
   removePhoto: () => Promise<string | null>;
+  /**
+   * Exclui a conta com a palavra digitada; devolve null (a sessão já foi encerrada) ou
+   * a mensagem de erro. O que é apagado e o que fica é explicado na tela.
+   */
+  deleteAccount: (confirmation: string) => Promise<string | null>;
+  /** Texto do que é apagado, próprio de cada app (passageiro ou motorista). */
+  deletionDetails: string;
 }
+
+/** Palavra que a API exige para excluir a conta. */
+export const DELETE_ACCOUNT_WORD = 'EXCLUIR';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -39,7 +49,32 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   photo,
   uploadPhoto,
   removePhoto,
+  deleteAccount,
+  deletionDetails,
 }) => {
+  const [deleting, setDeleting] = useState(false);
+  const [deleteWord, setDeleteWord] = useState('');
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const deleteConfirmed = deleteWord.trim().toUpperCase() === DELETE_ACCOUNT_WORD;
+
+  const confirmDelete = async () => {
+    setDeleteError(null);
+    setDeleteBusy(true);
+    const failure = await deleteAccount(DELETE_ACCOUNT_WORD);
+    // Com sucesso a sessão acabou e o app já trocou de tela: nada mais a atualizar
+    if (failure) {
+      setDeleteBusy(false);
+      setDeleteError(failure);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleting(false);
+    setDeleteWord('');
+    setDeleteError(null);
+  };
+
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoMessage, setPhotoMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
@@ -222,6 +257,63 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           style={[styles.primary, { backgroundColor: VoztriColors.brand.primary }]}
           textStyle={styles.primaryText}
         />
+
+        {/* Exclusão da conta (exigida pela Google Play e pela App Store) */}
+        <View style={styles.dangerZone}>
+          {!deleting ? (
+            <Button
+              label="Excluir conta"
+              onPress={() => setDeleting(true)}
+              style={styles.photoButton}
+              textStyle={[styles.photoButtonText, styles.removeText]}
+            />
+          ) : (
+            <View accessibilityLabel="Confirmar exclusão da conta">
+              <Text style={styles.dangerTitle} accessibilityRole="header">
+                Excluir sua conta?
+              </Text>
+              <Text style={styles.dangerText}>{deletionDetails}</Text>
+              <Text style={styles.dangerText}>
+                As corridas e os valores ficam guardados sem o seu nome, porque a lei exige o registro fiscal. Isso não
+                pode ser desfeito: para usar o VOZTRI de novo, você cria uma conta nova com o mesmo telefone.
+              </Text>
+              <Text style={styles.label}>Digite {DELETE_ACCOUNT_WORD} para confirmar</Text>
+              <TextInput
+                value={deleteWord}
+                onChangeText={(text) => {
+                  setDeleteWord(text);
+                  setDeleteError(null);
+                }}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                maxLength={20}
+                editable={!deleteBusy}
+                accessibilityLabel={`Digite ${DELETE_ACCOUNT_WORD} para confirmar`}
+                style={styles.input}
+              />
+              {deleteError && (
+                <Text style={[styles.message, styles.dangerError]} accessibilityLiveRegion="assertive">
+                  {deleteError}
+                </Text>
+              )}
+              <Button
+                label={deleteBusy ? 'Excluindo…' : 'Excluir minha conta'}
+                onPress={() => void confirmDelete()}
+                disabled={!deleteConfirmed || deleteBusy}
+                style={[styles.primary, styles.dangerButton, !deleteConfirmed ? styles.dangerButtonOff : null]}
+                textStyle={styles.primaryText}
+              />
+              <Button
+                label="Cancelar"
+                onPress={cancelDelete}
+                disabled={deleteBusy}
+                accessibilityLabel="Cancelar exclusão"
+                style={styles.cancelDelete}
+                textStyle={[styles.photoButtonText, { color: '#494457' }]}
+              />
+            </View>
+          )}
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -350,5 +442,38 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 16,
+  },
+  dangerZone: {
+    marginTop: 32,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#ECECFF',
+  },
+  dangerTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#BA1A1A',
+    marginBottom: 8,
+  },
+  dangerText: {
+    fontSize: 13,
+    color: '#494457',
+    lineHeight: 19,
+    marginBottom: 10,
+  },
+  dangerError: {
+    marginTop: 10,
+    marginBottom: 0,
+  },
+  dangerButton: {
+    backgroundColor: '#BA1A1A',
+    marginTop: 14,
+  },
+  dangerButtonOff: {
+    opacity: 0.45,
+  },
+  cancelDelete: {
+    paddingVertical: 12,
+    alignItems: 'center',
   },
 });

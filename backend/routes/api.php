@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\SavedPlaceController;
 use App\Http\Controllers\Api\V1\RecentDestinationController;
 use App\Http\Controllers\Api\V1\EmergencyPinController;
 use App\Http\Controllers\Api\V1\AvatarController;
+use App\Http\Controllers\Api\V1\AccountController;
 
 Route::prefix('v1')->group(function () {
     // Health Check
@@ -49,6 +50,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/avatar', [AvatarController::class, 'store'])->middleware('throttle:10,1');
         Route::delete('/auth/avatar', [AvatarController::class, 'destroy']);
         Route::get('/users/{id}/avatar', [AvatarController::class, 'show'])->whereUuid('id');
+
+        // Exclusão da conta pelo app (exigida pelas lojas); dados pessoais apagados
+        Route::delete('/auth/account', [AccountController::class, 'destroy'])->middleware('throttle:5,1');
 
         // Endereço da coordenada do GPS (embarque do passageiro); limite por usuário
         Route::get('/geo/reverse', [GeoController::class, 'reverse'])->middleware('throttle:30,1');

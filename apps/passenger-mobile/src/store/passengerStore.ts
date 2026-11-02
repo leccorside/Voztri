@@ -129,6 +129,8 @@ export interface PassengerState {
   uploadAvatar: (photo: PickedPhoto) => Promise<string | null>;
   /** Tira a foto do perfil; devolve null ou a mensagem de erro. */
   removeAvatar: () => Promise<string | null>;
+  /** Exclui a conta e encerra a sessão; devolve null ou a mensagem de erro. */
+  deleteAccount: (confirmation: string) => Promise<string | null>;
   finishRideEvaluation: (evaluation: { rating: number; tipCents?: number; tags?: string[] }) => Promise<void>;
   dismissError: () => void;
 }
@@ -704,6 +706,20 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
       } catch (err) {
         return errorMessage(err);
       }
+    },
+
+    deleteAccount: async (confirmation) => {
+      try {
+        await authApi.deleteAccount(confirmation);
+      } catch (err) {
+        return fieldErrors(err).confirmation ?? errorMessage(err);
+      }
+      // A API já apagou os aparelhos e os tokens: sem DELETE /devices, só invalida o
+      // token no Firebase; a sessão local (e a corrida guardada) sai junto
+      void disablePush({ revoke: true });
+      await session.clear();
+      set({ ...signedOut });
+      return null;
     },
 
     finishRideEvaluation: async ({ rating, tipCents, tags }) => {

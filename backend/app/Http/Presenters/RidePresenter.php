@@ -22,7 +22,15 @@ class RidePresenter
 
     public function present(Ride $ride, User $viewer): array
     {
-        $ride->loadMissing(['passenger.user.profile', 'driver.user.profile', 'driver.activeVehicle']);
+        // withTrashed: quem excluiu a conta aparece como "Conta excluída" no histórico
+        // da outra parte (os dados pessoais já foram apagados na exclusão)
+        $ride->loadMissing([
+            'passenger.user' => fn ($q) => $q->withTrashed(),
+            'passenger.user.profile',
+            'driver.user' => fn ($q) => $q->withTrashed(),
+            'driver.user.profile',
+            'driver.activeVehicle',
+        ]);
 
         $coords = DB::selectOne(
             'SELECT ST_Y(pickup_location) AS plat, ST_X(pickup_location) AS plng,

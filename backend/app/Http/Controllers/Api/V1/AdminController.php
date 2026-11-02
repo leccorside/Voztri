@@ -20,8 +20,9 @@ class AdminController extends Controller
      */
     public function getStats()
     {
-        $totalPassengers = Passenger::count();
-        $totalDrivers = Driver::count();
+        // whereHas('user'): contas excluídas (exclusão lógica) não entram na contagem
+        $totalPassengers = Passenger::whereHas('user')->count();
+        $totalDrivers = Driver::whereHas('user')->count();
         $onlineDrivers = Driver::where('is_online', true)->count();
         $activeRides = Ride::whereIn('status', ['SEARCHING', 'OFFERED', 'ACCEPTED', 'DRIVER_EN_ROUTE', 'IN_PROGRESS'])->count();
         $completedRides = Ride::where('status', 'COMPLETED')->count();
@@ -78,7 +79,7 @@ class AdminController extends Controller
      */
     public function listDrivers(Request $request)
     {
-        $drivers = Driver::with(['user', 'activeVehicle', 'documents'])->paginate(15);
+        $drivers = Driver::with(['user', 'activeVehicle', 'documents'])->whereHas('user')->paginate(15);
         return response()->json($drivers);
     }
 

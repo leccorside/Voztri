@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { POLL_INTERVAL_MS } from './config.js';
 import { currentToken, mediaUrl } from './api.js';
 import { Banner, ProfileScreen, usePolling } from '@voztri/mobile-core';
@@ -12,6 +12,10 @@ import { EnRouteNavigationScreen } from './screens/EnRouteNavigationScreen.js';
 import { ValidatePinModal } from './screens/ValidatePinModal.js';
 import { WeeklyEarningsScreen } from './screens/WeeklyEarningsScreen.js';
 import { PixPayoutScreen } from './screens/PixPayoutScreen.js';
+
+/** O que sai com a conta do motorista (texto da tela de exclusão). */
+const DRIVER_DELETION_DETAILS =
+  'Você sai do ar na hora. Apagamos seu nome, telefone, e-mail, foto, CNH, documentos enviados, chave Pix e as mensagens que você enviou no chat. Peça o repasse do saldo antes: depois da exclusão não dá mais para sacar pelo app.';
 
 export const App: React.FC = () => {
   const {
@@ -34,6 +38,7 @@ export const App: React.FC = () => {
     updateProfile,
     uploadAvatar,
     removeAvatar,
+    deleteAccount,
   } = useDriverStore();
   const [activeTab, setActiveTab] = useState<'home' | 'earnings' | 'payout' | 'profile'>('home');
   const [showPinModal, setShowPinModal] = useState(false);
@@ -94,6 +99,16 @@ export const App: React.FC = () => {
             photo={{ uri: mediaUrl(user.avatarUrl), token: currentToken() }}
             uploadPhoto={uploadAvatar}
             removePhoto={removeAvatar}
+            deleteAccount={async (confirmation) => {
+              const failure = await deleteAccount(confirmation);
+              if (!failure) {
+                // No próximo login o app abre no painel, não no perfil
+                setActiveTab('home');
+                Alert.alert('Conta excluída', 'Seus dados pessoais foram apagados. Obrigado por dirigir com o VOZTRI.');
+              }
+              return failure;
+            }}
+            deletionDetails={DRIVER_DELETION_DETAILS}
           />
         ) : (
           <DriverDashboardScreen onOpenEarnings={() => setActiveTab('earnings')} onOpenProfile={() => setActiveTab('profile')} />

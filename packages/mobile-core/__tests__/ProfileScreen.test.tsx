@@ -21,6 +21,7 @@ function render(
   save: jest.Mock = jest.fn(async (): Promise<ProfileSaveResult> => ({ ok: true })),
   user = USER,
   photo: { uri: string | null; token: string | null } = { uri: null, token: 'tk' },
+  deleteAccount: jest.Mock = jest.fn(async () => null as string | null),
 ) {
   const onBack = jest.fn();
   const uploadPhoto = jest.fn(async () => null as string | null);
@@ -35,10 +36,12 @@ function render(
         photo={photo}
         uploadPhoto={uploadPhoto}
         removePhoto={removePhoto}
+        deleteAccount={deleteAccount}
+        deletionDetails="Apagamos seu nome e telefone."
       />,
     );
   });
-  return { save, onBack, uploadPhoto, removePhoto };
+  return { save, onBack, uploadPhoto, removePhoto, deleteAccount };
 }
 
 const picker = jest.requireMock('react-native-image-picker') as Record<'launchCamera' | 'launchImageLibrary', jest.Mock>;
@@ -178,4 +181,45 @@ it('sem e-mail na conta: campo vazio, e o voltar chama onBack', async () => {
   expect(input.props.value).toBe('');
   await pressAsync(tree, 'Voltar');
   expect(onBack).toHaveBeenCalled();
+});
+
+describe('excluir conta', () => {
+  it('só exclui depois de digitar EXCLUIR, explicando o que sai e o que fica', async () => {
+    const { deleteAccount } = render();
+    expect(visibleText(tree)).not.toContain('Excluir sua conta?');
+
+    await pressAsync(tree, 'Excluir conta');
+    const text = visibleText(tree);
+    expect(text).toContain('Excluir sua conta?');
+    expect(text).toContain('Apagamos seu nome e telefone.');
+    expect(text).toContain('As corridas e os valores ficam guardados sem o seu nome');
+    expect(isDisabled(tree, 'Excluir minha conta')).toBe(true);
+
+    await typeAsync(tree, 'Digite EXCLUIR para confirmar', 'excluí');
+    expect(isDisabled(tree, 'Excluir minha conta')).toBe(true);
+    // Minúsculas valem (o teclado pode não ficar em maiúsculas)
+    await typeAsync(tree, 'Digite EXCLUIR para confirmar', ' excluir ');
+    expect(isDisabled(tree, 'Excluir minha conta')).toBe(false);
+
+    await pressAsync(tree, 'Excluir minha conta');
+    expect(deleteAccount).toHaveBeenCalledWith('EXCLUIR');
+    expectNoStrayText(tree);
+  });
+
+  it('mostra o erro da API (corrida em andamento) e o cancelar fecha a confirmação', async () => {
+    const deleteAccount = jest.fn(async () => 'Você tem uma corrida em andamento.' as string | null);
+    render(undefined, USER, undefined, deleteAccount);
+    await pressAsync(tree, 'Excluir conta');
+    await typeAsync(tree, 'Digite EXCLUIR para confirmar', 'EXCLUIR');
+    await pressAsync(tree, 'Excluir minha conta');
+
+    expect(visibleText(tree)).toContain('Você tem uma corrida em andamento.');
+    expect(isDisabled(tree, 'Excluir minha conta')).toBe(false);
+
+    await pressAsync(tree, 'Cancelar exclusão');
+    expect(visibleText(tree)).not.toContain('Excluir sua conta?');
+    // Ao abrir de novo, começa do zero
+    await pressAsync(tree, 'Excluir conta');
+    expect(isDisabled(tree, 'Excluir minha conta')).toBe(true);
+  });
 });

@@ -34,6 +34,7 @@ jest.mock('../src/api', () => ({
     updateProfile: jest.fn(),
     uploadAvatar: jest.fn(),
     removeAvatar: jest.fn(),
+    deleteAccount: jest.fn(),
   },
   // Como o real: caminho da API ganha a origem; endereço completo fica igual
   mediaUrl: (url: string | null | undefined) => (!url ? null : url.startsWith('/') ? `http://api.test${url}` : url),
@@ -90,7 +91,7 @@ jest.mock('../src/location', () => {
 
 const m = api as unknown as {
   session: Record<'load' | 'save' | 'clear', jest.Mock>;
-  authApi: Record<'requestOtp' | 'verifyOtp' | 'getMe' | 'updateProfile' | 'uploadAvatar' | 'removeAvatar', jest.Mock>;
+  authApi: Record<'requestOtp' | 'verifyOtp' | 'getMe' | 'updateProfile' | 'uploadAvatar' | 'removeAvatar' | 'deleteAccount', jest.Mock>;
   driverApi: Record<
     'getCurrent' | 'getEarnings' | 'setOnlineStatus' | 'acceptOffer' | 'rejectOffer' | 'updateLocation',
     jest.Mock
@@ -890,6 +891,28 @@ describe('driver-mobile integrado à API', () => {
       const image = tree.root.find((n) => n.props.source?.uri === 'http://api.test/api/v1/users/u-bia/avatar?v=5');
       expect(image.props.source.headers).toEqual({ Authorization: 'Bearer token-salvo' });
       expect(visibleText(tree)).toContain('Beatriz Lima');
+    });
+
+    it('excluir a conta: encerra a sessão, volta ao login e o próximo login abre no painel', async () => {
+      m.authApi.deleteAccount.mockResolvedValueOnce(undefined);
+      await renderLoggedIn();
+      await pressAsync(tree, 'Meu perfil');
+
+      await pressAsync(tree, 'Excluir conta');
+      expect(visibleText(tree)).toContain('Peça o repasse do saldo antes');
+      await typeAsync(tree, 'Digite EXCLUIR para confirmar', 'EXCLUIR');
+      await pressAsync(tree, 'Excluir minha conta');
+      await settle();
+
+      expect(m.authApi.deleteAccount).toHaveBeenCalledWith('EXCLUIR');
+      expect(pushMock.disablePush).toHaveBeenCalledWith({ revoke: true });
+      expect(m.session.clear).toHaveBeenCalled();
+      expect(alertSpy).toHaveBeenCalledWith('Conta excluída', expect.stringContaining('dados pessoais foram apagados'));
+      expect(visibleText(tree)).toContain('Entrar como motorista');
+      // Sem nenhuma chamada à API depois da exclusão (o token já não vale)
+      const calls = m.driverApi.getCurrent.mock.calls.length;
+      await advanceAsync(6000);
+      expect(m.driverApi.getCurrent.mock.calls.length).toBe(calls);
     });
 
     it('erro da API aparece na tela do perfil', async () => {
