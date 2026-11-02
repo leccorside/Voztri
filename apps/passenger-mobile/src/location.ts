@@ -7,7 +7,11 @@ import { Permission, PermissionsAndroid, Platform } from 'react-native';
 Geolocation.setRNConfiguration({
   skipPermissionRequests: true,
   authorizationLevel: 'whenInUse',
-  locationProvider: 'auto',
+  // 'playServices' (FusedLocationProvider: Wi-Fi, antenas e GPS juntos). Com 'auto', a
+  // biblioteca (3.4.0) nunca troca de gerenciador e fica no LocationManager cru: num
+  // Xiaomi real, dentro de casa, o GPS e a rede não entregaram posição em 10 s cada.
+  // Sem Play Services no aparelho, a biblioteca continua no LocationManager.
+  locationProvider: 'playServices',
   enableBackgroundLocationUpdates: false,
 });
 
@@ -94,18 +98,30 @@ function currentPosition(enableHighAccuracy: boolean, timeout: number): Promise<
   });
 }
 
+/** Espera antes de repetir o pedido quando o Play Services responde "indisponível". */
+export const UNAVAILABLE_RETRY_MS = 1500;
+
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 /**
- * Posição atual. Tenta o GPS (alta precisão) e, se demorar demais (comum em
- * ambientes fechados), usa a localização de rede.
+ * Posição atual. Tenta o GPS (alta precisão); se o Play Services responder
+ * "indisponível" na hora (ele não espera o tempo limite), tenta de novo depois de
+ * 1,5 s; se demorar demais (comum em ambientes fechados), usa a localização de rede.
  */
 export async function getCurrentPosition(): Promise<DevicePosition> {
   try {
     return await currentPosition(true, 10_000);
   } catch (err) {
-    if (err instanceof LocationError && err.code === 'timeout') {
-      return currentPosition(false, 10_000);
+    if (!(err instanceof LocationError) || err.code === 'denied') throw err;
+    if (err.code === 'unavailable') {
+      await wait(UNAVAILABLE_RETRY_MS);
+      try {
+        return await currentPosition(true, 10_000);
+      } catch (retryErr) {
+        if (!(retryErr instanceof LocationError) || retryErr.code !== 'timeout') throw retryErr;
+      }
     }
-    throw err;
+    return currentPosition(false, 10_000);
   }
 }
 

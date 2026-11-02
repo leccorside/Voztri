@@ -1,0 +1,568 @@
+diff --git a/node_modules/@react-native-community/geolocation/android/.classpath b/node_modules/@react-native-community/geolocation/android/.classpath
+new file mode 100644
+index 0000000..0a3280e
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/.classpath
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<classpath>
++	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21/"/>
++	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
++	<classpathentry kind="output" path="bin/default"/>
++</classpath>
+diff --git a/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/checksums/checksums.lock b/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/checksums/checksums.lock
+new file mode 100644
+index 0000000..1dd42f2
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/checksums/checksums.lock differ
+diff --git a/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/checksums/md5-checksums.bin b/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/checksums/md5-checksums.bin
+new file mode 100644
+index 0000000..ee578a9
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/checksums/md5-checksums.bin differ
+diff --git a/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/checksums/sha1-checksums.bin b/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/checksums/sha1-checksums.bin
+new file mode 100644
+index 0000000..879b8e6
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/checksums/sha1-checksums.bin differ
+diff --git a/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/fileChanges/last-build.bin b/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/fileChanges/last-build.bin
+new file mode 100644
+index 0000000..f76dd23
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/fileChanges/last-build.bin differ
+diff --git a/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/fileHashes/fileHashes.bin b/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/fileHashes/fileHashes.bin
+new file mode 100644
+index 0000000..458c452
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/fileHashes/fileHashes.bin differ
+diff --git a/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/fileHashes/fileHashes.lock b/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/fileHashes/fileHashes.lock
+new file mode 100644
+index 0000000..8255568
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/fileHashes/fileHashes.lock differ
+diff --git a/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/gc.properties b/node_modules/@react-native-community/geolocation/android/.gradle/9.2.0/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/@react-native-community/geolocation/android/.gradle/9.7.1/checksums/checksums.lock b/node_modules/@react-native-community/geolocation/android/.gradle/9.7.1/checksums/checksums.lock
+new file mode 100644
+index 0000000..7e18515
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/.gradle/9.7.1/checksums/checksums.lock differ
+diff --git a/node_modules/@react-native-community/geolocation/android/.gradle/9.7.1/fileChanges/last-build.bin b/node_modules/@react-native-community/geolocation/android/.gradle/9.7.1/fileChanges/last-build.bin
+new file mode 100644
+index 0000000..f76dd23
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/.gradle/9.7.1/fileChanges/last-build.bin differ
+diff --git a/node_modules/@react-native-community/geolocation/android/.gradle/9.7.1/fileHashes/fileHashes.lock b/node_modules/@react-native-community/geolocation/android/.gradle/9.7.1/fileHashes/fileHashes.lock
+new file mode 100644
+index 0000000..e59df24
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/.gradle/9.7.1/fileHashes/fileHashes.lock differ
+diff --git a/node_modules/@react-native-community/geolocation/android/.gradle/9.7.1/gc.properties b/node_modules/@react-native-community/geolocation/android/.gradle/9.7.1/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/@react-native-community/geolocation/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock b/node_modules/@react-native-community/geolocation/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+index 5f096d9..71cc2fa 100644
+Binary files a/node_modules/@react-native-community/geolocation/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock and b/node_modules/@react-native-community/geolocation/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock differ
+diff --git a/node_modules/@react-native-community/geolocation/android/.gradle/buildOutputCleanup/cache.properties b/node_modules/@react-native-community/geolocation/android/.gradle/buildOutputCleanup/cache.properties
+index 793df35..79f4a6f 100644
+--- a/node_modules/@react-native-community/geolocation/android/.gradle/buildOutputCleanup/cache.properties
++++ b/node_modules/@react-native-community/geolocation/android/.gradle/buildOutputCleanup/cache.properties
+@@ -1,2 +1,2 @@
+-#Sat Aug 31 18:34:42 CEST 2024
+-gradle.version=8.9
++#Mon Nov 02 14:35:40 GMT-03:00 2026
++gradle.version=9.2.0
+diff --git a/node_modules/@react-native-community/geolocation/android/.project b/node_modules/@react-native-community/geolocation/android/.project
+new file mode 100644
+index 0000000..afd01ea
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/.project
+@@ -0,0 +1,34 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<projectDescription>
++	<name>react-native-community_geolocation</name>
++	<comment>Project react-native-community_geolocation created by Buildship.</comment>
++	<projects>
++	</projects>
++	<buildSpec>
++		<buildCommand>
++			<name>org.eclipse.jdt.core.javabuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++		<buildCommand>
++			<name>org.eclipse.buildship.core.gradleprojectbuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++	</buildSpec>
++	<natures>
++		<nature>org.eclipse.jdt.core.javanature</nature>
++		<nature>org.eclipse.buildship.core.gradleprojectnature</nature>
++	</natures>
++	<filteredResources>
++		<filter>
++			<id>1793636976479</id>
++			<name></name>
++			<type>30</type>
++			<matcher>
++				<id>org.eclipse.core.resources.regexFilterMatcher</id>
++				<arguments>node_modules|\.git|__CREATED_BY_JAVA_LANGUAGE_SERVER__</arguments>
++			</matcher>
++		</filter>
++	</filteredResources>
++</projectDescription>
+diff --git a/node_modules/@react-native-community/geolocation/android/.settings/org.eclipse.buildship.core.prefs b/node_modules/@react-native-community/geolocation/android/.settings/org.eclipse.buildship.core.prefs
+new file mode 100644
+index 0000000..376454a
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/.settings/org.eclipse.buildship.core.prefs
+@@ -0,0 +1,2 @@
++connection.project.dir=../../../../apps/passenger-mobile/android
++eclipse.preferences.version=1
+diff --git a/node_modules/@react-native-community/geolocation/android/.settings/org.eclipse.jdt.core.prefs b/node_modules/@react-native-community/geolocation/android/.settings/org.eclipse.jdt.core.prefs
+new file mode 100644
+index 0000000..e9186c3
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/.settings/org.eclipse.jdt.core.prefs
+@@ -0,0 +1,4 @@
++eclipse.preferences.version=1
++org.eclipse.jdt.core.compiler.codegen.targetPlatform=21
++org.eclipse.jdt.core.compiler.compliance=21
++org.eclipse.jdt.core.compiler.source=21
+diff --git a/node_modules/@react-native-community/geolocation/android/build/.transforms/612fd05dacaa0a9306e5d8c6fc3272bd/results.bin b/node_modules/@react-native-community/geolocation/android/build/.transforms/612fd05dacaa0a9306e5d8c6fc3272bd/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/.transforms/612fd05dacaa0a9306e5d8c6fc3272bd/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/@react-native-community/geolocation/android/build/.transforms/612fd05dacaa0a9306e5d8c6fc3272bd/transformed/classes/classes_dex/classes.dex b/node_modules/@react-native-community/geolocation/android/build/.transforms/612fd05dacaa0a9306e5d8c6fc3272bd/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..eb3d3ce
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/.transforms/612fd05dacaa0a9306e5d8c6fc3272bd/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/.transforms/7547a4d956fb68433d292c9d02755ae2/results.bin b/node_modules/@react-native-community/geolocation/android/build/.transforms/7547a4d956fb68433d292c9d02755ae2/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/.transforms/7547a4d956fb68433d292c9d02755ae2/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/@react-native-community/geolocation/android/build/.transforms/7547a4d956fb68433d292c9d02755ae2/transformed/classes/classes_dex/classes.dex b/node_modules/@react-native-community/geolocation/android/build/.transforms/7547a4d956fb68433d292c9d02755ae2/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..eb3d3ce
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/.transforms/7547a4d956fb68433d292c9d02755ae2/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/generated/source/buildConfig/debug/com/reactnativecommunity/geolocation/BuildConfig.java b/node_modules/@react-native-community/geolocation/android/build/generated/source/buildConfig/debug/com/reactnativecommunity/geolocation/BuildConfig.java
+new file mode 100644
+index 0000000..bc9c16a
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/generated/source/buildConfig/debug/com/reactnativecommunity/geolocation/BuildConfig.java
+@@ -0,0 +1,12 @@
++/**
++ * Automatically generated file. DO NOT MODIFY
++ */
++package com.reactnativecommunity.geolocation;
++
++public final class BuildConfig {
++  public static final boolean DEBUG = Boolean.parseBoolean("true");
++  public static final String LIBRARY_PACKAGE_NAME = "com.reactnativecommunity.geolocation";
++  public static final String BUILD_TYPE = "debug";
++  // Field from default config.
++  public static final boolean IS_NEW_ARCHITECTURE_ENABLED = false;
++}
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/AndroidManifest.xml b/node_modules/@react-native-community/geolocation/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/AndroidManifest.xml
+new file mode 100644
+index 0000000..835b669
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/AndroidManifest.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.reactnativecommunity.geolocation" >
++
++    <uses-sdk android:minSdkVersion="23" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/output-metadata.json b/node_modules/@react-native-community/geolocation/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/output-metadata.json
+new file mode 100644
+index 0000000..66f947d
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/output-metadata.json
+@@ -0,0 +1,18 @@
++{
++  "version": 3,
++  "artifactType": {
++    "type": "AAPT_FRIENDLY_MERGED_MANIFESTS",
++    "kind": "Directory"
++  },
++  "applicationId": "com.reactnativecommunity.geolocation",
++  "variantName": "debug",
++  "elements": [
++    {
++      "type": "SINGLE",
++      "filters": [],
++      "attributes": [],
++      "outputFile": "AndroidManifest.xml"
++    }
++  ],
++  "elementType": "File"
++}
+\ No newline at end of file
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/aar_main_jar/debug/classes.jar b/node_modules/@react-native-community/geolocation/android/build/intermediates/aar_main_jar/debug/classes.jar
+new file mode 100644
+index 0000000..2bdb651
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/aar_main_jar/debug/classes.jar differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/aar_metadata/debug/aar-metadata.properties b/node_modules/@react-native-community/geolocation/android/build/intermediates/aar_metadata/debug/aar-metadata.properties
+new file mode 100644
+index 0000000..1211b1e
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/intermediates/aar_metadata/debug/aar-metadata.properties
+@@ -0,0 +1,6 @@
++aarFormatVersion=1.0
++aarMetadataVersion=1.0
++minCompileSdk=1
++minCompileSdkExtension=0
++minAndroidGradlePluginVersion=1.0.0
++coreLibraryDesugaringEnabled=false
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/annotation_processor_list/debug/annotationProcessors.json b/node_modules/@react-native-community/geolocation/android/build/intermediates/annotation_processor_list/debug/annotationProcessors.json
+new file mode 100644
+index 0000000..9e26dfe
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/intermediates/annotation_processor_list/debug/annotationProcessors.json
+@@ -0,0 +1 @@
++{}
+\ No newline at end of file
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/annotations_typedef_file/debug/typedefs.txt b/node_modules/@react-native-community/geolocation/android/build/intermediates/annotations_typedef_file/debug/typedefs.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/compile_library_classes_jar/debug/classes.jar b/node_modules/@react-native-community/geolocation/android/build/intermediates/compile_library_classes_jar/debug/classes.jar
+new file mode 100644
+index 0000000..68562d2
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/compile_library_classes_jar/debug/classes.jar differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/compile_r_class_jar/debug/R.jar b/node_modules/@react-native-community/geolocation/android/build/intermediates/compile_r_class_jar/debug/R.jar
+new file mode 100644
+index 0000000..93870d4
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/compile_r_class_jar/debug/R.jar differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/compile_symbol_list/debug/R.txt b/node_modules/@react-native-community/geolocation/android/build/intermediates/compile_symbol_list/debug/R.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/debug-mergeJavaRes/merge-state b/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/debug-mergeJavaRes/merge-state
+new file mode 100644
+index 0000000..1c983fc
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/debug-mergeJavaRes/merge-state differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties b/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+new file mode 100644
+index 0000000..f5ee3bc
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+@@ -0,0 +1 @@
++#Mon Nov 02 15:30:08 BRT 2026
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml b/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+new file mode 100644
+index 0000000..21d8d5a
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\debug\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\debug\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\build\generated\res\resValues\debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\build\generated\res\resValues\debug"/></dataSet><mergedItems/></merger>
+\ No newline at end of file
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml b/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+new file mode 100644
+index 0000000..411b2b1
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\jniLibs"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\debug\jniLibs"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/mergeDebugShaders/merger.xml b/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+new file mode 100644
+index 0000000..48dda2c
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\shaders"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\debug\shaders"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/packageDebugAssets/merger.xml b/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/packageDebugAssets/merger.xml
+new file mode 100644
+index 0000000..0505e71
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/intermediates/incremental/packageDebugAssets/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\assets"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\debug\assets"/></dataSet><dataSet config="generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\build\intermediates\shader_assets\debug\out"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager$1.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager$1.class
+new file mode 100644
+index 0000000..d09fe86
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager$1.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager$SingleUpdateRequest$1.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager$SingleUpdateRequest$1.class
+new file mode 100644
+index 0000000..15c5f28
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager$SingleUpdateRequest$1.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager$SingleUpdateRequest$2.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager$SingleUpdateRequest$2.class
+new file mode 100644
+index 0000000..fd20c56
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager$SingleUpdateRequest$2.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager$SingleUpdateRequest.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager$SingleUpdateRequest.class
+new file mode 100644
+index 0000000..ed5b4e4
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager$SingleUpdateRequest.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager.class
+new file mode 100644
+index 0000000..34be5dd
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/AndroidLocationManager.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/BaseLocationManager$LocationOptions.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/BaseLocationManager$LocationOptions.class
+new file mode 100644
+index 0000000..d60005f
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/BaseLocationManager$LocationOptions.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/BaseLocationManager.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/BaseLocationManager.class
+new file mode 100644
+index 0000000..338371e
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/BaseLocationManager.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/BuildConfig.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/BuildConfig.class
+new file mode 100644
+index 0000000..eb1acac
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/BuildConfig.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/GeolocationModule$Configuration.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/GeolocationModule$Configuration.class
+new file mode 100644
+index 0000000..68469d9
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/GeolocationModule$Configuration.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/GeolocationModule.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/GeolocationModule.class
+new file mode 100644
+index 0000000..de09325
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/GeolocationModule.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/GeolocationPackage.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/GeolocationPackage.class
+new file mode 100644
+index 0000000..76c7904
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/GeolocationPackage.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PlayServicesLocationManager$1.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PlayServicesLocationManager$1.class
+new file mode 100644
+index 0000000..9bb1a2d
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PlayServicesLocationManager$1.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PlayServicesLocationManager$2.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PlayServicesLocationManager$2.class
+new file mode 100644
+index 0000000..29cf123
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PlayServicesLocationManager$2.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PlayServicesLocationManager$CallbackHolder.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PlayServicesLocationManager$CallbackHolder.class
+new file mode 100644
+index 0000000..4e39dd8
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PlayServicesLocationManager$CallbackHolder.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PlayServicesLocationManager.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PlayServicesLocationManager.class
+new file mode 100644
+index 0000000..82f3e2b
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PlayServicesLocationManager.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PositionError.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PositionError.class
+new file mode 100644
+index 0000000..a1b5b07
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/PositionError.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/RNCGeolocationModule.class b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/RNCGeolocationModule.class
+new file mode 100644
+index 0000000..c58ebc2
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/javac/debug/classes/com/reactnativecommunity/geolocation/RNCGeolocationModule.class differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/local_only_symbol_list/debug/R-def.txt b/node_modules/@react-native-community/geolocation/android/build/intermediates/local_only_symbol_list/debug/R-def.txt
+new file mode 100644
+index 0000000..78ac5b8
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/intermediates/local_only_symbol_list/debug/R-def.txt
+@@ -0,0 +1,2 @@
++R_DEF: Internal format may change without notice
++local
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/manifest_merge_blame_file/debug/manifest-merger-blame-debug-report.txt b/node_modules/@react-native-community/geolocation/android/build/intermediates/manifest_merge_blame_file/debug/manifest-merger-blame-debug-report.txt
+new file mode 100644
+index 0000000..728ea83
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/intermediates/manifest_merge_blame_file/debug/manifest-merger-blame-debug-report.txt
+@@ -0,0 +1,7 @@
++1<?xml version="1.0" encoding="utf-8"?>
++2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++3    package="com.reactnativecommunity.geolocation" >
++4
++5    <uses-sdk android:minSdkVersion="23" />
++6
++7</manifest>
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/merged_java_res/debug/feature-react-native-community_geolocation.jar b/node_modules/@react-native-community/geolocation/android/build/intermediates/merged_java_res/debug/feature-react-native-community_geolocation.jar
+new file mode 100644
+index 0000000..15cb0ec
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/merged_java_res/debug/feature-react-native-community_geolocation.jar differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/merged_manifest/debug/AndroidManifest.xml b/node_modules/@react-native-community/geolocation/android/build/intermediates/merged_manifest/debug/AndroidManifest.xml
+new file mode 100644
+index 0000000..835b669
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/intermediates/merged_manifest/debug/AndroidManifest.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.reactnativecommunity.geolocation" >
++
++    <uses-sdk android:minSdkVersion="23" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/navigation_json/debug/navigation.json b/node_modules/@react-native-community/geolocation/android/build/intermediates/navigation_json/debug/navigation.json
+new file mode 100644
+index 0000000..0637a08
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/intermediates/navigation_json/debug/navigation.json
+@@ -0,0 +1 @@
++[]
+\ No newline at end of file
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/runtime_library_classes_jar/debug/classes.jar b/node_modules/@react-native-community/geolocation/android/build/intermediates/runtime_library_classes_jar/debug/classes.jar
+new file mode 100644
+index 0000000..96a23d2
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/intermediates/runtime_library_classes_jar/debug/classes.jar differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/intermediates/symbol_list_with_package_name/debug/package-aware-r.txt b/node_modules/@react-native-community/geolocation/android/build/intermediates/symbol_list_with_package_name/debug/package-aware-r.txt
+new file mode 100644
+index 0000000..a265004
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/intermediates/symbol_list_with_package_name/debug/package-aware-r.txt
+@@ -0,0 +1 @@
++com.reactnativecommunity.geolocation
+diff --git a/node_modules/@react-native-community/geolocation/android/build/outputs/aar/react-native-community_geolocation-debug.aar b/node_modules/@react-native-community/geolocation/android/build/outputs/aar/react-native-community_geolocation-debug.aar
+new file mode 100644
+index 0000000..27d7c6b
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/outputs/aar/react-native-community_geolocation-debug.aar differ
+diff --git a/node_modules/@react-native-community/geolocation/android/build/outputs/logs/manifest-merger-debug-report.txt b/node_modules/@react-native-community/geolocation/android/build/outputs/logs/manifest-merger-debug-report.txt
+new file mode 100644
+index 0000000..0ba5ef8
+--- /dev/null
++++ b/node_modules/@react-native-community/geolocation/android/build/outputs/logs/manifest-merger-debug-report.txt
+@@ -0,0 +1,17 @@
++-- Merging decision tree log ---
++manifest
++ADDED from D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\AndroidManifest.xml:2:1-5:12
++INJECTED from D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\AndroidManifest.xml:2:1-5:12
++	package
++		ADDED from D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\AndroidManifest.xml:3:11-57
++		INJECTED from D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\AndroidManifest.xml
++	xmlns:android
++		ADDED from D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\AndroidManifest.xml:2:11-69
++uses-sdk
++INJECTED from D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\AndroidManifest.xml reason: use-sdk injection requested
++INJECTED from D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\AndroidManifest.xml
++INJECTED from D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\AndroidManifest.xml
++	android:targetSdkVersion
++		INJECTED from D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\AndroidManifest.xml
++	android:minSdkVersion
++		INJECTED from D:\PROJETOS\VOZTRI\node_modules\@react-native-community\geolocation\android\src\main\AndroidManifest.xml
+diff --git a/node_modules/@react-native-community/geolocation/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin b/node_modules/@react-native-community/geolocation/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin
+new file mode 100644
+index 0000000..8985e14
+Binary files /dev/null and b/node_modules/@react-native-community/geolocation/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin differ
+diff --git a/node_modules/@react-native-community/geolocation/android/src/main/java/com/reactnativecommunity/geolocation/PlayServicesLocationManager.java b/node_modules/@react-native-community/geolocation/android/src/main/java/com/reactnativecommunity/geolocation/PlayServicesLocationManager.java
+index 423f7a5..be0dd29 100644
+--- a/node_modules/@react-native-community/geolocation/android/src/main/java/com/reactnativecommunity/geolocation/PlayServicesLocationManager.java
++++ b/node_modules/@react-native-community/geolocation/android/src/main/java/com/reactnativecommunity/geolocation/PlayServicesLocationManager.java
+@@ -3,6 +3,7 @@ package com.reactnativecommunity.geolocation;
+ import android.annotation.SuppressLint;
+ import android.app.Activity;
+ import android.location.Location;
++import android.os.Handler;
+ import android.os.Looper;
+ import android.util.Log;
+ import android.content.Context;
+@@ -30,7 +31,6 @@ import com.google.android.gms.location.SettingsClient;
+ public class PlayServicesLocationManager extends BaseLocationManager {
+     private FusedLocationProviderClient mFusedLocationClient;
+     private LocationCallback mLocationCallback;
+-    private LocationCallback mSingleLocationCallback;
+     private SettingsClient mLocationServicesSettingsClient;
+ 
+     protected PlayServicesLocationManager(ReactApplicationContext reactContext) {
+@@ -46,9 +46,8 @@ public class PlayServicesLocationManager extends BaseLocationManager {
+         Activity currentActivity = mReactContext.getCurrentActivity();
+ 
+         if (currentActivity == null) {
+-            mSingleLocationCallback = createSingleLocationCallback(success, error);
+-            checkLocationSettings(options, mSingleLocationCallback, error);
+-			return;
++            requestSingleLocation(options, locationOptions, success, error);
++            return;
+         }
+ 
+         try {
+@@ -57,8 +56,7 @@ public class PlayServicesLocationManager extends BaseLocationManager {
+                         if (location != null && (SystemClock.currentTimeMillis() - location.getTime()) < locationOptions.maximumAge) {
+                             success.invoke(locationToMap(location));
+                         } else {
+-                            mSingleLocationCallback = createSingleLocationCallback(success, error);
+-                            checkLocationSettings(options, mSingleLocationCallback, error);
++                            requestSingleLocation(options, locationOptions, success, error);
+                         }
+                     });
+         } catch (SecurityException e) {
+@@ -152,32 +150,49 @@ public class PlayServicesLocationManager extends BaseLocationManager {
+         return locationManager != null && (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
+     }
+ 
+-    private LocationCallback createSingleLocationCallback(Callback success, Callback error) {
++    /**
++     * VOZTRI (patch): pedido único de posição pelo Play Services. O original (3.4.0)
++     * ignorava o timeout, respondia erro na primeira oscilação de
++     * onLocationAvailability(false) e não cancelava as atualizações depois do erro:
++     * quando a posição chegava, o sucesso era chamado depois do erro ("No callback
++     * found ... already invoked", tela vermelha em debug) e o GPS ficava ligado.
++     * Aqui cada pedido tem o próprio callback, responde uma vez só (sucesso ou erro),
++     * cancela as atualizações ao terminar e aplica o timeout; "indisponível" no meio
++     * do caminho não encerra o pedido (o timeout decide).
++     */
++    private void requestSingleLocation(ReadableMap options, LocationOptions locationOptions, Callback success, Callback error) {
+         final CallbackHolder callbackHolder = new CallbackHolder(success, error);
++        final Handler handler = new Handler(Looper.getMainLooper());
++        final LocationCallback[] request = new LocationCallback[1];
++
++        final Runnable onTimeout = () -> {
++            mFusedLocationClient.removeLocationUpdates(request[0]);
++            callbackHolder.error(PositionError.buildError(PositionError.TIMEOUT, "Location request timed out (FusedLocationProvider)."));
++        };
+ 
+-        return new LocationCallback() {
++        request[0] = new LocationCallback() {
+             @Override
+             public void onLocationResult(@NonNull LocationResult locationResult) {
+                 Location location = locationResult.getLastLocation();
+-
+                 if (location == null) {
+-                    callbackHolder.error(PositionError.buildError(PositionError.POSITION_UNAVAILABLE, "No location provided (FusedLocationProvider/lastLocation)."));
+-                    return;
++                    return; // espera a próxima posição ou o timeout
+                 }
+-
++                handler.removeCallbacks(onTimeout);
++                mFusedLocationClient.removeLocationUpdates(this);
+                 callbackHolder.success(location);
+-
+-                mFusedLocationClient.removeLocationUpdates(mSingleLocationCallback);
+-                mSingleLocationCallback = null;
+             }
++        };
+ 
+-            @Override
+-            public void onLocationAvailability(@NonNull LocationAvailability locationAvailability) {
+-                if (!locationAvailability.isLocationAvailable()) {
+-                    callbackHolder.error(PositionError.buildError(PositionError.POSITION_UNAVAILABLE, "Location not available (FusedLocationProvider/lastLocation)."));
+-                }
+-            }
++        // Falha nas configurações de localização (sem nenhum provedor): erro uma vez só
++        final Callback settingsError = args -> {
++            handler.removeCallbacks(onTimeout);
++            callbackHolder.error((WritableMap) args[0]);
+         };
++
++        if (locationOptions.timeout > 0) {
++            handler.postDelayed(onTimeout, locationOptions.timeout);
++        }
++        checkLocationSettings(options, request[0], settingsError);
+     }
+ 
+     private static class CallbackHolder {
+@@ -195,6 +210,7 @@ public class PlayServicesLocationManager extends BaseLocationManager {
+             }
+             this.error.invoke(cause);
+             this.error = null;
++            this.success = null; // VOZTRI (patch): uma só resposta por pedido
+         }
+ 
+         public void success(Location location) {
+@@ -204,6 +220,7 @@ public class PlayServicesLocationManager extends BaseLocationManager {
+             }
+             this.success.invoke(locationToMap(location));
+             this.success = null;
++            this.error = null; // VOZTRI (patch): uma só resposta por pedido
+         }
+     }
+ }

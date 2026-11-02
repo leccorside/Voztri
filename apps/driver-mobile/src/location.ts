@@ -7,7 +7,11 @@ import { Permission, PermissionsAndroid, Platform } from 'react-native';
 const BASE_CONFIG = {
   skipPermissionRequests: true,
   authorizationLevel: 'whenInUse' as const,
-  locationProvider: 'auto' as const,
+  // 'playServices' (FusedLocationProvider: Wi-Fi, antenas e GPS juntos). Com 'auto', a
+  // biblioteca (3.4.0) nunca troca de gerenciador e fica no LocationManager cru, que em
+  // aparelho real, dentro de casa, não entrega posição a tempo. Sem Play Services no
+  // aparelho, a biblioteca continua no LocationManager.
+  locationProvider: 'playServices' as const,
 };
 let backgroundUpdates = false;
 Geolocation.setRNConfiguration({ ...BASE_CONFIG, enableBackgroundLocationUpdates: false });
@@ -161,33 +165,61 @@ function currentPosition(enableHighAccuracy: boolean, timeout: number): Promise<
   });
 }
 
+/** Espera antes de repetir o pedido quando o Play Services responde "indisponível". */
+export const UNAVAILABLE_RETRY_MS = 1500;
+
 /**
- * Posição atual. Tenta o GPS (alta precisão) e, se demorar demais (comum em
- * ambientes fechados), usa a localização de rede.
+ * No acompanhamento, um "indisponível" logo depois de uma posição boa é oscilação do
+ * Play Services (onLocationAvailability), não perda do GPS: só avisa sem posição há isso.
+ */
+export const UNAVAILABLE_GRACE_MS = 30_000;
+
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Posição atual. Tenta o GPS (alta precisão); se o Play Services responder
+ * "indisponível" na hora (ele não espera o tempo limite), tenta de novo depois de
+ * 1,5 s; se demorar demais (comum em ambientes fechados), usa a localização de rede.
  */
 export async function getCurrentPosition(): Promise<DevicePosition> {
   try {
     return await currentPosition(true, 10_000);
   } catch (err) {
-    if (err instanceof LocationError && err.code === 'timeout') {
-      return currentPosition(false, 10_000);
+    if (!(err instanceof LocationError) || err.code === 'denied') throw err;
+    if (err.code === 'unavailable') {
+      await wait(UNAVAILABLE_RETRY_MS);
+      try {
+        return await currentPosition(true, 10_000);
+      } catch (retryErr) {
+        if (!(retryErr instanceof LocationError) || retryErr.code !== 'timeout') throw retryErr;
+      }
     }
-    throw err;
+    return currentPosition(false, 10_000);
   }
 }
 
 /**
  * Acompanha a posição enquanto o app está aberto. Devolve a função que para o
- * acompanhamento.
+ * acompanhamento. Um "indisponível" a menos de 30 s da última posição é ignorado
+ * (oscilação do Play Services; com o motorista parado, nenhuma posição nova viria
+ * apagar o aviso).
  */
 export function watchPosition(
   onPosition: (position: DevicePosition) => void,
   onError: (error: LocationError) => void,
   options: { distanceFilterMeters: number; intervalMs: number },
 ): () => void {
+  let lastPositionAt = 0;
   const id = Geolocation.watchPosition(
-    (raw) => onPosition(toPosition(raw)),
-    (err) => onError(toError(err)),
+    (raw) => {
+      lastPositionAt = Date.now();
+      onPosition(toPosition(raw));
+    },
+    (err) => {
+      const error = toError(err);
+      if (error.code === 'unavailable' && Date.now() - lastPositionAt < UNAVAILABLE_GRACE_MS) return;
+      onError(error);
+    },
     {
       enableHighAccuracy: true,
       distanceFilter: options.distanceFilterMeters,

@@ -396,6 +396,8 @@ VOZTRI_API_URL=https://api.exemplo.com.br/api/v1 ./gradlew assembleRelease
 echo 'export VOZTRI_API_URL=https://api.exemplo.com.br/api/v1' >> ios/.xcode.env.local
 ```
 
+Por USB, o Metro também precisa do `adb reverse` da porta dele (ex.: `adb reverse tcp:8082 tcp:8082`), porque o app no aparelho procura o Metro em `localhost`. Com o passageiro no aparelho e o motorista no emulador ao mesmo tempo, use um Metro por app em portas diferentes (ex.: 8082 e 8083, com o mesmo `-PreactNativeDevServerPort` no `installDebug`) e, com mais de um aparelho conectado, escolha o alvo com `ANDROID_SERIAL`. Em celulares Xiaomi (MIUI), a instalação por USB precisa ser confirmada no aparelho (sem isso: `INSTALL_FAILED_USER_RESTRICTED`). O despacho só procura motoristas a até 12 km do embarque: leve o GPS do emulador para perto do celular (`adb emu geo fix <longitude> <latitude>`).
+
 No PowerShell: `$env:VOZTRI_API_URL = 'http://192.168.0.10:8080/api/v1'` antes do comando. O valor precisa começar com `http://` ou `https://` (a barra final é removida); se for inválido, o app avisa no console e usa o padrão. Trocar o valor não exige `--reset-cache`: ele entra na chave do cache do Metro e nas entradas da tarefa de bundle do Gradle. Fora do debug, o Android bloqueia HTTP sem TLS: use HTTPS no release.
 
 #### Ativando as notificações push
