@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { AddressLocation, ChatMessage, FareEstimate, PaymentMethodType, Ride, RideStatus, User } from '@voztri/shared-types';
 import type { RecentDestination, SavedPlaceKind, SavedPlaces } from '@voztri/api-client';
+import type { ProfileFields, ProfileSaveResult } from '@voztri/mobile-core';
 import {
   activeRideMemory,
   passengerApi,
@@ -11,6 +12,7 @@ import {
   billingApi,
   errorBody,
   errorMessage,
+  fieldErrors,
   onUnauthorized,
   rideApi,
   session,
@@ -67,6 +69,8 @@ export interface PassengerState {
   recentDestinations: RecentDestination[];
   /** Troca do PIN de emergência aberta (a definição inicial depende só do user). */
   changingPin: boolean;
+  /** Tela "Meu perfil" aberta. */
+  profileOpen: boolean;
   /** Push do andamento da corrida (off: ainda não ativado nesta sessão). */
   pushStatus: PushStatus | 'off';
 
@@ -117,6 +121,10 @@ export interface PassengerState {
   saveEmergencyPin: (pin: string, currentPin?: string) => Promise<string | null>;
   /** Abre ou fecha a troca do PIN de emergência (menu da conta). */
   setChangingPin: (open: boolean) => void;
+  /** Salva nome e e-mail (só os alterados); erros por campo voltam para a tela. */
+  updateProfile: (changes: Partial<ProfileFields>) => Promise<ProfileSaveResult>;
+  /** Abre ou fecha "Meu perfil" (menu da conta). */
+  setProfileOpen: (open: boolean) => void;
   finishRideEvaluation: (evaluation: { rating: number; tipCents?: number; tags?: string[] }) => Promise<void>;
   dismissError: () => void;
 }
@@ -185,6 +193,7 @@ const signedOut = {
   selectedCategory: 'pop' as Category,
   selectedPaymentMethod: 'pix' as PaymentMethodType,
   changingPin: false,
+  profileOpen: false,
   pushStatus: 'off' as PushStatus | 'off',
   busy: false,
   error: null,
@@ -654,6 +663,22 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
     },
 
     setChangingPin: (open) => set({ changingPin: open }),
+
+    updateProfile: async (changes) => {
+      set({ busy: true, error: null });
+      try {
+        const updated = await authApi.updateProfile(changes);
+        // A resposta não traz tudo do /auth/me: mantém o que já se sabia (ex.: o PIN)
+        set({ user: { ...get().user, ...updated } as User });
+        return { ok: true };
+      } catch (err) {
+        return { ok: false, message: errorMessage(err), fields: fieldErrors(err) };
+      } finally {
+        set({ busy: false });
+      }
+    },
+
+    setProfileOpen: (open) => set({ profileOpen: open }),
 
     finishRideEvaluation: async ({ rating, tipCents, tags }) => {
       const ride = get().activeRide;

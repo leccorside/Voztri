@@ -41,7 +41,8 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         // Usuário & Perfil
         Route::get('/auth/me', [AuthController::class, 'me']);
-        Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+        // Limite também contra descobrir e-mails cadastrados pela resposta "já em uso"
+        Route::put('/auth/profile', [AuthController::class, 'updateProfile'])->middleware('throttle:10,1');
 
         // Endereço da coordenada do GPS (embarque do passageiro); limite por usuário
         Route::get('/geo/reverse', [GeoController::class, 'reverse'])->middleware('throttle:30,1');

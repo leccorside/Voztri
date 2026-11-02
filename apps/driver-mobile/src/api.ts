@@ -25,7 +25,7 @@ export const onUnauthorized = (handler: () => void): void => core.onUnauthorized
 export const errorMessage = (err: unknown): string => core.errorMessage(err);
 
 /** Código de erro da API ("INVALID_PIN", "OFFER_EXPIRED"...) e status HTTP, se houver. */
-export { apiErrorCode, httpStatus } from '@voztri/mobile-core';
+export { apiErrorCode, fieldErrors, httpStatus } from '@voztri/mobile-core';
 
 export const authApi = new AuthApi(core.client);
 export const driverApi = new DriverApi(core.client);

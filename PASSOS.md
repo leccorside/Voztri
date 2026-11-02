@@ -213,7 +213,8 @@ Este documento registra todas as fases do desenvolvimento da plataforma **VOZTRI
 - **Objetivo**: Dar ao usuário controle sobre a própria conta e sobre o PIN que desativa o SOS, e cumprir a exigência das lojas de excluir a conta pelo app.
 - **Tarefas**:
   - [x] PIN de emergência definido pelo passageiro (2026-11-02): passageiro novo nasce sem PIN e o app pede para criar no primeiro acesso; troca pelo menu da conta exigindo o PIN atual; guardado com hash e fora das respostas da API; PINs fáceis (0000, 1234, 4321) recusados; 5 erros bloqueiam por 15 min a troca e a desativação do SOS; a solicitação de corrida exige o PIN (`EMERGENCY_PIN_REQUIRED`).
-  - [ ] Tela de perfil nos dois apps (nome, e-mail, foto), usando o `PUT /api/v1/auth/profile`, que já existe e não é chamado.
+  - [x] Tela de perfil nos dois apps (2026-11-02): "Meu perfil" com nome, e-mail (opcional) e o telefone só para leitura, pelo `PUT /api/v1/auth/profile` (corrigido: só os campos enviados, e-mail apagável, mensagens em português por campo, resposta no formato do login). Passageiro: menu da conta no avatar; motorista: botão "Perfil" no painel. Tela comum no `@voztri/mobile-core` (`ProfileScreen`).
+  - [ ] Foto do perfil: exige escolher a foto no aparelho (câmera ou galeria, dependência nativa nova), um endpoint de envio e o armazenamento no MinIO (o `avatar_url` hoje só vem do seed).
   - [ ] Exclusão de conta pelo app nos dois apps (exigida pela Google Play e pela App Store para apps com cadastro), com confirmação; apagar ou anonimizar os dados pessoais (Casa/Trabalho e histórico de destinos já saem no evento `deleted` do `User`).
   - [ ] Contatos de confiança do passageiro (citados no README e no protótipo do SOS): cadastro e aviso a eles quando o SOS é acionado.
 - **Dependências**: Nenhuma.

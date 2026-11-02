@@ -14,6 +14,18 @@ import {
  * Formata centavos como moeda brasileira (ex.: 24850 -> "R$ 248,50").
  * Não depende de Intl, cujo suporte no Hermes varia entre Android e iOS.
  */
+/**
+ * Telefone brasileiro para exibição: "11999991111" → "(11) 99999-1111" (fixo com 10
+ * dígitos: "(11) 3333-4444"). Aceita o DDI 55 na frente; outro formato volta como veio.
+ */
+export function formatPhone(phone: string): string {
+  let digits = phone.replace(/\D/g, '');
+  if (digits.length > 11 && digits.startsWith('55')) digits = digits.slice(2);
+  if (digits.length === 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  if (digits.length === 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return phone;
+}
+
 export function formatBRL(cents: number): string {
   const negative = cents < 0;
   const abs = Math.abs(Math.round(cents));

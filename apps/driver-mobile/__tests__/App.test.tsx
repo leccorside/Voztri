@@ -27,7 +27,7 @@ import {
 jest.mock('../src/api', () => ({
   session: { load: jest.fn(), save: jest.fn(), clear: jest.fn() },
   onUnauthorized: jest.fn(),
-  authApi: { requestOtp: jest.fn(), verifyOtp: jest.fn(), getMe: jest.fn() },
+  authApi: { requestOtp: jest.fn(), verifyOtp: jest.fn(), getMe: jest.fn(), updateProfile: jest.fn() },
   driverApi: {
     getCurrent: jest.fn(),
     getEarnings: jest.fn(),
@@ -40,6 +40,7 @@ jest.mock('../src/api', () => ({
   billingApi: { requestPayout: jest.fn() },
   apiErrorCode: (err: { code?: string }) => err?.code ?? null,
   errorMessage: (err: { message?: string }) => err?.message ?? 'Erro',
+  fieldErrors: (err: { fields?: Record<string, string> }) => err?.fields ?? {},
   currentToken: () => 'token-salvo',
 }));
 
@@ -80,7 +81,7 @@ jest.mock('../src/location', () => {
 
 const m = api as unknown as {
   session: Record<'load' | 'save' | 'clear', jest.Mock>;
-  authApi: Record<'requestOtp' | 'verifyOtp' | 'getMe', jest.Mock>;
+  authApi: Record<'requestOtp' | 'verifyOtp' | 'getMe' | 'updateProfile', jest.Mock>;
   driverApi: Record<
     'getCurrent' | 'getEarnings' | 'setOnlineStatus' | 'acceptOffer' | 'rejectOffer' | 'updateLocation',
     jest.Mock
@@ -823,6 +824,47 @@ describe('driver-mobile integrado à API', () => {
     expect(m.driverApi.setOnlineStatus).toHaveBeenCalledWith(false);
     expect(m.session.clear).toHaveBeenCalled();
     expect(visibleText(tree)).toContain('Entrar como motorista');
+  });
+
+  describe('Meu perfil (PUT /auth/profile)', () => {
+    it('abre pelo painel, salva o e-mail e volta ao painel', async () => {
+      m.authApi.updateProfile.mockImplementation(async (changes: object) => ({ ...DRIVER, email: null, ...changes }));
+      await renderLoggedIn();
+
+      await pressAsync(tree, 'Meu perfil');
+      expectNoStrayText(tree);
+      expect(visibleText(tree)).toContain('(11) 99999-2222');
+
+      await typeAsync(tree, 'E-mail', 'Carlos@Exemplo.com');
+      await pressAsync(tree, 'Salvar perfil');
+      expect(m.authApi.updateProfile).toHaveBeenCalledWith({ email: 'carlos@exemplo.com' });
+      expect(visibleText(tree)).toContain('Perfil atualizado.');
+      expect(useDriverStore.getState().user?.email).toBe('carlos@exemplo.com');
+
+      await pressAsync(tree, 'Voltar');
+      expect(visibleText(tree)).toContain('Painel Operacional');
+    });
+
+    it('com o perfil aberto, a oferta de corrida continua aparecendo', async () => {
+      await renderLoggedIn();
+      await pressAsync(tree, 'Meu perfil');
+
+      server.offer = OFFER;
+      await advanceAsync(3000);
+      expect(visibleText(tree)).toContain('Meu perfil');
+      expect(visibleText(tree)).toContain('ACEITAR');
+    });
+
+    it('erro da API aparece na tela do perfil', async () => {
+      m.authApi.updateProfile.mockRejectedValueOnce({ message: 'Informe seu nome.', fields: { name: 'Informe seu nome.' } });
+      await renderLoggedIn();
+      await pressAsync(tree, 'Meu perfil');
+      await typeAsync(tree, 'Nome', 'Carlos E.');
+      await pressAsync(tree, 'Salvar perfil');
+
+      expect(visibleText(tree)).toContain('Informe seu nome.');
+      expect(useDriverStore.getState().user?.name).toBe('Carlos Eduardo Silva');
+    });
   });
 
   describe('push de novas ofertas', () => {

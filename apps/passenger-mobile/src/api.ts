@@ -36,7 +36,7 @@ export const onUnauthorized = (handler: () => void): void => core.onUnauthorized
 export const errorMessage = (err: unknown): string => core.errorMessage(err);
 
 /** Código de erro ("INVALID_EMERGENCY_PIN", "RIDE_ALREADY_ACTIVE"...) e corpo da resposta de erro. */
-export { apiErrorCode, errorBody } from '@voztri/mobile-core';
+export { apiErrorCode, errorBody, fieldErrors } from '@voztri/mobile-core';
 
 export const authApi = new AuthApi(core.client);
 export const rideApi = new RideApi(core.client);

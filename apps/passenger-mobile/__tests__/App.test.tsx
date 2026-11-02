@@ -23,7 +23,7 @@ jest.mock('../src/api', () => ({
   session: { load: jest.fn(), save: jest.fn(), clear: jest.fn() },
   activeRideMemory: { load: jest.fn(), save: jest.fn(), clear: jest.fn() },
   onUnauthorized: jest.fn(),
-  authApi: { requestOtp: jest.fn(), verifyOtp: jest.fn(), getMe: jest.fn() },
+  authApi: { requestOtp: jest.fn(), verifyOtp: jest.fn(), getMe: jest.fn(), updateProfile: jest.fn() },
   geoApi: { reverse: jest.fn(), search: jest.fn() },
   placesApi: { list: jest.fn(), save: jest.fn(), remove: jest.fn(), recent: jest.fn(), removeRecent: jest.fn(), clearRecent: jest.fn() },
   passengerApi: { setEmergencyPin: jest.fn() },
@@ -41,6 +41,7 @@ jest.mock('../src/api', () => ({
   apiErrorCode: (err: { code?: string }) => err?.code ?? null,
   errorBody: (err: { body?: unknown }) => err?.body ?? null,
   errorMessage: (err: { message?: string }) => err?.message ?? 'Erro',
+  fieldErrors: (err: { fields?: Record<string, string> }) => err?.fields ?? {},
 }));
 
 // Push simulado: o teste guarda o callback para "entregar" uma mensagem
@@ -74,7 +75,7 @@ type Mocks<K extends string> = Record<K, jest.Mock>;
 const m = api as unknown as {
   session: Mocks<'load' | 'save' | 'clear'>;
   activeRideMemory: Mocks<'load' | 'save' | 'clear'>;
-  authApi: Mocks<'requestOtp' | 'verifyOtp' | 'getMe'>;
+  authApi: Mocks<'requestOtp' | 'verifyOtp' | 'getMe' | 'updateProfile'>;
   rideApi: Mocks<
     'getEstimates' | 'requestRide' | 'getRide' | 'cancelRide' | 'getChatMessages' | 'sendChatMessage' | 'triggerSos' | 'cancelSos'
   >;
@@ -480,6 +481,65 @@ describe('passenger-mobile integrado à API', () => {
     expect(m.session.clear).toHaveBeenCalled();
     expect(visibleText(tree)).toContain('Entrar na VOZTRI');
     alertSpy.mockRestore();
+  });
+
+  describe('Meu perfil (PUT /auth/profile)', () => {
+    /** Abre "Meu perfil" pelo menu da conta no avatar. */
+    async function openProfile() {
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
+        buttons?.find((b) => b.text === 'Meu perfil')?.onPress?.();
+      });
+      await pressAsync(tree, /^Conta de Beatriz Lima/);
+      alertSpy.mockRestore();
+    }
+
+    it('abre pelo menu da conta, salva o nome e a tela inicial mostra as iniciais novas', async () => {
+      m.authApi.updateProfile.mockImplementation(async (changes: object) => ({ ...PASSENGER, email: null, ...changes }));
+      await renderLoggedIn(null, { ...PASSENGER, email: 'bia@exemplo.com' });
+      await openProfile();
+
+      expectNoStrayText(tree);
+      let text = visibleText(tree);
+      expect(text).toContain('Meu perfil');
+      expect(text).toContain('(11) 99999-1111');
+
+      await typeAsync(tree, 'Nome', 'Ana Souza');
+      await pressAsync(tree, 'Salvar perfil');
+      expect(m.authApi.updateProfile).toHaveBeenCalledWith({ name: 'Ana Souza' });
+      expect(visibleText(tree)).toContain('Perfil atualizado.');
+
+      await pressAsync(tree, 'Voltar');
+      text = visibleText(tree);
+      expect(text).toContain('Para onde vamos hoje?');
+      expect(text).toContain('AS');
+      // A resposta não traz o PIN: a conta continua com PIN (sem a tela de criação)
+      expect(usePassengerStore.getState().user).toMatchObject({ name: 'Ana Souza', hasEmergencyPin: true });
+    });
+
+    it('erro por campo da API aparece no campo e nada muda na conta', async () => {
+      m.authApi.updateProfile.mockRejectedValueOnce({
+        message: 'Este e-mail já está em uso por outra conta.',
+        fields: { email: 'Este e-mail já está em uso por outra conta.' },
+      });
+      await renderLoggedIn();
+      await openProfile();
+      await typeAsync(tree, 'E-mail', 'ocupado@exemplo.com');
+      await pressAsync(tree, 'Salvar perfil');
+
+      expect(visibleText(tree)).toContain('Este e-mail já está em uso por outra conta.');
+      expect(usePassengerStore.getState().user?.email).toBeUndefined();
+      expect(usePassengerStore.getState().error).toBeNull();
+    });
+
+    it('voltar sem salvar não chama a API', async () => {
+      await renderLoggedIn();
+      await openProfile();
+      await typeAsync(tree, 'Nome', 'Outro Nome');
+      await pressAsync(tree, 'Voltar');
+
+      expect(m.authApi.updateProfile).not.toHaveBeenCalled();
+      expect(usePassengerStore.getState().user?.name).toBe('Beatriz Lima');
+    });
   });
 
   describe('PIN de emergência definido pelo passageiro', () => {

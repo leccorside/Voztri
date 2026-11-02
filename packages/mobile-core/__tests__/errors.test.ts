@@ -2,7 +2,7 @@
  * Funções de erro da API: código, status, corpo e mensagem amigável.
  */
 import { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { apiErrorCode, errorBody, errorMessageFor, httpStatus } from '../src/errors';
+import { apiErrorCode, errorBody, errorMessageFor, fieldErrors, httpStatus } from '../src/errors';
 
 const API = 'http://api.test/api/v1';
 const config = { headers: {} } as InternalAxiosRequestConfig;
@@ -60,5 +60,22 @@ describe('apiErrorCode / httpStatus / errorBody', () => {
 
   it('resposta sem o campo error não tem código', () => {
     expect(apiErrorCode(fail(422, { message: 'Dados inválidos.' }))).toBeNull();
+  });
+});
+
+describe('fieldErrors', () => {
+  it('422 do Laravel: a primeira mensagem de cada campo', () => {
+    const err = fail(422, {
+      message: 'Informe seu nome. (and 1 more error)',
+      errors: { name: ['Informe seu nome.', 'outra'], email: ['Informe um e-mail válido.'] },
+    });
+    expect(fieldErrors(err)).toEqual({ name: 'Informe seu nome.', email: 'Informe um e-mail válido.' });
+  });
+
+  it('sem campos, outro status ou sem resposta: objeto vazio', () => {
+    expect(fieldErrors(fail(422, { message: 'x', error: 'WEAK_EMERGENCY_PIN' }))).toEqual({});
+    expect(fieldErrors(fail(409, { errors: { name: ['x'] } }))).toEqual({});
+    expect(fieldErrors(offline())).toEqual({});
+    expect(fieldErrors(new Error('x'))).toEqual({});
   });
 });

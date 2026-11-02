@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { POLL_INTERVAL_MS } from './config.js';
-import { Banner, usePolling } from '@voztri/mobile-core';
+import { Banner, ProfileScreen, usePolling } from '@voztri/mobile-core';
 import { useLocationTracking } from './hooks/useLocationTracking.js';
 import { useDriverStore } from './store/driverStore.js';
 import { LoginScreen } from './screens/LoginScreen.js';
@@ -28,8 +28,11 @@ export const App: React.FC = () => {
     validatePin,
     completeRide,
     dismissError,
+    user,
+    busy,
+    updateProfile,
   } = useDriverStore();
-  const [activeTab, setActiveTab] = useState<'home' | 'earnings' | 'payout'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'earnings' | 'payout' | 'profile'>('home');
   const [showPinModal, setShowPinModal] = useState(false);
 
   useEffect(() => {
@@ -78,8 +81,16 @@ export const App: React.FC = () => {
           <WeeklyEarningsScreen onBack={() => setActiveTab('home')} onOpenPayout={() => setActiveTab('payout')} />
         ) : activeTab === 'payout' ? (
           <PixPayoutScreen onBack={() => setActiveTab('earnings')} />
+        ) : activeTab === 'profile' && user ? (
+          // Ofertas continuam chegando com o perfil aberto (o modal fica por cima)
+          <ProfileScreen
+            user={{ name: user.name, email: user.email, phone: user.phone }}
+            save={updateProfile}
+            onBack={() => setActiveTab('home')}
+            busy={busy}
+          />
         ) : (
-          <DriverDashboardScreen onOpenEarnings={() => setActiveTab('earnings')} />
+          <DriverDashboardScreen onOpenEarnings={() => setActiveTab('earnings')} onOpenProfile={() => setActiveTab('profile')} />
         )}
       </View>
 

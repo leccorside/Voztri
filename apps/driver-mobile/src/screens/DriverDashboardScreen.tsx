@@ -6,9 +6,10 @@ import { Button, formatBRL, shadow } from '@voztri/mobile-core';
 
 interface Props {
   onOpenEarnings: () => void;
+  onOpenProfile: () => void;
 }
 
-export const DriverDashboardScreen: React.FC<Props> = ({ onOpenEarnings }) => {
+export const DriverDashboardScreen: React.FC<Props> = ({ onOpenEarnings, onOpenProfile }) => {
   const { isOnline, toggleOnline, earnings, busy, logout, locationStatus, lastPosition, backgroundMode } = useDriverStore();
 
   const backgroundText =
@@ -67,6 +68,7 @@ export const DriverDashboardScreen: React.FC<Props> = ({ onOpenEarnings }) => {
             <View style={styles.onlineDot} />
             <Text style={styles.onlineText}>{isOnline ? 'ONLINE' : 'OFFLINE'}</Text>
           </Pressable>
+          <Button label="Perfil" onPress={onOpenProfile} accessibilityLabel="Meu perfil" textStyle={styles.logout} />
           <Button label="Sair" onPress={() => void logout()} accessibilityLabel="Sair da conta" textStyle={styles.logout} />
         </View>
       </View>

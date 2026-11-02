@@ -1,6 +1,17 @@
 import { create } from 'zustand';
 import type { DriverEarningsSummary, DriverRideOffer, Ride, User } from '@voztri/shared-types';
-import { apiErrorCode, authApi, billingApi, driverApi, errorMessage, onUnauthorized, rideApi, session } from '../api.js';
+import type { ProfileFields, ProfileSaveResult } from '@voztri/mobile-core';
+import {
+  apiErrorCode,
+  authApi,
+  billingApi,
+  driverApi,
+  errorMessage,
+  fieldErrors,
+  onUnauthorized,
+  rideApi,
+  session,
+} from '../api.js';
 import { LOCATION_HEARTBEAT_MS, LOCATION_SEND_DISTANCE_M, LOCATION_SEND_INTERVAL_MS } from '../config.js';
 import {
   DevicePosition,
@@ -88,6 +99,8 @@ export interface DriverState {
   completeRide: () => Promise<boolean>;
   requestPayout: () => Promise<number | null>;
   dismissError: () => void;
+  /** Salva nome e e-mail (só os alterados); erros por campo voltam para a tela. */
+  updateProfile: (changes: Partial<ProfileFields>) => Promise<ProfileSaveResult>;
 
   /** Recebe uma posição do GPS e envia à API respeitando o intervalo mínimo. */
   reportPosition: (position: DevicePosition, force?: boolean) => Promise<void>;
@@ -448,5 +461,18 @@ export const useDriverStore = create<DriverState>((set, get) => {
     },
 
     dismissError: () => set({ error: null }),
+
+    updateProfile: async (changes) => {
+      set({ busy: true, error: null });
+      try {
+        const updated = await authApi.updateProfile(changes);
+        set({ user: { ...get().user, ...updated } as User });
+        return { ok: true };
+      } catch (err) {
+        return { ok: false, message: errorMessage(err), fields: fieldErrors(err) };
+      } finally {
+        set({ busy: false });
+      }
+    },
   };
 });

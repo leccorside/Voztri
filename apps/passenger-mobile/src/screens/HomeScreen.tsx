@@ -29,6 +29,7 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
     setDestination,
     openPlacePicker,
     setChangingPin,
+    setProfileOpen,
   } = usePassengerStore();
 
   const pickupText =
@@ -44,9 +45,10 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
       { text: 'Sair', style: 'destructive', onPress: () => void logout() },
     ]);
 
-  // Menu da conta: trocar o PIN de emergência ou sair (com confirmação)
+  // Menu da conta: perfil, trocar o PIN de emergência ou sair (com confirmação)
   const openAccountMenu = () =>
     Alert.alert(user?.name ?? 'Sua conta', undefined, [
+      { text: 'Meu perfil', onPress: () => setProfileOpen(true) },
       { text: 'Trocar PIN de emergência', onPress: () => setChangingPin(true) },
       { text: 'Sair da conta', style: 'destructive', onPress: confirmLogout },
       { text: 'Cancelar', style: 'cancel' },
@@ -71,7 +73,7 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
         <Pressable
           onPress={openAccountMenu}
           accessibilityRole="button"
-          accessibilityLabel={`Conta de ${user?.name ?? 'passageiro'}. Toque para trocar o PIN de emergência ou sair`}
+          accessibilityLabel={`Conta de ${user?.name ?? 'passageiro'}. Toque para ver o perfil, trocar o PIN de emergência ou sair`}
           style={({ pressed }) => [styles.avatar, pressed && styles.pressed]}
         >
           <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>{initials(user?.name)}</Text>

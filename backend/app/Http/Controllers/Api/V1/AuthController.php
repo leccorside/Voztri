@@ -190,16 +190,7 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'phone' => $user->phone,
-                'email' => $user->email,
-                'role' => $user->role,
-                'status' => $user->status,
-                'avatar_url' => $user->avatar_url,
-                ...$this->emergencyPinStatus($user),
-            ],
+            'user' => $this->userPayload($user),
         ]);
     }
 
@@ -212,6 +203,18 @@ class AuthController extends Controller
         $user->load(['profile', 'passenger', 'driver.activeVehicle']);
 
         return response()->json([
+            ...$this->userPayload($user),
+            'profile' => $user->profile,
+            // O PIN de emergência fica oculto no model (hash); só se informa se existe
+            'passenger' => $user->passenger,
+            'driver' => $user->driver,
+        ]);
+    }
+
+    /** Usuário no formato dos apps (o mesmo no login, no /auth/me e no PUT /auth/profile). */
+    private function userPayload(User $user): array
+    {
+        return [
             'id' => $user->id,
             'name' => $user->name,
             'phone' => $user->phone,
@@ -220,12 +223,8 @@ class AuthController extends Controller
             'avatar_url' => $user->avatar_url,
             'role' => $user->role,
             'status' => $user->status,
-            'profile' => $user->profile,
-            // O PIN de emergência fica oculto no model (hash); só se informa se existe
-            'passenger' => $user->passenger,
-            'driver' => $user->driver,
             ...$this->emergencyPinStatus($user),
-        ]);
+        ];
     }
 
     /** Passageiro: { has_emergency_pin }; outros papéis: nada. */
@@ -239,22 +238,48 @@ class AuthController extends Controller
     }
 
     /**
-     * Atualiza dados de perfil
+     * Atualiza o perfil (tela "Meu perfil" dos apps). Só muda os campos enviados:
+     * o nome não pode ficar vazio; o e-mail pode ser apagado (null ou ""). Telefone,
+     * papel e status não mudam por aqui. Responde no mesmo formato do login.
      */
     public function updateProfile(Request $request)
     {
         $user = $request->user();
-        $validated = $request->validate([
-            'name' => 'nullable|string|min:2|max:100',
-            'email' => 'nullable|email|unique:users,email,'.$user->id,
-            'cpf' => 'nullable|string|max:14|unique:users,cpf,'.$user->id,
-        ]);
 
-        $user->update(array_filter($validated));
+        // Espaços repetidos no nome viram um só; e-mail em minúsculas (o único é por e-mail)
+        $input = [];
+        if ($request->has('name')) {
+            $input['name'] = is_string($request->input('name'))
+                ? preg_replace('/\s+/u', ' ', trim($request->input('name')))
+                : $request->input('name');
+        }
+        if ($request->has('email')) {
+            $input['email'] = is_string($request->input('email')) ? mb_strtolower(trim($request->input('email'))) : $request->input('email');
+            $input['email'] = $input['email'] === '' ? null : $input['email'];
+        }
+        if ($request->has('cpf')) {
+            $input['cpf'] = $request->input('cpf');
+        }
+
+        $validated = validator($input, [
+            'name' => 'sometimes|required|string|min:2|max:100',
+            'email' => 'sometimes|nullable|string|email:rfc|max:255|unique:users,email,' . $user->id,
+            'cpf' => 'sometimes|nullable|string|max:14|unique:users,cpf,' . $user->id,
+        ], [
+            'name.required' => 'Informe seu nome.',
+            'name.min' => 'O nome precisa ter pelo menos 2 letras.',
+            'name.max' => 'O nome pode ter no máximo 100 caracteres.',
+            'email.email' => 'Informe um e-mail válido.',
+            'email.max' => 'O e-mail pode ter no máximo 255 caracteres.',
+            'email.unique' => 'Este e-mail já está em uso por outra conta.',
+            'cpf.unique' => 'Este CPF já está em uso por outra conta.',
+        ])->validate();
+
+        $user->fill($validated)->save();
 
         return response()->json([
             'message' => 'Perfil atualizado com sucesso.',
-            'user' => $user,
+            'user' => $this->userPayload($user->fresh(['passenger'])),
         ]);
     }
 }

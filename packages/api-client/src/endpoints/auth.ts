@@ -8,6 +8,12 @@ export interface OtpResponse {
   debugOtp: string | null;
 }
 
+/** Campos que o usuário edita na tela "Meu perfil". */
+export interface ProfileChanges {
+  name?: string;
+  email?: string | null;
+}
+
 export interface AuthResponse {
   token: string;
   user: User;
@@ -92,5 +98,14 @@ export class AuthApi {
   async getMe(): Promise<User> {
     const res = await this.client.get<RawUser>('/auth/me');
     return normalizeUser(res.data);
+  }
+
+  /**
+   * Atualiza o perfil (só os campos enviados). O e-mail pode ser apagado com null.
+   * Erros 422 trazem a mensagem em português por campo (`errors.name`, `errors.email`).
+   */
+  async updateProfile(changes: ProfileChanges): Promise<User> {
+    const res = await this.client.put<{ message: string; user: RawUser }>('/auth/profile', changes);
+    return normalizeUser(res.data.user);
   }
 }

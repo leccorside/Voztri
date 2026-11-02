@@ -20,6 +20,22 @@ export function errorBody<T>(err: unknown): T | null {
 }
 
 /**
+ * Erros de validação por campo (422 do Laravel: `errors: { campo: [mensagens] }`),
+ * com a primeira mensagem de cada campo. Objeto vazio se não for um 422 com campos.
+ */
+export function fieldErrors(err: unknown): Record<string, string> {
+  if (!isAxiosError(err) || err.response?.status !== 422) return {};
+  const errors = (err.response.data as { errors?: Record<string, unknown> } | undefined)?.errors;
+  if (!errors || typeof errors !== 'object') return {};
+  const out: Record<string, string> = {};
+  for (const [field, messages] of Object.entries(errors)) {
+    const first = Array.isArray(messages) ? messages[0] : messages;
+    if (typeof first === 'string' && first) out[field] = first;
+  }
+  return out;
+}
+
+/**
  * Mensagem amigável a partir do erro da API ou da rede. `apiUrl` entra na
  * mensagem de falta de conexão (ajuda a ver para onde o app está apontando).
  */

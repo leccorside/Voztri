@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { POLL_INTERVAL_MS } from './config.js';
-import { Banner, usePolling } from '@voztri/mobile-core';
+import { Banner, ProfileScreen, usePolling } from '@voztri/mobile-core';
 import { usePassengerStore } from './store/passengerStore.js';
 import { LoginScreen } from './screens/LoginScreen.js';
 import { HomeScreen } from './screens/HomeScreen.js';
@@ -19,6 +19,10 @@ export const App: React.FC = () => {
     sessionStatus,
     user,
     changingPin,
+    profileOpen,
+    setProfileOpen,
+    updateProfile,
+    busy,
     currentStep,
     activeRide,
     error,
@@ -63,6 +67,21 @@ export const App: React.FC = () => {
   // Sem PIN de emergência, o passageiro define o dele antes de seguir (é ele que desativa
   // o SOS). Uma corrida já em andamento (conta de antes da mudança) não é interrompida.
   const pinMode = changingPin ? 'change' : user?.hasEmergencyPin === false && !activeRide ? 'create' : null;
+  if (profileOpen && user && !pinMode) {
+    return (
+      <SafeAreaView style={[styles.root, { backgroundColor: '#FFFFFF' }]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        {connectionError && <Banner tone="warning" message={connectionError} />}
+        <ProfileScreen
+          user={{ name: user.name, email: user.email, phone: user.phone }}
+          save={updateProfile}
+          onBack={() => setProfileOpen(false)}
+          busy={busy}
+        />
+      </SafeAreaView>
+    );
+  }
+
   if (pinMode) {
     return (
       <SafeAreaView style={[styles.root, { backgroundColor: '#FFFFFF' }]}>
