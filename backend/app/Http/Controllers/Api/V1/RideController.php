@@ -13,6 +13,7 @@ use App\Jobs\SendRideStatusPush;
 use App\Models\Driver;
 use App\Models\FinancialLedger;
 use App\Models\Passenger;
+use App\Models\RecentDestination;
 use App\Models\Ride;
 use App\Models\RideChatMessage;
 use App\Models\RideOffer;
@@ -73,6 +74,10 @@ class RideController extends Controller
             'destination.address' => 'required|string|max:255',
             'destination.latitude' => 'required|numeric|between:-90,90',
             'destination.longitude' => 'required|numeric|between:-180,180',
+            // Título e cidade do destino (para o histórico); o app sempre envia
+            'destination.shortAddress' => 'nullable|string|max:120',
+            'destination.city' => 'nullable|string|max:100',
+            'destination.state' => 'nullable|string|max:50',
             'category' => 'required|string|in:pop,black,mulher,moto',
             'paymentMethod' => 'required|string|in:pix,credit_card,cash,wallet',
         ]);
@@ -128,6 +133,13 @@ class RideController extends Controller
 
             return $ride;
         });
+
+        // Histórico dos últimos destinos: não pode impedir a corrida, que já foi criada
+        try {
+            RecentDestination::record($user, $d);
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return response()->json($this->presenter->present($ride->fresh(), $user), 201);
     }

@@ -58,12 +58,19 @@ class User extends Authenticatable
         return $this->hasMany(SavedPlace::class);
     }
 
+    public function recentDestinations()
+    {
+        return $this->hasMany(RecentDestination::class);
+    }
+
     protected static function booted(): void
     {
-        // A exclusão é lógica (SoftDeletes), então o cascade do banco não age: Casa e
-        // Trabalho são dados sensíveis e não ficam guardados para uma conta excluída
+        // A exclusão é lógica (SoftDeletes), então o cascade do banco não age: Casa,
+        // Trabalho e os últimos destinos são dados sensíveis e não ficam guardados
+        // para uma conta excluída
         static::deleted(function (User $user) {
             $user->savedPlaces()->delete();
+            $user->recentDestinations()->delete();
         });
     }
 }

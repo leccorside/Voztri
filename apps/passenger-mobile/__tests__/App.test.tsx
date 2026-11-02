@@ -25,7 +25,7 @@ jest.mock('../src/api', () => ({
   onUnauthorized: jest.fn(),
   authApi: { requestOtp: jest.fn(), verifyOtp: jest.fn(), getMe: jest.fn() },
   geoApi: { reverse: jest.fn(), search: jest.fn() },
-  placesApi: { list: jest.fn(), save: jest.fn(), remove: jest.fn() },
+  placesApi: { list: jest.fn(), save: jest.fn(), remove: jest.fn(), recent: jest.fn(), removeRecent: jest.fn() },
   rideApi: {
     getEstimates: jest.fn(),
     requestRide: jest.fn(),
@@ -79,7 +79,7 @@ const m = api as unknown as {
   >;
   billingApi: Mocks<'submitRating'>;
   geoApi: Mocks<'reverse' | 'search'>;
-  placesApi: Mocks<'list' | 'save' | 'remove'>;
+  placesApi: Mocks<'list' | 'save' | 'remove' | 'recent' | 'removeRecent'>;
 };
 const loc = location as unknown as Mocks<'requestLocationPermission' | 'getCurrentPosition'>;
 const pushMock = push as unknown as Mocks<'enablePush' | 'disablePush'>;
@@ -206,6 +206,9 @@ beforeEach(() => {
   m.placesApi.list.mockResolvedValue({ home: null, work: null });
   m.placesApi.save.mockImplementation(async (kind: string, place: unknown) => ({ home: null, work: null, [kind]: place }));
   m.placesApi.remove.mockResolvedValue(undefined);
+  // Sem histórico de destinos por padrão
+  m.placesApi.recent.mockResolvedValue([]);
+  m.placesApi.removeRecent.mockResolvedValue(undefined);
   // Praça da Sé: diferente da origem padrão, para provar que a estimativa usa o GPS
   loc.requestLocationPermission.mockResolvedValue('granted');
   loc.getCurrentPosition.mockResolvedValue(gpsAt(-23.55052, -46.633308));
@@ -583,6 +586,120 @@ describe('passenger-mobile integrado à API', () => {
       m.placesApi.list.mockRejectedValue({ message: 'Sem conexão com a API.' });
       await renderLoggedIn();
       expect(visibleText(tree)).toContain('Adicionar');
+      expect(usePassengerStore.getState().error).toBeNull();
+    });
+  });
+
+  describe('histórico dos últimos destinos', () => {
+    const AUGUSTA = {
+      address: 'Rua Augusta, 1500 - Consolação, São Paulo - SP',
+      shortAddress: 'Rua Augusta, 1500',
+      latitude: -23.5565,
+      longitude: -46.6586,
+    };
+    const RECENT = [
+      { id: 'r1', ...FARIA_LIMA },
+      { id: 'r2', ...AUGUSTA },
+    ];
+    const HINT = 'Digite pelo menos 3 letras do endereço ou do nome do lugar.';
+
+    it('antes de digitar mostra os últimos destinos; tocar leva às estimativas', async () => {
+      m.placesApi.recent.mockResolvedValue(RECENT);
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+
+      expect(m.placesApi.recent).toHaveBeenCalledTimes(1);
+      expectNoStrayText(tree);
+      const text = visibleText(tree);
+      expect(text).toContain('Recentes');
+      expect(text).toContain('Av. Faria Lima, 3477');
+      expect(text).toContain('Rua Augusta, 1500 - Consolação, São Paulo - SP');
+      expect(text).not.toContain(HINT);
+
+      await pressAsync(tree, /^Rua Augusta, 1500, .*, destino recente$/);
+      // O destino vai sem o id do histórico
+      expect(m.rideApi.getEstimates).toHaveBeenCalledWith(expect.objectContaining({ latitude: -23.55052 }), AUGUSTA);
+      expect(visibleText(tree)).toContain('R$ 18,69');
+      expect(m.geoApi.search).not.toHaveBeenCalled();
+    });
+
+    it('ao digitar, o histórico dá lugar aos resultados e volta ao apagar o texto', async () => {
+      m.placesApi.recent.mockResolvedValue(RECENT);
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+
+      await typeAsync(tree, 'Destino', 'Faria Lima');
+      await advanceAsync(400);
+      let text = visibleText(tree);
+      expect(text).toContain('Resultados');
+      expect(text).not.toContain('Recentes');
+      expect(text).not.toContain('Rua Augusta, 1500');
+
+      await typeAsync(tree, 'Destino', '');
+      text = visibleText(tree);
+      expect(text).toContain('Recentes');
+      expect(text).toContain('Rua Augusta, 1500');
+    });
+
+    it('remover tira o destino do histórico da conta', async () => {
+      m.placesApi.recent.mockResolvedValue(RECENT);
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+
+      await pressAsync(tree, 'Remover Av. Faria Lima, 3477 do histórico');
+      expect(m.placesApi.removeRecent).toHaveBeenCalledWith('r1');
+      expectNoStrayText(tree);
+      const text = visibleText(tree);
+      expect(text).not.toContain('Av. Faria Lima, 3477');
+      expect(text).toContain('Rua Augusta, 1500');
+
+      // Sem nenhum destino, volta a dica para digitar
+      await pressAsync(tree, 'Remover Rua Augusta, 1500 do histórico');
+      expect(visibleText(tree)).toContain(HINT);
+      expect(visibleText(tree)).not.toContain('Recentes');
+    });
+
+    it('falha ao remover mostra o erro e mantém o destino', async () => {
+      m.placesApi.recent.mockResolvedValue(RECENT);
+      m.placesApi.removeRecent.mockRejectedValueOnce({ message: 'Sem conexão com a API.' });
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+
+      await pressAsync(tree, 'Remover Av. Faria Lima, 3477 do histórico');
+      expect(usePassengerStore.getState().error).toBe('Sem conexão com a API.');
+      expect(visibleText(tree)).toContain('Av. Faria Lima, 3477');
+    });
+
+    it('o histórico é lido de novo a cada abertura da busca', async () => {
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+      expect(visibleText(tree)).toContain(HINT);
+      await pressAsync(tree, 'Voltar');
+
+      // Uma corrida depois (a API gravou o destino)
+      m.placesApi.recent.mockResolvedValue([{ id: 'r1', ...FARIA_LIMA }]);
+      await pressAsync(tree, 'Buscar endereço de destino');
+      expect(m.placesApi.recent).toHaveBeenCalledTimes(2);
+      expect(visibleText(tree)).toContain('Av. Faria Lima, 3477');
+    });
+
+    it('na escolha da Casa, tocar num destino recente salva como Casa', async () => {
+      m.placesApi.recent.mockResolvedValue(RECENT);
+      await renderLoggedIn();
+      await pressAsync(tree, 'Casa, adicionar endereço');
+      expect(visibleText(tree)).toContain('Recentes');
+
+      await pressAsync(tree, /^Av\. Faria Lima, 3477, .*, destino recente$/);
+      expect(m.placesApi.save).toHaveBeenCalledWith('home', FARIA_LIMA);
+      expect(m.rideApi.getEstimates).not.toHaveBeenCalled();
+      expect(visibleText(tree)).toContain('Para onde vamos hoje?');
+    });
+
+    it('sem conseguir carregar o histórico, mostra a dica sem aviso', async () => {
+      m.placesApi.recent.mockRejectedValue({ message: 'Sem conexão com a API.' });
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+      expect(visibleText(tree)).toContain(HINT);
       expect(usePassengerStore.getState().error).toBeNull();
     });
   });

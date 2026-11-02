@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\GeoController;
 use App\Http\Controllers\Api\V1\SavedPlaceController;
+use App\Http\Controllers\Api\V1\RecentDestinationController;
 
 Route::prefix('v1')->group(function () {
     // Health Check
@@ -46,8 +47,10 @@ Route::prefix('v1')->group(function () {
         // Busca de destino pelo texto (o app espera a digitação parar antes de chamar)
         Route::get('/geo/search', [GeoController::class, 'search'])->middleware('throttle:60,1');
 
-        // Endereços salvos do passageiro (Casa e Trabalho)
+        // Endereços salvos do passageiro (Casa e Trabalho) e histórico dos últimos destinos
         Route::prefix('places')->middleware('role:passenger')->group(function () {
+            Route::get('/recent', [RecentDestinationController::class, 'index']);
+            Route::delete('/recent/{id}', [RecentDestinationController::class, 'destroy'])->whereUuid('id');
             Route::get('/', [SavedPlaceController::class, 'index']);
             Route::put('/{kind}', [SavedPlaceController::class, 'update'])->whereIn('kind', ['home', 'work']);
             Route::delete('/{kind}', [SavedPlaceController::class, 'destroy'])->whereIn('kind', ['home', 'work']);

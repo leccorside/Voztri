@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { AddressLocation, ChatMessage, FareEstimate, PaymentMethodType, Ride, RideStatus, User } from '@voztri/shared-types';
-import type { SavedPlaceKind, SavedPlaces } from '@voztri/api-client';
+import type { RecentDestination, SavedPlaceKind, SavedPlaces } from '@voztri/api-client';
 import {
   activeRideMemory,
   placesApi,
@@ -62,6 +62,8 @@ export interface PassengerState {
   savedPlaces: SavedPlaces | null;
   /** Com um tipo, a tela de busca escolhe o endereço desse tipo em vez do destino. */
   placePicker: SavedPlaceKind | null;
+  /** Últimos destinos da conta, mostrados na busca antes de digitar. */
+  recentDestinations: RecentDestination[];
   /** Push do andamento da corrida (off: ainda não ativado nesta sessão). */
   pushStatus: PushStatus | 'off';
 
@@ -83,6 +85,9 @@ export interface PassengerState {
   /** Salva o endereço do tipo e volta ao início. */
   savePlace: (kind: SavedPlaceKind, place: AddressLocation) => Promise<boolean>;
   removePlace: (kind: SavedPlaceKind) => Promise<boolean>;
+  /** Busca o histórico na API (a cada abertura da busca: a última corrida entra nele). */
+  loadRecentDestinations: () => Promise<void>;
+  removeRecentDestination: (id: string) => Promise<boolean>;
   setDestination: (destination: AddressLocation) => Promise<void>;
   loadEstimates: () => Promise<void>;
   selectCategory: (category: Category) => void;
@@ -163,6 +168,7 @@ const signedOut = {
   originWarning: null,
   savedPlaces: null as SavedPlaces | null,
   placePicker: null as SavedPlaceKind | null,
+  recentDestinations: [] as RecentDestination[],
   selectedCategory: 'pop' as Category,
   selectedPaymentMethod: 'pix' as PaymentMethodType,
   pushStatus: 'off' as PushStatus | 'off',
@@ -422,6 +428,25 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
         placePicker: null,
         currentStep: 'HOME',
       });
+      return true;
+    },
+
+    loadRecentDestinations: async () => {
+      try {
+        const recentDestinations = await placesApi.recent();
+        if (get().sessionStatus === 'authenticated') set({ recentDestinations });
+      } catch {
+        // Sem o histórico, a busca só pede para digitar; nada a avisar
+      }
+    },
+
+    removeRecentDestination: async (id) => {
+      const done = await run(async () => {
+        await placesApi.removeRecent(id);
+        return true;
+      });
+      if (!done) return false;
+      set({ recentDestinations: get().recentDestinations.filter((r) => r.id !== id) });
       return true;
     },
 

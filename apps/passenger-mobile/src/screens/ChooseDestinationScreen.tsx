@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import type { AddressLocation } from '@voztri/shared-types';
 import { VoztriColors } from '@voztri/design-tokens';
 import { usePassengerStore } from '../store/passengerStore.js';
 import { Button } from '@voztri/mobile-core';
@@ -11,7 +12,24 @@ interface Props {
 }
 
 export const ChooseDestinationScreen: React.FC<Props> = ({ onBack }) => {
-  const { origin, setDestination, placePicker, savedPlaces, savePlace, removePlace, busy } = usePassengerStore();
+  const {
+    origin,
+    setDestination,
+    placePicker,
+    savedPlaces,
+    savePlace,
+    removePlace,
+    busy,
+    recentDestinations,
+    loadRecentDestinations,
+    removeRecentDestination,
+  } = usePassengerStore();
+  // O histórico muda a cada corrida solicitada: atualiza ao abrir a busca
+  useEffect(() => {
+    void loadRecentDestinations();
+  }, [loadRecentDestinations]);
+  // Destino da corrida ou, na escolha de Casa/Trabalho, o endereço a salvar
+  const choose = (dest: AddressLocation) => (placePicker ? void savePlace(placePicker, dest) : void setDestination(dest));
   // Escolhendo o endereço de Casa ou do Trabalho (em vez do destino da corrida)
   const picking = placePicker ? PLACE_LABELS[placePicker] : null;
   const current = placePicker ? savedPlaces?.[placePicker] ?? null : null;
@@ -71,9 +89,25 @@ export const ChooseDestinationScreen: React.FC<Props> = ({ onBack }) => {
           />
         )}
 
-        {status === 'idle' && (
+        {/* Antes de digitar: os últimos destinos da conta (ou a dica, sem histórico) */}
+        {status === 'idle' && recentDestinations.length === 0 && (
           <Text style={styles.empty}>Digite pelo menos {MIN_SEARCH_LENGTH} letras do endereço ou do nome do lugar.</Text>
         )}
+
+        {status === 'idle' && recentDestinations.length > 0 && <Text style={styles.sectionTitle}>Recentes</Text>}
+
+        {status === 'idle' &&
+          recentDestinations.map(({ id, ...dest }) => (
+            <DestinationRow
+              key={id}
+              dest={dest}
+              icon="🕘"
+              labelSuffix=", destino recente"
+              onPress={() => choose(dest)}
+              onRemove={() => void removeRecentDestination(id)}
+              removeDisabled={busy}
+            />
+          ))}
 
         {status === 'loading' && (
           <View style={styles.loading} accessibilityLiveRegion="polite">
@@ -104,26 +138,51 @@ export const ChooseDestinationScreen: React.FC<Props> = ({ onBack }) => {
 
         {status === 'done' &&
           results.map((dest, i) => (
-            <Pressable
-              key={`${dest.latitude},${dest.longitude},${i}`}
-              onPress={() => (placePicker ? void savePlace(placePicker, dest) : void setDestination(dest))}
-              accessibilityRole="button"
-              accessibilityLabel={`${dest.shortAddress}, ${dest.address}`}
-              style={({ pressed }) => [styles.suggestion, pressed && { opacity: 0.6 }]}
-            >
-              <View style={styles.pinCircle}>
-                <Text style={styles.pin}>📍</Text>
-              </View>
-              <View style={styles.flex}>
-                <Text style={styles.suggestionTitle}>{dest.shortAddress}</Text>
-                <Text style={styles.suggestionAddress}>{dest.address}</Text>
-              </View>
-            </Pressable>
+            <DestinationRow key={`${dest.latitude},${dest.longitude},${i}`} dest={dest} icon="📍" onPress={() => choose(dest)} />
           ))}
       </ScrollView>
     </View>
   );
 };
+
+/** Um endereço da lista (resultado da busca ou destino recente). */
+const DestinationRow: React.FC<{
+  dest: AddressLocation;
+  icon: string;
+  labelSuffix?: string;
+  onPress: () => void;
+  onRemove?: () => void;
+  removeDisabled?: boolean;
+}> = ({ dest, icon, labelSuffix = '', onPress, onRemove, removeDisabled }) => (
+  <View style={styles.suggestion}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${dest.shortAddress}, ${dest.address}${labelSuffix}`}
+      style={({ pressed }) => [styles.suggestionMain, pressed && { opacity: 0.6 }]}
+    >
+      <View style={styles.pinCircle}>
+        <Text style={styles.pin}>{icon}</Text>
+      </View>
+      <View style={styles.flex}>
+        <Text style={styles.suggestionTitle}>{dest.shortAddress}</Text>
+        <Text style={styles.suggestionAddress}>{dest.address}</Text>
+      </View>
+    </Pressable>
+    {onRemove && (
+      <Pressable
+        onPress={onRemove}
+        disabled={removeDisabled}
+        accessibilityRole="button"
+        accessibilityLabel={`Remover ${dest.shortAddress} do histórico`}
+        hitSlop={8}
+        style={({ pressed }) => [styles.removeRecent, pressed && { opacity: 0.6 }]}
+      >
+        <Text style={styles.removeRecentText}>✕</Text>
+      </Pressable>
+    )}
+  </View>
+);
 
 const styles = StyleSheet.create({
   screen: {
@@ -237,10 +296,24 @@ const styles = StyleSheet.create({
   suggestion: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#F4F6FA',
+  },
+  suggestionMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingVertical: 14,
+  },
+  removeRecent: {
+    paddingVertical: 14,
+    paddingLeft: 12,
+    paddingRight: 4,
+  },
+  removeRecentText: {
+    fontSize: 14,
+    color: '#7B7489',
   },
   pinCircle: {
     width: 36,

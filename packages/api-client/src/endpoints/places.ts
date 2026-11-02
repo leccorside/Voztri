@@ -6,6 +6,9 @@ export type SavedPlaceKind = 'home' | 'work';
 
 export type SavedPlaces = Record<SavedPlaceKind, AddressLocation | null>;
 
+/** Destino de uma corrida anterior (gravado pela API ao solicitar a corrida). */
+export type RecentDestination = AddressLocation & { id: string };
+
 /** Casa e Trabalho do passageiro, guardados na conta. */
 export class PlacesApi {
   constructor(private client: VoztriApiClient) {}
@@ -30,5 +33,16 @@ export class PlacesApi {
 
   async remove(kind: SavedPlaceKind): Promise<void> {
     await this.client.delete(`/places/${kind}`);
+  }
+
+  /** Últimos destinos, do mais recente para o mais antigo. */
+  async recent(): Promise<RecentDestination[]> {
+    const res = await this.client.get<{ recent: RecentDestination[] }>('/places/recent');
+    return res.data.recent;
+  }
+
+  /** Tira um destino do histórico. */
+  async removeRecent(id: string): Promise<void> {
+    await this.client.delete(`/places/recent/${id}`);
   }
 }
