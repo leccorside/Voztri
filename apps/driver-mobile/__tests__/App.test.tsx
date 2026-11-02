@@ -8,7 +8,7 @@ import * as api from '../src/api';
 import * as location from '../src/location';
 import { backgroundTracking } from '../src/backgroundTracking';
 import * as push from '../src/push';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import type { DevicePosition } from '../src/location';
 import {
   advanceAsync,
@@ -567,7 +567,7 @@ describe('driver-mobile integrado à API', () => {
   });
 
   describe('segundo plano', () => {
-    it('Android: inicia o serviço nativo, que passa a ser o único a enviar', async () => {
+    it('inicia o rastreamento nativo (Android e iOS), que passa a ser o único a enviar', async () => {
       bg.supported = true;
       await renderLoggedIn();
 
@@ -580,6 +580,7 @@ describe('driver-mobile integrado à API', () => {
         distanceFilterM: 25,
       });
       expect(loc.setBackgroundUpdates).not.toHaveBeenCalledWith(true);
+      expect(useDriverStore.getState().backgroundMode).toBe('native');
 
       // O GPS do JS só atualiza a tela; quem envia é o serviço
       m.driverApi.updateLocation.mockClear();
@@ -590,14 +591,20 @@ describe('driver-mobile integrado à API', () => {
     });
 
     it('Android: se o serviço não iniciar, o app envia pelo JS e avisa', async () => {
-      bg.supported = true;
-      bg.start.mockResolvedValue(false);
-      await renderLoggedIn();
-      m.driverApi.updateLocation.mockClear();
+      const os = jest.replaceProperty(Platform, 'OS', 'android');
+      try {
+        bg.supported = true;
+        bg.start.mockResolvedValue(false);
+        await renderLoggedIn();
+        expect(loc.setBackgroundUpdates).not.toHaveBeenCalledWith(true);
+        m.driverApi.updateLocation.mockClear();
 
-      await act(async () => gps!.emit(position(-23.5615, -46.6559)));
-      expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(1);
-      expect(visibleText(tree)).toContain('• só com o app aberto');
+        await act(async () => gps!.emit(position(-23.5615, -46.6559)));
+        expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(1);
+        expect(visibleText(tree)).toContain('• só com o app aberto');
+      } finally {
+        os.restore(); // replaceProperty não é desfeito sozinho entre os testes
+      }
     });
 
     it('para o serviço ao ficar offline, mas não ao desmontar a tela', async () => {
@@ -617,12 +624,25 @@ describe('driver-mobile integrado à API', () => {
       tree = renderer.create(<View />); // o afterEach desmonta
     });
 
-    it('iOS: liga as atualizações em segundo plano do GPS no turno online', async () => {
+    it('iOS: se o módulo nativo não iniciar (ex.: sem permissão), volta ao envio pelo JS em segundo plano', async () => {
+      bg.supported = true;
+      bg.start.mockResolvedValue(false);
+      await renderLoggedIn();
+      expect(bg.start).toHaveBeenCalled();
+      expect(loc.setBackgroundUpdates).toHaveBeenCalledWith(true);
+      expect(useDriverStore.getState().backgroundMode).toBe('ios');
+      m.driverApi.updateLocation.mockClear();
+      await act(async () => gps!.emit(position(-23.5615, -46.6559)));
+      expect(m.driverApi.updateLocation).toHaveBeenCalledTimes(1);
+      expect(visibleText(tree)).toContain('também em segundo plano');
+    });
+
+    it('iOS sem o módulo nativo no build: liga as atualizações em segundo plano do GPS do JS', async () => {
       await renderLoggedIn();
       expect(bg.start).not.toHaveBeenCalled();
       expect(loc.setBackgroundUpdates).toHaveBeenCalledWith(true);
       await act(async () => gps!.emit(position(-23.5615, -46.6559)));
-      expect(m.driverApi.updateLocation).toHaveBeenCalled(); // no iOS quem envia é o JS
+      expect(m.driverApi.updateLocation).toHaveBeenCalled(); // sem o nativo, quem envia é o JS
       expect(visibleText(tree)).toContain('também em segundo plano');
     });
 

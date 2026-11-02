@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { currentToken } from '../api.js';
 import { backgroundTracking } from '../backgroundTracking.js';
 import { API_URL, LOCATION_DISTANCE_FILTER_M, LOCATION_SEND_DISTANCE_M, LOCATION_SEND_INTERVAL_MS } from '../config.js';
@@ -48,9 +48,11 @@ async function askBackgroundPermission(): Promise<void> {
 
 /**
  * Durante o turno online:
- * - Android: inicia o LocationTrackingService, que envia a posição mesmo com o app
- *   em segundo plano (notificação fixa enquanto online);
- * - iOS: liga o allowsBackgroundLocationUpdates e o JS segue enviando;
+ * - inicia o rastreamento nativo, que envia a posição mesmo com o app em segundo
+ *   plano: LocationTrackingService no Android (notificação fixa enquanto online) e
+ *   VoztriLocationTracking no iOS (GPS sem pausa automática, indicador azul);
+ * - se o nativo não iniciar no iOS, volta ao envio pelo JS com o
+ *   allowsBackgroundLocationUpdates da biblioteca (o iOS pode pausar parado);
  * - em ambos, acompanha o GPS no JS para exibir a posição e a precisão na tela.
  *
  * O serviço para quando o motorista fica offline ou sai da conta (enabled = false),
@@ -91,7 +93,16 @@ export function useLocationTracking(enabled: boolean): void {
             })
           : false;
         if (cancelled) return;
-        store().setBackgroundMode(started ? 'native' : 'foreground-only');
+        if (started) {
+          // O GPS do JS só alimenta a tela: quem envia em segundo plano é o nativo
+          setBackgroundUpdates(false);
+          store().setBackgroundMode('native');
+        } else if (Platform.OS === 'ios') {
+          setBackgroundUpdates(true);
+          store().setBackgroundMode('ios');
+        } else {
+          store().setBackgroundMode('foreground-only');
+        }
       } else {
         setBackgroundUpdates(true);
         store().setBackgroundMode('ios');

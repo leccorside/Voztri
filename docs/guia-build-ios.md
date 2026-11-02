@@ -29,3 +29,6 @@ open VOZTRI.xcworkspace
 - Certifique-se de que os Capabilities `Background Modes (Location updates, Remote notifications)` e `Push Notifications` estão habilitados.
 - Gere o archive para TestFlight com `Product -> Archive`.
 
+## 5. Módulo nativo do motorista (`VoztriLocationTracking`)
+O `driver-mobile` tem um módulo Objective-C próprio em `ios/VoztriDriver/VoztriLocationTracking.m` (rastreamento em segundo plano com `pausesLocationUpdatesAutomatically = NO` e `activityType` de navegação automotiva), já registrado no `project.pbxproj`. Ele foi escrito sem Xcode: no primeiro build, confira se o arquivo aparece no grupo `VoztriDriver` e em *Build Phases → Compile Sources* do target do app; se não, adicione-o pelo Xcode (*Add Files to "VoztriDriver"*). Para testar: ficar online, minimizar o app e fixar a posição do simulador (*Features → Location → Custom Location*); a API deve receber a posição a cada ~10 s mesmo parado.
+

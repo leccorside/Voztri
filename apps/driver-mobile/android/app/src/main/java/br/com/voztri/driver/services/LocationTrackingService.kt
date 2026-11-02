@@ -80,6 +80,19 @@ class LocationTrackingService : Service() {
   private var lastSentLocation: Location? = null
   private var updatesRequested = false
 
+  /**
+   * Leitura segurada pelo intervalo mínimo, enviada quando ele vence. Sem isso, a
+   * última posição antes de o motorista parar podia nunca chegar à API: parado, o
+   * filtro de distância não entrega leitura nova (e a chegada automática ao
+   * embarque não aconteceria).
+   */
+  private var pendingLocation: Location? = null
+  private val flushPending = Runnable {
+    val pending = pendingLocation
+    pendingLocation = null
+    if (pending != null && isRunning) maybeSend(pending)
+  }
+
   private val callback =
       object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -121,6 +134,7 @@ class LocationTrackingService : Service() {
   }
 
   override fun onDestroy() {
+    mainHandler.removeCallbacks(flushPending)
     stopUpdates()
     isRunning = false
     network.shutdownNow()
@@ -216,8 +230,15 @@ class LocationTrackingService : Service() {
     val now = System.currentTimeMillis()
     val previous = lastSentLocation
     val due = previous == null || now - lastSentAt >= intervalMs || location.distanceTo(previous) >= distanceM
-    if (!due) return
+    if (!due) {
+      val scheduled = pendingLocation != null
+      pendingLocation = location
+      if (!scheduled) mainHandler.postDelayed(flushPending, (intervalMs - (now - lastSentAt)).coerceAtLeast(500))
+      return
+    }
 
+    mainHandler.removeCallbacks(flushPending)
+    pendingLocation = null
     lastSentAt = now
     lastSentLocation = location
     val body = JSONObject()
@@ -272,6 +293,8 @@ class LocationTrackingService : Service() {
   }
 
   private fun shutdown() {
+    mainHandler.removeCallbacks(flushPending)
+    pendingLocation = null
     stopUpdates()
     isRunning = false
     ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)

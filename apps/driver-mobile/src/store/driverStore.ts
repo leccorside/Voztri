@@ -19,7 +19,8 @@ export type LocationStatus = 'off' | 'tracking' | 'denied' | 'unavailable';
 
 /**
  * Quem envia a posição com o app em segundo plano:
- * native: LocationTrackingService (Android); ios: JS com allowsBackgroundLocationUpdates;
+ * native: rastreamento nativo (LocationTrackingService no Android, VoztriLocationTracking no iOS);
+ * ios: fallback do iOS sem o módulo nativo (JS com allowsBackgroundLocationUpdates, que o iOS pode pausar);
  * foreground-only: o serviço não iniciou, o envio só acontece com o app aberto.
  */
 export type BackgroundMode = 'off' | 'native' | 'ios' | 'foreground-only';

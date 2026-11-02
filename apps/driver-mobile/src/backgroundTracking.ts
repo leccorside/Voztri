@@ -1,11 +1,12 @@
 import { NativeModules, Platform } from 'react-native';
 
-/** Configuração repassada ao LocationTrackingService (Android). */
+/** Configuração repassada ao rastreamento nativo (Android e iOS). */
 export interface BackgroundTrackingConfig {
   apiUrl: string;
   token: string;
   intervalMs: number;
   distanceM: number;
+  /** Só no Android; no iOS não há filtro (parado também precisa de leituras). */
   distanceFilterM: number;
 }
 
@@ -15,12 +16,17 @@ interface NativeTracking {
   status(): Promise<{ running: boolean; lastHttpStatus: number }>;
 }
 
-const native: NativeTracking | undefined = Platform.OS === 'android' ? NativeModules.VoztriLocationTracking : undefined;
+// Mesmo nome e mesma API nas duas plataformas; ausente em builds sem o módulo
+const native: NativeTracking | undefined =
+  Platform.OS === 'android' || Platform.OS === 'ios' ? NativeModules.VoztriLocationTracking : undefined;
 
 /**
- * Serviço nativo em primeiro plano (Android) que envia a posição para
- * /driver/location com o app em segundo plano. No iOS o envio segue pelo
- * JavaScript, com o allowsBackgroundLocationUpdates ligado (setBackgroundUpdates).
+ * Rastreamento nativo que envia a posição para /driver/location com o app em
+ * segundo plano, sem depender do JavaScript:
+ * - Android: LocationTrackingService (serviço em primeiro plano com notificação);
+ * - iOS: VoztriLocationTracking.m (CLLocationManager próprio com
+ *   pausesLocationUpdatesAutomatically = NO, activityType automotiveNavigation e
+ *   sem filtro de distância, para seguir enviando com o motorista parado).
  */
 export const backgroundTracking = {
   supported: !!native,
