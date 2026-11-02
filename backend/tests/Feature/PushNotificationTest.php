@@ -339,6 +339,43 @@ class PushNotificationTest extends TestCase
         $this->assertCount(1, $this->push->messagesFor($passenger));
     }
 
+    public function test_ride_exposes_search_deadline_only_while_searching(): void
+    {
+        $passenger = $this->passenger();
+        $res = $this->actingAs($passenger, 'sanctum')->postJson('/api/v1/rides/request', [
+            'origin' => ['address' => 'Av. Paulista, 1578 - Bela Vista', 'latitude' => -23.561414, 'longitude' => -46.655881],
+            'destination' => ['address' => 'Av. Faria Lima, 3477 - Itaim Bibi', 'latitude' => -23.585721, 'longitude' => -46.679199],
+            'category' => 'pop',
+            'paymentMethod' => 'pix',
+        ])->assertCreated();
+
+        // Prazo = createdAt + 3 min, no mesmo formato ISO 8601
+        $created = \Carbon\Carbon::parse($res->json('createdAt'));
+        $this->assertSame('SEARCHING', $res->json('status'));
+        $this->assertSame($created->copy()->addSeconds(180)->toIso8601String(), $res->json('searchExpiresAt'));
+        $rideId = $res->json('id');
+
+        // Com oferta em andamento continua; aceita, deixa de existir
+        $driver = $this->driver('11922220001');
+        $this->getRide($passenger, $rideId)->assertJsonPath('status', 'OFFERED')
+            ->assertJsonPath('searchExpiresAt', $res->json('searchExpiresAt'));
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/accept")->assertOk()
+            ->assertJsonPath('searchExpiresAt', null);
+        $this->getRide($passenger, $rideId)->assertJsonPath('searchExpiresAt', null);
+    }
+
+    public function test_search_deadline_kept_when_search_ends_without_driver(): void
+    {
+        $passenger = $this->passenger();
+        $rideId = $this->requestRide($passenger);
+        $expiresAt = $this->getRide($passenger, $rideId)->json('searchExpiresAt');
+
+        $this->travel(181)->seconds();
+        // Mantido no NO_DRIVER_AVAILABLE: o app mostra quanto tempo a busca durou
+        $this->getRide($passenger, $rideId)->assertJsonPath('status', 'NO_DRIVER_AVAILABLE')
+            ->assertJsonPath('searchExpiresAt', $expiresAt);
+    }
+
     public function test_expire_job_ends_search_without_any_polling(): void
     {
         $passenger = $this->passenger();

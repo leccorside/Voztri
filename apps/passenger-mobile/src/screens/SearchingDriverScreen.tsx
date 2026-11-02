@@ -1,8 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
-import { SEARCH_TIMEOUT_MS } from '../config.js';
-import { formatCountdown, useSearchCountdown } from '../hooks/useSearchCountdown.js';
+import { formatCountdown, searchDurationMs, useSearchCountdown } from '../hooks/useSearchCountdown.js';
 import { usePassengerStore } from '../store/passengerStore.js';
 import { Button, shadow } from '../ui/kit.js';
 
@@ -17,10 +16,9 @@ const PAYMENT_LABEL: Record<string, string> = {
   wallet: 'Pagamento com saldo',
 };
 
-const TIMEOUT_MINUTES = Math.round(SEARCH_TIMEOUT_MS / 60_000);
-
 /**
- * Busca por motorista: contador regressivo do prazo (createdAt + 3 min) e, quando a
+ * Busca por motorista: contador regressivo do prazo (searchExpiresAt, enviado pela
+ * API) e, quando a
  * API encerra a busca sem motorista (NO_DRIVER_AVAILABLE), o aviso com "Tentar de
  * novo" (mesma origem, destino, categoria e pagamento) e "Voltar ao início".
  */
@@ -28,8 +26,13 @@ export const SearchingDriverScreen: React.FC<Props> = ({ onCancel }) => {
   const { activeRide, noDriverRide, busy, retrySearch, dismissNoDriver } = usePassengerStore();
   const failed = !activeRide && !!noDriverRide;
   const ride = activeRide ?? noDriverRide;
-  const remaining = useSearchCountdown(failed ? null : activeRide?.createdAt);
-  const progress = remaining !== null ? remaining / (SEARCH_TIMEOUT_MS / 1000) : 0;
+  const countdown = useSearchCountdown(failed ? null : activeRide);
+  const remaining = countdown?.remainingSeconds ?? null;
+  const progress = countdown && countdown.totalSeconds > 0 ? countdown.remainingSeconds / countdown.totalSeconds : 0;
+  // Duração da busca encerrada, para o aviso ("em 3 minutos"); omitida se a API não informou
+  const duration = noDriverRide ? searchDurationMs(noDriverRide) : null;
+  const minutes = duration ? Math.max(1, Math.round(duration / 60_000)) : 0;
+  const durationText = minutes ? ` em ${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}` : '';
 
   return (
     <View style={styles.screen}>
@@ -41,7 +44,7 @@ export const SearchingDriverScreen: React.FC<Props> = ({ onCancel }) => {
         </Text>
         <Text style={styles.subtitle}>
           {failed
-            ? `Não encontramos um motorista ${ride?.categoryName ?? 'VOZTRI'} perto de ${ride?.origin.shortAddress ?? 'você'} em ${TIMEOUT_MINUTES} minutos.`
+            ? `Não encontramos um motorista ${ride?.categoryName ?? 'VOZTRI'} perto de ${ride?.origin.shortAddress ?? 'você'}${durationText}.`
             : 'Conectando com parceiros num raio de 2 a 5 km'}
         </Text>
       </View>

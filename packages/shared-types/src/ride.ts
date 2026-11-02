@@ -77,6 +77,12 @@ export interface Ride {
   paymentMethod: PaymentMethodType;
   paymentStatus: PaymentStatus;
   createdAt: string;
+  /**
+   * Prazo da busca por motorista (ISO 8601), definido pela API: a busca é
+   * encerrada nele (NO_DRIVER_AVAILABLE). Preenchido em REQUESTED, SEARCHING,
+   * OFFERED e NO_DRIVER_AVAILABLE; null nos demais status.
+   */
+  searchExpiresAt?: string | null;
   startedAt?: string | null;
   completedAt?: string | null;
   cancelledAt?: string | null;

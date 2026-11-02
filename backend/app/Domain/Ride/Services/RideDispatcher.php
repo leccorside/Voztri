@@ -134,8 +134,17 @@ class RideDispatcher
         return $offer;
     }
 
+    /** Status em que a corrida tem prazo de busca (enviado como searchExpiresAt). */
+    public const SEARCH_STATUSES = ['REQUESTED', 'SEARCHING', 'OFFERED', 'NO_DRIVER_AVAILABLE'];
+
     /** Até quando a corrida pode procurar motorista. */
     public function searchDeadline(Ride $ride): Carbon
+    {
+        return self::searchDeadlineFor($ride);
+    }
+
+    /** Fonte única do prazo da busca: usada no despacho, no job e no RidePresenter. */
+    public static function searchDeadlineFor(Ride $ride): Carbon
     {
         return Carbon::parse($ride->created_at)->addSeconds(self::SEARCH_TIMEOUT_SECONDS);
     }

@@ -91,7 +91,20 @@ const ESTIMATES: FareEstimate[] = [
   { category: 'moto', categoryName: 'VozTri Moto', priceCents: 1230, formattedPrice: 'R$ 12,30', estimatedMinutes: 10, distanceKm: 4.86, surgeMultiplier: 1, description: 'Moto' },
 ];
 
-const ride = (status: Ride['status'], over: Partial<Ride> = {}): Ride => ({
+/** Status em que a API envia o prazo da busca (RideDispatcher::SEARCH_STATUSES). */
+const SEARCH_STATUSES: Ride['status'][] = ['REQUESTED', 'SEARCHING', 'OFFERED', 'NO_DRIVER_AVAILABLE'];
+
+/** Como a API: searchExpiresAt = createdAt + 3 min nos status de busca (sobrescrevível). */
+const ride = (status: Ride['status'], over: Partial<Ride> = {}): Ride => {
+  const base = rideBase(status, over);
+  if ('searchExpiresAt' in over) return base;
+  return {
+    ...base,
+    searchExpiresAt: SEARCH_STATUSES.includes(status) ? new Date(Date.parse(base.createdAt) + 180_000).toISOString() : null,
+  };
+};
+
+const rideBase = (status: Ride['status'], over: Partial<Ride> = {}): Ride => ({
   id: 'ride-1',
   passengerId: 'p-1',
   passenger: { id: 'p-1', user: { id: 'u-bia', name: 'Beatriz Lima', avatarUrl: null, rating: 4.95 } },
@@ -597,6 +610,34 @@ describe('passenger-mobile integrado à API', () => {
       await advanceAsync(60_000);
       expect(visibleText(tree)).toContain('Encerrando a busca…');
       expect(visibleText(tree)).not.toContain('Prazo da busca');
+    });
+
+    it('usa o prazo enviado pela API, e não uma duração fixa no app', async () => {
+      // O backend passou a buscar por só 1 min: criada há 23 s, restam 0:37
+      const createdAt = new Date(Date.now() - 23_000).toISOString();
+      serverRide = ride('SEARCHING', { createdAt, searchExpiresAt: new Date(Date.now() + 37_000).toISOString() });
+      await renderLoggedIn();
+      await requestBlackRide();
+      expect(visibleText(tree)).toContain('Prazo da busca: 0:37');
+
+      // E o aviso de busca encerrada usa a mesma duração
+      serverRide = ride('NO_DRIVER_AVAILABLE', { createdAt, searchExpiresAt: new Date(Date.parse(createdAt) + 60_000).toISOString() });
+      await advanceAsync(3000);
+      expect(visibleText(tree)).toContain('perto de Av. Paulista, 1578 em 1 minuto.');
+    });
+
+    it('sem o prazo na resposta (API antiga), não mostra o contador nem a duração', async () => {
+      serverRide = ride('SEARCHING', { searchExpiresAt: null });
+      await renderLoggedIn();
+      await requestBlackRide();
+      expectNoStrayText(tree);
+      expect(visibleText(tree)).toContain('Buscando o melhor motorista...');
+      expect(visibleText(tree)).not.toContain('Prazo da busca');
+      expect(visibleText(tree)).not.toContain('Encerrando a busca');
+
+      serverRide = ride('NO_DRIVER_AVAILABLE', { searchExpiresAt: null });
+      await advanceAsync(3000);
+      expect(visibleText(tree)).toContain('perto de Av. Paulista, 1578.');
     });
 
     it('corrige o relógio do aparelho atrasado pelo deslocamento medido no header Date', async () => {

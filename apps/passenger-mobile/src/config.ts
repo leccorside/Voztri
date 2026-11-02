@@ -13,10 +13,3 @@ export const API_URL: string =
 
 /** Intervalo do polling da corrida em andamento e do chat. */
 export const POLL_INTERVAL_MS = 3000;
-
-/**
- * Prazo da busca por motorista, contado do createdAt da corrida. Precisa ser igual
- * ao RideDispatcher::SEARCH_TIMEOUT_SECONDS do backend (quem encerra a busca é a API;
- * aqui é só o contador da tela).
- */
-export const SEARCH_TIMEOUT_MS = 180_000;

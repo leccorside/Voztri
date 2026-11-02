@@ -1,18 +1,35 @@
 import { useEffect, useState } from 'react';
-import { SEARCH_TIMEOUT_MS } from '../config.js';
+import type { Ride } from '@voztri/shared-types';
 import { serverClock } from '../serverClock.js';
 
+export interface SearchCountdown {
+  /** Segundos até o prazo da busca (0 quando venceu). */
+  remainingSeconds: number;
+  /** Duração total da busca, em segundos (searchExpiresAt - createdAt), para a barra. */
+  totalSeconds: number;
+}
+
+/** Duração da busca definida pela API (ms), ou null sem os campos. */
+export function searchDurationMs(ride: Pick<Ride, 'createdAt' | 'searchExpiresAt'>): number | null {
+  const start = Date.parse(ride.createdAt);
+  const end = ride.searchExpiresAt ? Date.parse(ride.searchExpiresAt) : NaN;
+  return Number.isNaN(start) || Number.isNaN(end) || end <= start ? null : end - start;
+}
+
 /**
- * Segundos restantes do prazo da busca (createdAt + SEARCH_TIMEOUT_MS), atualizados
- * a cada segundo. null sem createdAt válido.
+ * Contador do prazo da busca, atualizado a cada segundo. O prazo vem pronto da API
+ * (searchExpiresAt): o app não conhece a duração da busca, então ela pode mudar no
+ * backend sem atualizar o app. null sem o prazo (fora da busca ou API antiga).
  *
- * O createdAt vem do relógio do servidor, então "agora" também: serverClock.now()
- * corrige o relógio do aparelho pelo header Date das respostas da API (adiantado ou
- * atrasado, o contador continua certo). Sem nenhuma medida ainda, usa o relógio do
- * aparelho. O valor fica sempre entre 0 e o prazo.
+ * O prazo está no relógio do servidor, então "agora" também: serverClock.now()
+ * corrige o relógio do aparelho pelo header Date das respostas da API. O restante
+ * fica sempre entre 0 e a duração total.
  */
-export function useSearchCountdown(createdAt: string | null | undefined): number | null {
-  const deadline = createdAt ? Date.parse(createdAt) + SEARCH_TIMEOUT_MS : NaN;
+export function useSearchCountdown(
+  ride: Pick<Ride, 'createdAt' | 'searchExpiresAt'> | null | undefined,
+): SearchCountdown | null {
+  const deadline = ride?.searchExpiresAt ? Date.parse(ride.searchExpiresAt) : NaN;
+  const totalMs = ride ? searchDurationMs(ride) : null;
   const [now, setNow] = useState(() => serverClock.now());
 
   useEffect(() => {
@@ -23,8 +40,12 @@ export function useSearchCountdown(createdAt: string | null | undefined): number
   }, [deadline]);
 
   if (Number.isNaN(deadline)) return null;
-  const remainingMs = Math.min(SEARCH_TIMEOUT_MS, Math.max(0, deadline - now));
-  return Math.ceil(remainingMs / 1000);
+  const remainingMs = Math.max(0, deadline - now);
+  const cappedMs = totalMs !== null ? Math.min(totalMs, remainingMs) : remainingMs;
+  return {
+    remainingSeconds: Math.ceil(cappedMs / 1000),
+    totalSeconds: totalMs !== null ? Math.round(totalMs / 1000) : Math.ceil(cappedMs / 1000),
+  };
 }
 
 /** 157 -> "2:37". */

@@ -3,6 +3,7 @@
 namespace App\Http\Presenters;
 
 use App\Domain\Ride\Services\FareCalculator;
+use App\Domain\Ride\Services\RideDispatcher;
 use App\Models\Ride;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -69,6 +70,10 @@ class RidePresenter
             'paymentMethod' => $ride->payment_method,
             'paymentStatus' => $ride->payment_status,
             'createdAt' => $ride->created_at?->toIso8601String(),
+            // Prazo da busca por motorista (a API encerra a busca nele); null fora da busca
+            'searchExpiresAt' => $ride->created_at && in_array($ride->status, RideDispatcher::SEARCH_STATUSES, true)
+                ? RideDispatcher::searchDeadlineFor($ride)->toIso8601String()
+                : null,
             'startedAt' => $ride->started_at?->toIso8601String(),
             'completedAt' => $ride->completed_at?->toIso8601String(),
             'cancelledAt' => $ride->cancelled_at?->toIso8601String(),
