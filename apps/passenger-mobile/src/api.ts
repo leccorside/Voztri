@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthApi, BillingApi, DeviceApi, GeoApi, PassengerApi, PlacesApi, RideApi } from '@voztri/api-client';
-import { createMobileApi } from '@voztri/mobile-core';
+import { createMobileApi, resolveMediaUrl } from '@voztri/mobile-core';
 import { API_URL } from './config.js';
 import { serverClock } from './serverClock.js';
 
@@ -28,6 +28,12 @@ export const activeRideMemory = {
   save: (rideId: string) => AsyncStorage.setItem(ACTIVE_RIDE_KEY, rideId),
   clear: () => AsyncStorage.removeItem(ACTIVE_RIDE_KEY),
 };
+
+/** Token da sessão atual (para carregar as fotos, que a API só serve com login). */
+export const currentToken = (): string | null => core.session.current();
+
+/** Endereço completo de uma foto (a API devolve a foto enviada como caminho relativo). */
+export const mediaUrl = (url: string | null | undefined): string | null => resolveMediaUrl(url, API_URL);
 
 /** Chamado quando a API responde 401 (token expirado ou revogado). */
 export const onUnauthorized = (handler: () => void): void => core.onUnauthorized(handler);

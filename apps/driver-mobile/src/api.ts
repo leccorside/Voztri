@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthApi, BillingApi, DeviceApi, DriverApi, RideApi } from '@voztri/api-client';
-import { createMobileApi } from '@voztri/mobile-core';
+import { createMobileApi, resolveMediaUrl } from '@voztri/mobile-core';
 import { API_URL } from './config.js';
 
 /**
@@ -17,6 +17,9 @@ export const session = core.session;
 
 /** Token da sessão atual (repassado ao serviço nativo de rastreamento). */
 export const currentToken = (): string | null => core.session.current();
+
+/** Endereço completo de uma foto (a API devolve a foto enviada como caminho relativo). */
+export const mediaUrl = (url: string | null | undefined): string | null => resolveMediaUrl(url, API_URL);
 
 /** Chamado quando a API responde 401 (token expirado ou revogado). */
 export const onUnauthorized = (handler: () => void): void => core.onUnauthorized(handler);

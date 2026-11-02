@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { POLL_INTERVAL_MS } from './config.js';
+import { currentToken, mediaUrl } from './api.js';
 import { Banner, ProfileScreen, usePolling } from '@voztri/mobile-core';
 import { useLocationTracking } from './hooks/useLocationTracking.js';
 import { useDriverStore } from './store/driverStore.js';
@@ -31,6 +32,8 @@ export const App: React.FC = () => {
     user,
     busy,
     updateProfile,
+    uploadAvatar,
+    removeAvatar,
   } = useDriverStore();
   const [activeTab, setActiveTab] = useState<'home' | 'earnings' | 'payout' | 'profile'>('home');
   const [showPinModal, setShowPinModal] = useState(false);
@@ -88,6 +91,9 @@ export const App: React.FC = () => {
             save={updateProfile}
             onBack={() => setActiveTab('home')}
             busy={busy}
+            photo={{ uri: mediaUrl(user.avatarUrl), token: currentToken() }}
+            uploadPhoto={uploadAvatar}
+            removePhoto={removeAvatar}
           />
         ) : (
           <DriverDashboardScreen onOpenEarnings={() => setActiveTab('earnings')} onOpenProfile={() => setActiveTab('profile')} />

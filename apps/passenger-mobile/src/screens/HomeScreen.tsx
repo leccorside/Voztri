@@ -1,19 +1,14 @@
 import React from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Text, View, type AlertButton } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import type { AddressLocation } from '@voztri/shared-types';
 import type { SavedPlaceKind } from '@voztri/api-client';
 import { usePassengerStore } from '../store/passengerStore.js';
-import { shadow } from '@voztri/mobile-core';
+import { Avatar, shadow } from '@voztri/mobile-core';
+import { currentToken, mediaUrl } from '../api.js';
 
 interface Props {
   onOpenSearch: () => void;
-}
-
-function initials(name: string | undefined): string {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : '')).toUpperCase();
 }
 
 export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
@@ -45,14 +40,22 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
       { text: 'Sair', style: 'destructive', onPress: () => void logout() },
     ]);
 
-  // Menu da conta: perfil, trocar o PIN de emergência ou sair (com confirmação)
-  const openAccountMenu = () =>
-    Alert.alert(user?.name ?? 'Sua conta', undefined, [
+  // Menu da conta: perfil, trocar o PIN de emergência ou sair (com confirmação). O
+  // Alert do Android mostra no máximo 3 botões e descartava o 4º ("Cancelar"): lá o
+  // menu fecha com o "voltar" ou tocando fora (cancelable); no iOS o Cancelar fica.
+  const openAccountMenu = () => {
+    const options: AlertButton[] = [
       { text: 'Meu perfil', onPress: () => setProfileOpen(true) },
       { text: 'Trocar PIN de emergência', onPress: () => setChangingPin(true) },
       { text: 'Sair da conta', style: 'destructive', onPress: confirmLogout },
-      { text: 'Cancelar', style: 'cancel' },
-    ]);
+    ];
+    Alert.alert(
+      user?.name ?? 'Sua conta',
+      undefined,
+      Platform.OS === 'android' ? options : [...options, { text: 'Cancelar', style: 'cancel' }],
+      { cancelable: true },
+    );
+  };
 
   return (
     <View style={[styles.screen, { backgroundColor: VoztriColors.light.surface }]}>
@@ -74,9 +77,9 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
           onPress={openAccountMenu}
           accessibilityRole="button"
           accessibilityLabel={`Conta de ${user?.name ?? 'passageiro'}. Toque para ver o perfil, trocar o PIN de emergência ou sair`}
-          style={({ pressed }) => [styles.avatar, pressed && styles.pressed]}
+          style={({ pressed }) => [pressed && styles.pressed]}
         >
-          <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>{initials(user?.name)}</Text>
+          <Avatar name={user?.name ?? '?'} uri={mediaUrl(user?.avatarUrl)} token={currentToken()} size={38} />
         </Pressable>
       </View>
 
@@ -245,17 +248,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     color: '#151A31',
-  },
-  avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    backgroundColor: '#F3F2FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontWeight: '700',
   },
   map: {
     flex: 1,

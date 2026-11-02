@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { POLL_INTERVAL_MS } from './config.js';
+import { currentToken, mediaUrl } from './api.js';
 import { Banner, ProfileScreen, usePolling } from '@voztri/mobile-core';
 import { usePassengerStore } from './store/passengerStore.js';
 import { LoginScreen } from './screens/LoginScreen.js';
@@ -22,6 +23,8 @@ export const App: React.FC = () => {
     profileOpen,
     setProfileOpen,
     updateProfile,
+    uploadAvatar,
+    removeAvatar,
     busy,
     currentStep,
     activeRide,
@@ -77,6 +80,9 @@ export const App: React.FC = () => {
           save={updateProfile}
           onBack={() => setProfileOpen(false)}
           busy={busy}
+          photo={{ uri: mediaUrl(user.avatarUrl), token: currentToken() }}
+          uploadPhoto={uploadAvatar}
+          removePhoto={removeAvatar}
         />
       </SafeAreaView>
     );

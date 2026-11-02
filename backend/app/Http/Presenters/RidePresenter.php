@@ -106,7 +106,8 @@ class RidePresenter
         return [
             'id' => $user->id,
             'name' => $user->name,
-            'avatarUrl' => $user->avatar_url,
+            // Foto servida pela API (só para quem divide a corrida; ver AvatarController)
+            'avatarUrl' => $user->avatarUrl(),
             'rating' => $user->profile ? (float) $user->profile->rating_avg : null,
         ];
     }

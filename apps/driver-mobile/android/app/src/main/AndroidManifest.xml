@@ -13,6 +13,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
+    <!-- Câmera para a foto do perfil (e, depois, CNH/CRLV); espelha NSCameraUsageDescription.
+         Pedida na hora de tirar a foto (o seletor de imagens exige quando o manifesto a declara) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
     <!-- Notificações e Despertar do Dispositivo -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />

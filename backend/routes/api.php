@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\GeoController;
 use App\Http\Controllers\Api\V1\SavedPlaceController;
 use App\Http\Controllers\Api\V1\RecentDestinationController;
 use App\Http\Controllers\Api\V1\EmergencyPinController;
+use App\Http\Controllers\Api\V1\AvatarController;
 
 Route::prefix('v1')->group(function () {
     // Health Check
@@ -43,6 +44,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/auth/me', [AuthController::class, 'me']);
         // Limite também contra descobrir e-mails cadastrados pela resposta "já em uso"
         Route::put('/auth/profile', [AuthController::class, 'updateProfile'])->middleware('throttle:10,1');
+
+        // Foto do perfil (MinIO), servida pela API só a quem pode vê-la
+        Route::post('/auth/avatar', [AvatarController::class, 'store'])->middleware('throttle:10,1');
+        Route::delete('/auth/avatar', [AvatarController::class, 'destroy']);
+        Route::get('/users/{id}/avatar', [AvatarController::class, 'show'])->whereUuid('id');
 
         // Endereço da coordenada do GPS (embarque do passageiro); limite por usuário
         Route::get('/geo/reverse', [GeoController::class, 'reverse'])->middleware('throttle:30,1');

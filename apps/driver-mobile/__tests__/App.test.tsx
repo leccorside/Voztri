@@ -27,7 +27,16 @@ import {
 jest.mock('../src/api', () => ({
   session: { load: jest.fn(), save: jest.fn(), clear: jest.fn() },
   onUnauthorized: jest.fn(),
-  authApi: { requestOtp: jest.fn(), verifyOtp: jest.fn(), getMe: jest.fn(), updateProfile: jest.fn() },
+  authApi: {
+    requestOtp: jest.fn(),
+    verifyOtp: jest.fn(),
+    getMe: jest.fn(),
+    updateProfile: jest.fn(),
+    uploadAvatar: jest.fn(),
+    removeAvatar: jest.fn(),
+  },
+  // Como o real: caminho da API ganha a origem; endereço completo fica igual
+  mediaUrl: (url: string | null | undefined) => (!url ? null : url.startsWith('/') ? `http://api.test${url}` : url),
   driverApi: {
     getCurrent: jest.fn(),
     getEarnings: jest.fn(),
@@ -81,7 +90,7 @@ jest.mock('../src/location', () => {
 
 const m = api as unknown as {
   session: Record<'load' | 'save' | 'clear', jest.Mock>;
-  authApi: Record<'requestOtp' | 'verifyOtp' | 'getMe' | 'updateProfile', jest.Mock>;
+  authApi: Record<'requestOtp' | 'verifyOtp' | 'getMe' | 'updateProfile' | 'uploadAvatar' | 'removeAvatar', jest.Mock>;
   driverApi: Record<
     'getCurrent' | 'getEarnings' | 'setOnlineStatus' | 'acceptOffer' | 'rejectOffer' | 'updateLocation',
     jest.Mock
@@ -853,6 +862,34 @@ describe('driver-mobile integrado à API', () => {
       await advanceAsync(3000);
       expect(visibleText(tree)).toContain('Meu perfil');
       expect(visibleText(tree)).toContain('ACEITAR');
+    });
+
+    it('foto pela câmera: envia e fica no perfil', async () => {
+      const picker = jest.requireMock('react-native-image-picker') as Record<'launchCamera', jest.Mock>;
+      picker.launchCamera.mockResolvedValueOnce({ assets: [{ uri: 'file:///cache/selfie.jpg', fileName: 'selfie.jpg', type: 'image/jpeg' }] });
+      m.authApi.uploadAvatar.mockResolvedValueOnce('/api/v1/users/u-carlos/avatar?v=77');
+      await renderLoggedIn();
+      await pressAsync(tree, 'Meu perfil');
+
+      await pressAsync(tree, 'Tirar foto');
+      expect(m.authApi.uploadAvatar).toHaveBeenCalledWith({ uri: 'file:///cache/selfie.jpg', name: 'selfie.jpg', type: 'image/jpeg' });
+      expect(useDriverStore.getState().user?.avatarUrl).toBe('/api/v1/users/u-carlos/avatar?v=77');
+      const image = tree.root.find((n) => n.props.source?.uri === 'http://api.test/api/v1/users/u-carlos/avatar?v=77');
+      expect(image.props.source.headers).toEqual({ Authorization: 'Bearer token-salvo' });
+    });
+
+    it('na corrida, mostra a foto do passageiro para achá-lo no embarque', async () => {
+      const base = ride('DRIVER_EN_ROUTE');
+      server = {
+        isOnline: true,
+        offer: null,
+        ride: { ...base, passenger: { ...base.passenger!, user: { ...base.passenger!.user, avatarUrl: '/api/v1/users/u-bia/avatar?v=5' } } },
+      };
+      await renderLoggedIn();
+
+      const image = tree.root.find((n) => n.props.source?.uri === 'http://api.test/api/v1/users/u-bia/avatar?v=5');
+      expect(image.props.source.headers).toEqual({ Authorization: 'Bearer token-salvo' });
+      expect(visibleText(tree)).toContain('Beatriz Lima');
     });
 
     it('erro da API aparece na tela do perfil', async () => {

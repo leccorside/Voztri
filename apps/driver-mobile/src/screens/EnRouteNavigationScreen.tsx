@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { useDriverStore } from '../store/driverStore.js';
-import { Button, formatBRL, shadow } from '@voztri/mobile-core';
+import { Avatar, Button, formatBRL, shadow } from '@voztri/mobile-core';
+import { currentToken, mediaUrl } from '../api.js';
 
 interface Props {
   onOpenPinModal: () => void;
@@ -15,12 +16,6 @@ const PAYMENT_LABEL: Record<string, string> = {
   cash: 'Pagamento em dinheiro',
   wallet: 'Pagamento com saldo',
 };
-
-function initials(name: string | undefined): string {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : '')).toUpperCase();
-}
 
 export const EnRouteNavigationScreen: React.FC<Props> = ({ onOpenPinModal, onFinishRide }) => {
   const { currentRide, busy, markArrived } = useDriverStore();
@@ -72,9 +67,8 @@ export const EnRouteNavigationScreen: React.FC<Props> = ({ onOpenPinModal, onFin
       <View style={styles.sheet}>
         <View style={styles.passengerRow}>
           <View style={styles.passenger}>
-            <View style={styles.avatar}>
-              <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>{initials(passengerName)}</Text>
-            </View>
+            {/* Foto do passageiro: ajuda a encontrar quem buscar no embarque */}
+            <Avatar name={passengerName} uri={mediaUrl(currentRide.passenger?.user?.avatarUrl)} token={currentToken()} size={44} />
             <View style={styles.flex}>
               <Text style={styles.passengerName}>{passengerName}</Text>
               <Text style={styles.passengerMeta}>
@@ -219,17 +213,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 999,
-    backgroundColor: '#ECECFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontWeight: '700',
   },
   passengerName: {
     fontSize: 15,

@@ -23,6 +23,7 @@
     "@voztri/validation": "*",
     "react": "18.2.0",
     "react-native": "^0.74.2",
+    "react-native-image-picker": "7.2.3",
     "zustand": "^4.5.2"
   },
   "devDependencies": {

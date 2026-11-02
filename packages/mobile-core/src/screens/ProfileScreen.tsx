@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { Button, formatPhone } from '../ui/kit.js';
+import { Avatar } from '../ui/Avatar.js';
+import { pickPhoto, type PickedPhoto } from '../media.js';
 
 /** Campos editáveis do perfil (os mesmos do PUT /auth/profile usados pelos apps). */
 export interface ProfileFields {
@@ -18,12 +20,51 @@ export interface ProfileScreenProps {
   save: (changes: Partial<ProfileFields>) => Promise<ProfileSaveResult>;
   onBack: () => void;
   busy: boolean;
+  /** Foto atual (endereço completo) e o token para carregá-la (a API exige login). */
+  photo: { uri: string | null; token: string | null };
+  /** Envia a foto escolhida; devolve null ou a mensagem de erro. */
+  uploadPhoto: (photo: PickedPhoto) => Promise<string | null>;
+  /** Tira a foto; devolve null ou a mensagem de erro. */
+  removePhoto: () => Promise<string | null>;
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** "Meu perfil": nome e e-mail editáveis e o telefone da conta (só leitura), comum aos dois apps. */
-export const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, save, onBack, busy }) => {
+export const ProfileScreen: React.FC<ProfileScreenProps> = ({
+  user,
+  save,
+  onBack,
+  busy,
+  photo,
+  uploadPhoto,
+  removePhoto,
+}) => {
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoMessage, setPhotoMessage] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const changePhoto = async (source: 'camera' | 'library') => {
+    setPhotoMessage(null);
+    const picked = await pickPhoto(source);
+    if (picked.status === 'cancelled') return;
+    if (picked.status === 'error') {
+      setPhotoMessage({ text: picked.message, ok: false });
+      return;
+    }
+    setPhotoBusy(true);
+    const failure = await uploadPhoto(picked.photo);
+    setPhotoBusy(false);
+    setPhotoMessage(failure ? { text: failure, ok: false } : { text: 'Foto atualizada.', ok: true });
+  };
+
+  const dropPhoto = async () => {
+    setPhotoMessage(null);
+    setPhotoBusy(true);
+    const failure = await removePhoto();
+    setPhotoBusy(false);
+    setPhotoMessage(failure ? { text: failure, ok: false } : { text: 'Foto removida.', ok: true });
+  };
+
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email ?? '');
   const [errors, setErrors] = useState<Partial<Record<keyof ProfileFields, string>>>({});
@@ -78,6 +119,50 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, save, onBack
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {/* Foto do perfil: o motorista e o passageiro da corrida a veem */}
+        <View style={styles.photoSection}>
+          <Avatar name={user.name} uri={photo.uri} token={photo.token} size={96} />
+          <View style={styles.photoActions}>
+            <Button
+              label="Tirar foto"
+              onPress={() => void changePhoto('camera')}
+              disabled={photoBusy}
+              style={styles.photoButton}
+              textStyle={[styles.photoButtonText, { color: VoztriColors.brand.primary }]}
+            />
+            <Button
+              label="Escolher da galeria"
+              onPress={() => void changePhoto('library')}
+              disabled={photoBusy}
+              style={styles.photoButton}
+              textStyle={[styles.photoButtonText, { color: VoztriColors.brand.primary }]}
+            />
+            {photo.uri && (
+              <Button
+                label="Remover foto"
+                onPress={() => void dropPhoto()}
+                disabled={photoBusy}
+                style={styles.photoButton}
+                textStyle={[styles.photoButtonText, styles.removeText]}
+              />
+            )}
+          </View>
+        </View>
+        {photoBusy && (
+          <View style={styles.photoBusy} accessibilityLiveRegion="polite">
+            <ActivityIndicator color={VoztriColors.brand.primary} />
+            <Text style={styles.hint}>Enviando…</Text>
+          </View>
+        )}
+        {photoMessage && (
+          <Text style={photoMessage.ok ? styles.saved : styles.message} accessibilityLiveRegion="polite">
+            {photoMessage.text}
+          </Text>
+        )}
+        <Text style={[styles.hint, styles.photoHint]}>
+          Sua foto aparece para o motorista ou o passageiro da sua corrida. A localização gravada na foto é removida.
+        </Text>
+
         <View style={styles.field}>
           <Text style={styles.label}>Nome</Text>
           <TextInput
@@ -169,6 +254,36 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+  },
+  photoSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 8,
+  },
+  photoActions: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  photoButton: {
+    paddingVertical: 6,
+  },
+  photoButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  removeText: {
+    color: '#BA1A1A',
+  },
+  photoBusy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  photoHint: {
+    marginTop: 0,
+    marginBottom: 20,
   },
   field: {
     marginBottom: 18,

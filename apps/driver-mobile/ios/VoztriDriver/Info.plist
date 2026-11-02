@@ -38,7 +38,10 @@
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>O rastreamento contínuo em segundo plano é fundamental para que você receba solicitações de corrida mesmo com outros navegadores em primeiro plano.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Acesso à câmera para captura de fotos da CNH, CRLV e validação de segurança.</string>
+	<string>Acesso à câmera para a sua foto de perfil e, no cadastro, para as fotos da CNH e do CRLV.</string>
+	<!-- Galeria: o seletor do iOS 14+ não pede permissão, mas a chave é exigida para versões anteriores -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Acesso às suas fotos para você escolher a foto do seu perfil.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

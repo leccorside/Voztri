@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Alert, Platform, Text, View } from 'react-native';
 import renderer, { act, ReactTestRenderer } from 'react-test-renderer';
 import type { ChatMessage, FareEstimate, Ride } from '@voztri/shared-types';
 import { App } from '../src/App';
@@ -23,7 +23,17 @@ jest.mock('../src/api', () => ({
   session: { load: jest.fn(), save: jest.fn(), clear: jest.fn() },
   activeRideMemory: { load: jest.fn(), save: jest.fn(), clear: jest.fn() },
   onUnauthorized: jest.fn(),
-  authApi: { requestOtp: jest.fn(), verifyOtp: jest.fn(), getMe: jest.fn(), updateProfile: jest.fn() },
+  authApi: {
+    requestOtp: jest.fn(),
+    verifyOtp: jest.fn(),
+    getMe: jest.fn(),
+    updateProfile: jest.fn(),
+    uploadAvatar: jest.fn(),
+    removeAvatar: jest.fn(),
+  },
+  // Como o real: caminho da API ganha a origem; endereço completo fica igual
+  mediaUrl: (url: string | null | undefined) => (!url ? null : url.startsWith('/') ? `http://api.test${url}` : url),
+  currentToken: () => 'token-salvo',
   geoApi: { reverse: jest.fn(), search: jest.fn() },
   placesApi: { list: jest.fn(), save: jest.fn(), remove: jest.fn(), recent: jest.fn(), removeRecent: jest.fn(), clearRecent: jest.fn() },
   passengerApi: { setEmergencyPin: jest.fn() },
@@ -75,7 +85,7 @@ type Mocks<K extends string> = Record<K, jest.Mock>;
 const m = api as unknown as {
   session: Mocks<'load' | 'save' | 'clear'>;
   activeRideMemory: Mocks<'load' | 'save' | 'clear'>;
-  authApi: Mocks<'requestOtp' | 'verifyOtp' | 'getMe' | 'updateProfile'>;
+  authApi: Mocks<'requestOtp' | 'verifyOtp' | 'getMe' | 'updateProfile' | 'uploadAvatar' | 'removeAvatar'>;
   rideApi: Mocks<
     'getEstimates' | 'requestRide' | 'getRide' | 'cancelRide' | 'getChatMessages' | 'sendChatMessage' | 'triggerSos' | 'cancelSos'
   >;
@@ -419,6 +429,16 @@ describe('passenger-mobile integrado à API', () => {
     expect(visibleText(tree)).toContain('Seu motorista está a caminho');
   });
 
+  it('mostra a foto do motorista na corrida (o passageiro confere quem vai buscá-lo)', async () => {
+    const base = ride('DRIVER_EN_ROUTE');
+    serverRide = { ...base, driver: { ...base.driver!, user: { ...base.driver!.user, avatarUrl: '/api/v1/users/u-carlos/avatar?v=9' } } };
+    await renderLoggedIn('ride-1');
+
+    const image = tree.root.find((n) => n.props.source?.uri === 'http://api.test/api/v1/users/u-carlos/avatar?v=9');
+    expect(image.props.source.headers).toEqual({ Authorization: 'Bearer token-salvo' });
+    expect(visibleText(tree)).toContain('Carlos Eduardo Silva');
+  });
+
   it('mostra erro e permite tentar de novo quando a estimativa falha', async () => {
     await renderLoggedIn();
     m.rideApi.getEstimates.mockRejectedValueOnce({ message: 'Sem conexão com a API.' });
@@ -483,6 +503,29 @@ describe('passenger-mobile integrado à API', () => {
     alertSpy.mockRestore();
   });
 
+  it('menu da conta: no Android só 3 botões (o Alert descarta o 4º) e fecha tocando fora', async () => {
+    const originalOS = Platform.OS;
+    const setOS = (os: string) => Object.defineProperty(Platform, 'OS', { configurable: true, get: () => os });
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    try {
+      await renderLoggedIn();
+
+      setOS('android');
+      await pressAsync(tree, /^Conta de Beatriz Lima/);
+      let [, , buttons, options] = alertSpy.mock.calls[0]!;
+      expect(buttons?.map((b) => b.text)).toEqual(['Meu perfil', 'Trocar PIN de emergência', 'Sair da conta']);
+      expect(options).toEqual({ cancelable: true });
+
+      setOS('ios');
+      await pressAsync(tree, /^Conta de Beatriz Lima/);
+      [, , buttons] = alertSpy.mock.calls[1]!;
+      expect(buttons?.map((b) => b.text)).toEqual(['Meu perfil', 'Trocar PIN de emergência', 'Sair da conta', 'Cancelar']);
+    } finally {
+      setOS(originalOS);
+      alertSpy.mockRestore();
+    }
+  });
+
   describe('Meu perfil (PUT /auth/profile)', () => {
     /** Abre "Meu perfil" pelo menu da conta no avatar. */
     async function openProfile() {
@@ -529,6 +572,48 @@ describe('passenger-mobile integrado à API', () => {
       expect(visibleText(tree)).toContain('Este e-mail já está em uso por outra conta.');
       expect(usePassengerStore.getState().user?.email).toBeUndefined();
       expect(usePassengerStore.getState().error).toBeNull();
+    });
+
+    it('foto pela galeria: envia, mostra no perfil e no avatar da tela inicial', async () => {
+      const picker = jest.requireMock('react-native-image-picker') as Record<'launchImageLibrary', jest.Mock>;
+      picker.launchImageLibrary.mockResolvedValueOnce({ assets: [{ uri: 'file:///cache/eu.jpg', fileName: 'eu.jpg', type: 'image/jpeg' }] });
+      m.authApi.uploadAvatar.mockResolvedValueOnce('/api/v1/users/u-bia/avatar?v=abc123');
+      await renderLoggedIn();
+      await openProfile();
+
+      await pressAsync(tree, 'Escolher da galeria');
+      expect(m.authApi.uploadAvatar).toHaveBeenCalledWith({ uri: 'file:///cache/eu.jpg', name: 'eu.jpg', type: 'image/jpeg' });
+      expect(visibleText(tree)).toContain('Foto atualizada.');
+
+      await pressAsync(tree, 'Voltar');
+      // Caminho da API completado com a origem e carregado com o token (a foto exige login)
+      const image = tree.root.find((n) => n.props.source?.uri === 'http://api.test/api/v1/users/u-bia/avatar?v=abc123');
+      expect(image.props.source.headers).toEqual({ Authorization: 'Bearer token-salvo' });
+    });
+
+    it('foto recusada pela API: a mensagem do campo aparece', async () => {
+      const picker = jest.requireMock('react-native-image-picker') as Record<'launchImageLibrary', jest.Mock>;
+      picker.launchImageLibrary.mockResolvedValueOnce({ assets: [{ uri: 'file:///x.png', fileName: 'x.png', type: 'image/png' }] });
+      m.authApi.uploadAvatar.mockRejectedValueOnce({ message: 'x', fields: { photo: 'A foto precisa ter pelo menos 128 × 128 pixels.' } });
+      await renderLoggedIn();
+      await openProfile();
+      await pressAsync(tree, 'Escolher da galeria');
+
+      expect(visibleText(tree)).toContain('A foto precisa ter pelo menos 128 × 128 pixels.');
+      expect(usePassengerStore.getState().user?.avatarUrl).toBeUndefined();
+    });
+
+    it('remover a foto volta às iniciais', async () => {
+      m.authApi.removeAvatar.mockResolvedValueOnce(undefined);
+      await renderLoggedIn(null, { ...PASSENGER, avatarUrl: '/api/v1/users/u-bia/avatar?v=1' });
+      await openProfile();
+      await pressAsync(tree, 'Remover foto');
+
+      expect(m.authApi.removeAvatar).toHaveBeenCalled();
+      expect(usePassengerStore.getState().user?.avatarUrl).toBeNull();
+      await pressAsync(tree, 'Voltar');
+      expect(tree.root.findAll((n) => n.props.source?.uri)).toHaveLength(0);
+      expect(visibleText(tree)).toContain('BL');
     });
 
     it('voltar sem salvar não chama a API', async () => {

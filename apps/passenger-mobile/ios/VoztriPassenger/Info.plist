@@ -38,6 +38,9 @@
 	<string>O VOZTRI utiliza sua localização para exibir o mapa, calcular rotas precisas e conectar você aos motoristas mais próximos.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>O VOZTRI necessita de acesso à câmera para leitura de QR Code Pix e fotos de perfil.</string>
+	<!-- Galeria: o seletor do iOS 14+ não pede permissão, mas a chave é exigida para versões anteriores -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Acesso às suas fotos para você escolher a foto do seu perfil.</string>
 	<!-- Sem "location": o passageiro não usa GPS em segundo plano. "remote-notification"
 	     fica: o push (@voztri/mobile-core) registra o setBackgroundMessageHandler -->
 	<key>UIBackgroundModes</key>

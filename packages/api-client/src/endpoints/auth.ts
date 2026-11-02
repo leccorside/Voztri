@@ -8,6 +8,14 @@ export interface OtpResponse {
   debugOtp: string | null;
 }
 
+/** Foto escolhida no aparelho (arquivo local do seletor de imagens). */
+export interface PhotoFile {
+  uri: string;
+  name: string;
+  /** Tipo MIME, ex.: image/jpeg. */
+  type: string;
+}
+
 /** Campos que o usuário edita na tela "Meu perfil". */
 export interface ProfileChanges {
   name?: string;
@@ -107,5 +115,27 @@ export class AuthApi {
   async updateProfile(changes: ProfileChanges): Promise<User> {
     const res = await this.client.put<{ message: string; user: RawUser }>('/auth/profile', changes);
     return normalizeUser(res.data.user);
+  }
+
+  /**
+   * Envia ou troca a foto do perfil (multipart, campo `photo`; JPEG ou PNG até 2 MB).
+   * Devolve o novo `avatarUrl`, um caminho da API (/api/v1/users/{id}/avatar?v=...).
+   * Erros 422 trazem a mensagem em português em `errors.photo`.
+   */
+  async uploadAvatar(photo: PhotoFile): Promise<string | null> {
+    const form = new FormData();
+    // Formato de arquivo do React Native no FormData: { uri, name, type }
+    form.append('photo', { uri: photo.uri, name: photo.name, type: photo.type } as unknown as Blob);
+    const res = await this.client.post<{ avatarUrl: string | null }>('/auth/avatar', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      // Foto em rede móvel pode demorar mais que o padrão de 15 s
+      timeout: 60_000,
+    });
+    return res.data.avatarUrl;
+  }
+
+  /** Tira a foto do perfil. */
+  async removeAvatar(): Promise<void> {
+    await this.client.delete('/auth/avatar');
   }
 }

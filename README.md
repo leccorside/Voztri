@@ -431,7 +431,7 @@ Os testes substituem a camada de API por mocks e percorrem o fluxo completo de c
 | Redis | `localhost:6380` | Cache e posição de motoristas |
 | Mailpit (SMTP) | `localhost:1026` | Recebimento de e-mails em desenvolvimento |
 | Mailpit (interface) | `http://localhost:8026` | Visualização de e-mails em desenvolvimento |
-| MinIO (API S3) | `http://localhost:9010` | Armazenamento de objetos |
+| MinIO (API S3) | `http://localhost:9010` | Armazenamento de objetos (bucket privado `voztri-media`, criado no primeiro envio; as fotos do perfil são servidas pela API) |
 | MinIO Console | `http://localhost:9011` | Gestão de objetos e documentos |
 
 Sem porta exposta, dois contêineres rodam o trabalho em segundo plano do Laravel: o `worker` (`queue:work`, executa os jobs da fila: push, timeout da busca) e o `scheduler` (`schedule:work`, dispara as tarefas agendadas de `backend/routes/console.php`, como a limpeza diária do histórico de destinos com mais de 90 dias, e as coloca na fila do `worker`). Em produção, o `scheduler` equivale a um cron com `php artisan schedule:run` a cada minuto.

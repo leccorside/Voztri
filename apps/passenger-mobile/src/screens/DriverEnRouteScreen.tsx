@@ -2,18 +2,13 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
 import { usePassengerStore } from '../store/passengerStore.js';
-import { Button, shadow } from '@voztri/mobile-core';
+import { Avatar, Button, shadow } from '@voztri/mobile-core';
+import { currentToken, mediaUrl } from '../api.js';
 
 interface Props {
   onOpenChat: () => void;
   onOpenSos: () => void;
   onCancel: () => void;
-}
-
-function initials(name: string | undefined): string {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : '')).toUpperCase();
 }
 
 const STATUS_TEXT: Record<string, { label: string; title: string }> = {
@@ -83,9 +78,8 @@ export const DriverEnRouteScreen: React.FC<Props> = ({ onOpenChat, onOpenSos, on
 
         <View style={styles.driverRow}>
           <View style={styles.driver}>
-            <View style={styles.avatar}>
-              <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>{initials(driverName)}</Text>
-            </View>
+            {/* Foto do motorista: o passageiro confere quem vai buscá-lo */}
+            <Avatar name={driverName} uri={mediaUrl(driver?.user?.avatarUrl)} token={currentToken()} size={50} />
             <View>
               <Text style={styles.driverName}>{driverName}</Text>
               {rating != null && <Text style={styles.driverMeta}>★ {rating.toFixed(2).replace('.', ',')}</Text>}
@@ -251,18 +245,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 999,
-    backgroundColor: '#ECECFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontWeight: '800',
-    fontSize: 18,
   },
   driverName: {
     fontSize: 16,

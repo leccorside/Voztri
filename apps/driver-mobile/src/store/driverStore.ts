@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { DriverEarningsSummary, DriverRideOffer, Ride, User } from '@voztri/shared-types';
-import type { ProfileFields, ProfileSaveResult } from '@voztri/mobile-core';
+import type { PickedPhoto, ProfileFields, ProfileSaveResult } from '@voztri/mobile-core';
 import {
   apiErrorCode,
   authApi,
@@ -101,6 +101,10 @@ export interface DriverState {
   dismissError: () => void;
   /** Salva nome e e-mail (só os alterados); erros por campo voltam para a tela. */
   updateProfile: (changes: Partial<ProfileFields>) => Promise<ProfileSaveResult>;
+  /** Envia ou troca a foto do perfil; devolve null ou a mensagem de erro. */
+  uploadAvatar: (photo: PickedPhoto) => Promise<string | null>;
+  /** Tira a foto do perfil; devolve null ou a mensagem de erro. */
+  removeAvatar: () => Promise<string | null>;
 
   /** Recebe uma posição do GPS e envia à API respeitando o intervalo mínimo. */
   reportPosition: (position: DevicePosition, force?: boolean) => Promise<void>;
@@ -461,6 +465,28 @@ export const useDriverStore = create<DriverState>((set, get) => {
     },
 
     dismissError: () => set({ error: null }),
+
+    uploadAvatar: async (photo) => {
+      try {
+        const avatarUrl = await authApi.uploadAvatar(photo);
+        const user = get().user;
+        if (user) set({ user: { ...user, avatarUrl } });
+        return null;
+      } catch (err) {
+        return fieldErrors(err).photo ?? errorMessage(err);
+      }
+    },
+
+    removeAvatar: async () => {
+      try {
+        await authApi.removeAvatar();
+        const user = get().user;
+        if (user) set({ user: { ...user, avatarUrl: null } });
+        return null;
+      } catch (err) {
+        return errorMessage(err);
+      }
+    },
 
     updateProfile: async (changes) => {
       set({ busy: true, error: null });

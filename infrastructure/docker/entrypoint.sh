@@ -33,6 +33,12 @@ fi
 mkdir -p storage/framework/cache/data storage/framework/sessions \
          storage/framework/views storage/logs bootstrap/cache
 
+# O PHP-FPM roda como www-data, mas artisan, tinker, worker e scheduler rodam como
+# root: o log criado por eles (644, dono root) não aceitava escrita do FPM, e qualquer
+# pedido da API que registrasse algo virava erro 500 ("Permission denied").
+touch storage/logs/laravel.log
+chmod 666 storage/logs/laravel.log 2>/dev/null || true
+
 # Cria arquivo sqlite para testes/fallback se necessário
 touch database/database.sqlite 2>/dev/null || true
 

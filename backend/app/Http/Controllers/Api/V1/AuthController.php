@@ -220,7 +220,7 @@ class AuthController extends Controller
             'phone' => $user->phone,
             'email' => $user->email,
             'cpf' => $user->cpf,
-            'avatar_url' => $user->avatar_url,
+            'avatar_url' => $user->avatarUrl(),
             'role' => $user->role,
             'status' => $user->status,
             ...$this->emergencyPinStatus($user),

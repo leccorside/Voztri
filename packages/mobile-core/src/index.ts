@@ -5,5 +5,7 @@ export * from './errors.js';
 export * from './mobileApi.js';
 export * from './hooks/usePolling.js';
 export * from './ui/kit.js';
+export * from './ui/Avatar.js';
+export * from './media.js';
 export * from './screens/OtpLoginScreen.js';
 export * from './screens/ProfileScreen.js';

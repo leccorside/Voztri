@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { AddressLocation, ChatMessage, FareEstimate, PaymentMethodType, Ride, RideStatus, User } from '@voztri/shared-types';
 import type { RecentDestination, SavedPlaceKind, SavedPlaces } from '@voztri/api-client';
-import type { ProfileFields, ProfileSaveResult } from '@voztri/mobile-core';
+import type { PickedPhoto, ProfileFields, ProfileSaveResult } from '@voztri/mobile-core';
 import {
   activeRideMemory,
   passengerApi,
@@ -125,6 +125,10 @@ export interface PassengerState {
   updateProfile: (changes: Partial<ProfileFields>) => Promise<ProfileSaveResult>;
   /** Abre ou fecha "Meu perfil" (menu da conta). */
   setProfileOpen: (open: boolean) => void;
+  /** Envia ou troca a foto do perfil; devolve null ou a mensagem de erro. */
+  uploadAvatar: (photo: PickedPhoto) => Promise<string | null>;
+  /** Tira a foto do perfil; devolve null ou a mensagem de erro. */
+  removeAvatar: () => Promise<string | null>;
   finishRideEvaluation: (evaluation: { rating: number; tipCents?: number; tags?: string[] }) => Promise<void>;
   dismissError: () => void;
 }
@@ -679,6 +683,28 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
     },
 
     setProfileOpen: (open) => set({ profileOpen: open }),
+
+    uploadAvatar: async (photo) => {
+      try {
+        const avatarUrl = await authApi.uploadAvatar(photo);
+        const user = get().user;
+        if (user) set({ user: { ...user, avatarUrl } });
+        return null;
+      } catch (err) {
+        return fieldErrors(err).photo ?? errorMessage(err);
+      }
+    },
+
+    removeAvatar: async () => {
+      try {
+        await authApi.removeAvatar();
+        const user = get().user;
+        if (user) set({ user: { ...user, avatarUrl: null } });
+        return null;
+      } catch (err) {
+        return errorMessage(err);
+      }
+    },
 
     finishRideEvaluation: async ({ rating, tipCents, tags }) => {
       const ride = get().activeRide;

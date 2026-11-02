@@ -17,13 +17,85 @@ afterEach(() => {
 
 const USER = { name: 'Beatriz Lima', email: 'bia@exemplo.com', phone: '11999991111' };
 
-function render(save: jest.Mock = jest.fn(async (): Promise<ProfileSaveResult> => ({ ok: true })), user = USER) {
+function render(
+  save: jest.Mock = jest.fn(async (): Promise<ProfileSaveResult> => ({ ok: true })),
+  user = USER,
+  photo: { uri: string | null; token: string | null } = { uri: null, token: 'tk' },
+) {
   const onBack = jest.fn();
+  const uploadPhoto = jest.fn(async () => null as string | null);
+  const removePhoto = jest.fn(async () => null as string | null);
   act(() => {
-    tree = renderer.create(<ProfileScreen user={user} save={save} onBack={onBack} busy={false} />);
+    tree = renderer.create(
+      <ProfileScreen
+        user={user}
+        save={save}
+        onBack={onBack}
+        busy={false}
+        photo={photo}
+        uploadPhoto={uploadPhoto}
+        removePhoto={removePhoto}
+      />,
+    );
   });
-  return { save, onBack };
+  return { save, onBack, uploadPhoto, removePhoto };
 }
+
+const picker = jest.requireMock('react-native-image-picker') as Record<'launchCamera' | 'launchImageLibrary', jest.Mock>;
+const PICKED = { assets: [{ uri: 'file:///cache/foto.jpg', fileName: 'foto.jpg', type: 'image/jpeg' }] };
+
+describe('foto do perfil', () => {
+  it('sem foto: iniciais e sem "Remover foto"; com foto: imagem com o token', () => {
+    render();
+    expect(visibleText(tree)).toContain('BL');
+    expect(visibleText(tree)).not.toContain('Remover foto');
+    act(() => tree.unmount());
+
+    render(undefined, USER, { uri: 'http://api.test/api/v1/users/u/avatar?v=1', token: 'tk' });
+    const image = tree.root.find((n) => n.props.source?.uri);
+    expect(image.props.source).toEqual({
+      uri: 'http://api.test/api/v1/users/u/avatar?v=1',
+      headers: { Authorization: 'Bearer tk' },
+    });
+    expect(visibleText(tree)).toContain('Remover foto');
+  });
+
+  it('galeria: envia a foto escolhida e avisa', async () => {
+    picker.launchImageLibrary.mockResolvedValueOnce(PICKED);
+    const { uploadPhoto } = render();
+    await pressAsync(tree, 'Escolher da galeria');
+
+    expect(picker.launchImageLibrary).toHaveBeenCalledWith(expect.objectContaining({ mediaType: 'photo', maxWidth: 1024, maxHeight: 1024 }));
+    expect(uploadPhoto).toHaveBeenCalledWith({ uri: 'file:///cache/foto.jpg', name: 'foto.jpg', type: 'image/jpeg' });
+    expect(visibleText(tree)).toContain('Foto atualizada.');
+  });
+
+  it('câmera frontal; cancelar não envia nada', async () => {
+    const { uploadPhoto } = render();
+    await pressAsync(tree, 'Tirar foto'); // padrão do mock: cancelado
+
+    expect(picker.launchCamera).toHaveBeenCalledWith(expect.objectContaining({ cameraType: 'front', saveToPhotos: false }));
+    expect(uploadPhoto).not.toHaveBeenCalled();
+    expect(visibleText(tree)).not.toContain('Foto atualizada.');
+  });
+
+  it('erro da API no envio aparece na tela', async () => {
+    picker.launchImageLibrary.mockResolvedValueOnce(PICKED);
+    const { uploadPhoto } = render();
+    uploadPhoto.mockResolvedValueOnce('A foto pode ter no máximo 2 MB.');
+    await pressAsync(tree, 'Escolher da galeria');
+
+    expect(visibleText(tree)).toContain('A foto pode ter no máximo 2 MB.');
+  });
+
+  it('remover chama removePhoto e avisa', async () => {
+    const { removePhoto } = render(undefined, USER, { uri: 'http://x/a.jpg', token: null });
+    await pressAsync(tree, 'Remover foto');
+
+    expect(removePhoto).toHaveBeenCalled();
+    expect(visibleText(tree)).toContain('Foto removida.');
+  });
+});
 
 it('formatPhone: celular, fixo, com DDI e formato desconhecido', () => {
   expect(formatPhone('11999991111')).toBe('(11) 99999-1111');
