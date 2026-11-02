@@ -7,6 +7,10 @@ use App\Models\Passenger;
 use App\Models\RecentDestination;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Bus\UniqueLock;
+use Illuminate\Cache\RedisStore;
+use Illuminate\Contracts\Cache\Repository as CacheRepository;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Console\Scheduling\CacheEventMutex;
 use Illuminate\Console\Scheduling\CacheSchedulingMutex;
 use Illuminate\Console\Scheduling\Event;
@@ -224,6 +228,43 @@ class RecentDestinationsTest extends TestCase
         $scheduling = (new \ReflectionProperty(Schedule::class, 'schedulingMutex'))->getValue(app(Schedule::class));
         $this->assertInstanceOf(CacheSchedulingMutex::class, $scheduling);
         $this->assertSame('redis', $scheduling->store);
+    }
+
+    public function test_prune_job_is_unique_with_the_lock_in_redis(): void
+    {
+        $job = new PruneRecentDestinations;
+
+        $this->assertInstanceOf(ShouldBeUnique::class, $job);
+        $this->assertSame(3600, $job->uniqueFor);
+        // Redis mesmo com o CACHE_STORE=array dos testes
+        $this->assertInstanceOf(RedisStore::class, $job->uniqueVia()->getStore());
+    }
+
+    public function test_a_second_prune_is_discarded_while_one_is_queued_or_running(): void
+    {
+        $u = $this->passenger();
+        $this->usedDaysAgo($u, 'Vencido', 120);
+        $job = new PruneRecentDestinations;
+        // Na fila "sync" dos testes, o dispatch executa na hora; segurar a trava por
+        // fora equivale a outro job igual na fila ou rodando no worker
+        $lock = new UniqueLock(app(CacheRepository::class));
+
+        try {
+            $this->assertTrue($lock->acquire($job), 'Trava já presa no Redis (outro job em andamento?).');
+
+            PruneRecentDestinations::dispatch();
+            $this->pruneEvent()->run(app()); // o disparo agendado passa pelo mesmo controle
+            $this->assertSame(1, RecentDestination::count(), 'Com a trava presa, nenhum disparo executa.');
+
+            $lock->release($job);
+            $this->pruneEvent()->run(app());
+            $this->assertSame(0, RecentDestination::count());
+
+            // Ao terminar, o job solta a trava: o próximo disparo pode rodar
+            $this->assertTrue($lock->acquire($job));
+        } finally {
+            $lock->release($job);
+        }
     }
 
     public function test_redis_locks_block_a_second_server_and_an_overlapping_run(): void
