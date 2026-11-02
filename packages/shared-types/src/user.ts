@@ -13,6 +13,8 @@ export interface User {
   status: UserStatus;
   createdAt: string;
   updatedAt: string;
+  /** Só passageiros: se já definiu o PIN de emergência (o PIN em si nunca vem da API). */
+  hasEmergencyPin?: boolean;
 }
 
 export interface UserProfile {

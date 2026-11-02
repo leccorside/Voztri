@@ -10,14 +10,16 @@ interface Props {
 export const SosModal: React.FC<Props> = ({ onClose }) => {
   const { isSosActive, triggerSos, cancelSos, busy } = usePassengerStore();
   const [pin, setPin] = useState('');
-  const [error, setError] = useState(false);
+  // PIN errado, tentativas esgotadas (o alerta segue ativo) ou falha de rede
+  const [error, setError] = useState<string | null>(null);
 
   const handleCancelSos = async () => {
-    if (await cancelSos(pin)) {
+    const failure = await cancelSos(pin);
+    if (!failure) {
       onClose();
     } else {
       setPin('');
-      setError(true);
+      setError(failure);
     }
   };
 
@@ -64,13 +66,13 @@ export const SosModal: React.FC<Props> = ({ onClose }) => {
               <TextInput
                 secureTextEntry
                 keyboardType="number-pad"
-                maxLength={6}
+                maxLength={4}
                 placeholder="PIN de emergência"
                 placeholderTextColor="#7B7489"
                 value={pin}
                 onChangeText={(text) => {
-                  setPin(text);
-                  setError(false);
+                  setPin(text.replace(/\D/g, ''));
+                  setError(null);
                 }}
                 onSubmitEditing={() => void handleCancelSos()}
                 accessibilityLabel="PIN de emergência"
@@ -79,7 +81,7 @@ export const SosModal: React.FC<Props> = ({ onClose }) => {
 
               {error && (
                 <Text style={styles.error} accessibilityLiveRegion="assertive">
-                  PIN incorreto! Verifique e tente novamente.
+                  {error}
                 </Text>
               )}
 

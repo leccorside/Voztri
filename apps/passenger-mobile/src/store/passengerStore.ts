@@ -3,6 +3,7 @@ import type { AddressLocation, ChatMessage, FareEstimate, PaymentMethodType, Rid
 import type { RecentDestination, SavedPlaceKind, SavedPlaces } from '@voztri/api-client';
 import {
   activeRideMemory,
+  passengerApi,
   placesApi,
   geoApi,
   apiErrorCode,
@@ -64,6 +65,8 @@ export interface PassengerState {
   placePicker: SavedPlaceKind | null;
   /** Últimos destinos da conta, mostrados na busca antes de digitar. */
   recentDestinations: RecentDestination[];
+  /** Troca do PIN de emergência aberta (a definição inicial depende só do user). */
+  changingPin: boolean;
   /** Push do andamento da corrida (off: ainda não ativado nesta sessão). */
   pushStatus: PushStatus | 'off';
 
@@ -105,7 +108,15 @@ export interface PassengerState {
   loadChat: () => Promise<void>;
   sendChat: (text: string) => Promise<void>;
   triggerSos: () => Promise<void>;
-  cancelSos: (pin: string) => Promise<boolean>;
+  /** Desativa o SOS com o PIN de emergência; devolve null ou a mensagem de erro. */
+  cancelSos: (pin: string) => Promise<string | null>;
+  /**
+   * Define (primeira vez) ou troca o PIN de emergência (para trocar, o atual);
+   * devolve null ou a mensagem de erro, mostrada na própria tela do PIN.
+   */
+  saveEmergencyPin: (pin: string, currentPin?: string) => Promise<string | null>;
+  /** Abre ou fecha a troca do PIN de emergência (menu da conta). */
+  setChangingPin: (open: boolean) => void;
   finishRideEvaluation: (evaluation: { rating: number; tipCents?: number; tags?: string[] }) => Promise<void>;
   dismissError: () => void;
 }
@@ -120,7 +131,8 @@ const DEFAULT_ORIGIN: AddressLocation = {
   state: 'SP',
 };
 
-const DRIVER_CANCELLED_MESSAGE = 'O motorista cancelou a corrida. Peça um novo motorista quando quiser.';
+const WRONG_PIN_MESSAGE = 'PIN incorreto! Verifique e tente novamente.';
+const DRIVER_CANCELLED_MESSAGE ='O motorista cancelou a corrida. Peça um novo motorista quando quiser.';
 /** A API encerra a busca depois de 3 min sem motorista (NO_DRIVER_AVAILABLE). */
 const NO_DRIVER_MESSAGE = 'Nenhum motorista disponível no momento. Tente de novo em instantes.';
 /** Quanto a solicitação espera o endereço do embarque antes de seguir com a coordenada. */
@@ -172,6 +184,7 @@ const signedOut = {
   recentDestinations: [] as RecentDestination[],
   selectedCategory: 'pop' as Category,
   selectedPaymentMethod: 'pix' as PaymentMethodType,
+  changingPin: false,
   pushStatus: 'off' as PushStatus | 'off',
   busy: false,
   error: null,
@@ -222,6 +235,11 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
       if (existing) {
         await activeRideMemory.save(existing.id);
         await applyRide(existing);
+      } else if (apiErrorCode(err) === 'EMERGENCY_PIN_REQUIRED') {
+        // Conta sem PIN (ex.: de antes da mudança): a tela de definição aparece no lugar,
+        // com a explicação; depois de salvar, a escolha da categoria continua onde estava
+        const user = get().user;
+        set({ user: user ? { ...user, hasEmergencyPin: false } : user });
       } else {
         set({ error: errorMessage(err) });
       }
@@ -607,19 +625,35 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
 
     cancelSos: async (pin) => {
       const ride = get().activeRide;
-      if (!ride) return false;
+      if (!ride) return 'Nenhuma corrida em andamento.';
       set({ busy: true, error: null });
       try {
         await rideApi.cancelSos(ride.id, pin);
         set({ isSosActive: false });
-        return true;
+        return null;
       } catch (err) {
-        if (apiErrorCode(err) !== 'INVALID_EMERGENCY_PIN') set({ error: errorMessage(err) });
-        return false;
+        // Mostrado no próprio modal do SOS (o aviso geral fica atrás dele)
+        return apiErrorCode(err) === 'INVALID_EMERGENCY_PIN' ? WRONG_PIN_MESSAGE : errorMessage(err);
       } finally {
         set({ busy: false });
       }
     },
+
+    saveEmergencyPin: async (pin, currentPin) => {
+      set({ busy: true, error: null });
+      try {
+        await passengerApi.setEmergencyPin(pin, currentPin);
+        const user = get().user;
+        set({ user: user ? { ...user, hasEmergencyPin: true } : user, changingPin: false });
+        return null;
+      } catch (err) {
+        return apiErrorCode(err) === 'INVALID_EMERGENCY_PIN' ? 'PIN atual incorreto.' : errorMessage(err);
+      } finally {
+        set({ busy: false });
+      }
+    },
+
+    setChangingPin: (open) => set({ changingPin: open }),
 
     finishRideEvaluation: async ({ rating, tipCents, tags }) => {
       const ride = get().activeRide;

@@ -56,10 +56,8 @@ class AuthController extends Controller
         }
 
         if ($role === 'passenger' && !$user->passenger) {
-            Passenger::create([
-                'user_id' => $user->id,
-                'emergency_pin' => '1234',
-            ]);
+            // Sem PIN de emergência: o próprio passageiro define no app antes da primeira corrida
+            Passenger::create(['user_id' => $user->id]);
         } elseif ($role === 'driver' && !$user->driver) {
             Driver::create([
                 'user_id' => $user->id,
@@ -200,6 +198,7 @@ class AuthController extends Controller
                 'role' => $user->role,
                 'status' => $user->status,
                 'avatar_url' => $user->avatar_url,
+                ...$this->emergencyPinStatus($user),
             ],
         ]);
     }
@@ -222,9 +221,21 @@ class AuthController extends Controller
             'role' => $user->role,
             'status' => $user->status,
             'profile' => $user->profile,
+            // O PIN de emergência fica oculto no model (hash); só se informa se existe
             'passenger' => $user->passenger,
             'driver' => $user->driver,
+            ...$this->emergencyPinStatus($user),
         ]);
+    }
+
+    /** Passageiro: { has_emergency_pin }; outros papéis: nada. */
+    private function emergencyPinStatus(User $user): array
+    {
+        if ($user->role !== 'passenger') {
+            return [];
+        }
+
+        return ['has_emergency_pin' => (bool) $user->passenger?->hasEmergencyPin()];
     }
 
     /**

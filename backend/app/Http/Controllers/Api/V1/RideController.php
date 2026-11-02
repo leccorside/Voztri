@@ -24,11 +24,17 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 
 class RideController extends Controller
 {
     /** Status em que a corrida ainda está em andamento (não terminal). */
     private const OPEN_STATUSES = ['REQUESTED', 'SEARCHING', 'OFFERED', 'ACCEPTED', 'DRIVER_EN_ROUTE', 'DRIVER_ARRIVED', 'IN_PROGRESS'];
+
+    /** Tentativas erradas de desativar o SOS antes de bloquear (por corrida). */
+    public const SOS_CANCEL_MAX_ATTEMPTS = 5;
+
+    public const SOS_CANCEL_DECAY_SECONDS = 15 * 60;
 
     public function __construct(
         private FareCalculator $fares,
@@ -82,7 +88,7 @@ class RideController extends Controller
             'paymentMethod' => 'required|string|in:pix,credit_card,cash,wallet',
         ]);
 
-        $passenger = Passenger::firstOrCreate(['user_id' => $user->id], ['emergency_pin' => '1234']);
+        $passenger = Passenger::firstOrCreate(['user_id' => $user->id]);
 
         $active = Ride::where('passenger_id', $passenger->id)->whereIn('status', self::OPEN_STATUSES)->first();
         if ($active) {
@@ -91,6 +97,15 @@ class RideController extends Controller
                 'error' => 'RIDE_ALREADY_ACTIVE',
                 'ride' => $this->presenter->present($active, $user),
             ], 409);
+        }
+
+        // Sem PIN, o passageiro não conseguiria desativar um SOS acionado na corrida
+        if (!$passenger->hasEmergencyPin()) {
+            return $this->error(
+                'Defina seu PIN de emergência antes de pedir a corrida. É com ele que você desativa o SOS.',
+                'EMERGENCY_PIN_REQUIRED',
+                409,
+            );
         }
 
         $o = $v['origin'];
@@ -487,10 +502,25 @@ class RideController extends Controller
             return $this->forbidden();
         }
 
-        $pin = (string) $ride->passenger->emergency_pin;
-        if ($pin === '' || !hash_equals($pin, $v['emergencyPin'])) {
+        // Contra força bruta (são só 10 mil PINs): com 5 erros, o alerta segue ativo
+        // por 15 min. Falhar aqui mantém o SOS ligado, que é o lado seguro.
+        $key = 'sos-cancel:' . $ride->id;
+        if (RateLimiter::tooManyAttempts($key, self::SOS_CANCEL_MAX_ATTEMPTS)) {
+            $minutes = max(1, (int) ceil(RateLimiter::availableIn($key) / 60));
+
+            return response()->json([
+                'message' => "Muitas tentativas com o PIN errado. O alerta continua ativo; tente de novo em {$minutes} min.",
+                'error' => 'TOO_MANY_ATTEMPTS',
+                'retryAfterSeconds' => RateLimiter::availableIn($key),
+            ], 429);
+        }
+
+        if (!$ride->passenger->checkEmergencyPin($v['emergencyPin'])) {
+            RateLimiter::hit($key, self::SOS_CANCEL_DECAY_SECONDS);
+
             return $this->error('PIN de segurança inválido.', 'INVALID_EMERGENCY_PIN', 422);
         }
+        RateLimiter::clear($key);
 
         SafetyIncident::where('ride_id', $ride->id)
             ->where('status', 'active')

@@ -18,7 +18,7 @@ Este documento registra todas as fases do desenvolvimento da plataforma **VOZTRI
 - [Fase 9: Qualidade, Testes de Concorrência, Segurança e Resiliência](#fase-9--qualidade-testes-de-concorrência-segurança-e-resiliência) — `CONCLUÍDO`
 - [Fase 10: Compilação Android, Release Builds e Permissões de Fundo](#fase-10--compilação-android-release-builds-e-permissões-de-fundo) — `CONCLUÍDO`
 - [Fase 11: Preparação Multiplataforma iOS e Conformidade](#fase-11--preparação-multiplataforma-ios-e-conformidade) — `CONCLUÍDO`
-- [Fase 12: Conta e Segurança do Usuário](#fase-12--conta-e-segurança-do-usuário) — `PENDENTE`
+- [Fase 12: Conta e Segurança do Usuário](#fase-12--conta-e-segurança-do-usuário) — `EM ANDAMENTO`
 - [Fase 13: Cadastro do Motorista no App](#fase-13--cadastro-do-motorista-no-app) — `PENDENTE`
 - [Fase 14: Pagamentos Reais, Gorjeta e Cupons](#fase-14--pagamentos-reais-gorjeta-e-cupons) — `PENDENTE`
 - [Fase 15: Mapas e Tempo Real nos Apps](#fase-15--mapas-e-tempo-real-nos-apps) — `PENDENTE`
@@ -209,10 +209,10 @@ Este documento registra todas as fases do desenvolvimento da plataforma **VOZTRI
 ---
 
 ### Fase 12 — Conta e Segurança do Usuário
-- **Status**: `PENDENTE`
+- **Status**: `EM ANDAMENTO`
 - **Objetivo**: Dar ao usuário controle sobre a própria conta e sobre o PIN que desativa o SOS, e cumprir a exigência das lojas de excluir a conta pelo app.
 - **Tarefas**:
-  - [ ] PIN de emergência definido pelo passageiro: hoje a API cria todo passageiro com `emergency_pin = '1234'` (`AuthController` e `RideController::requestRide`). Pedir o PIN no primeiro acesso (ou antes da primeira corrida), permitir a troca e guardar com hash.
+  - [x] PIN de emergência definido pelo passageiro (2026-11-02): passageiro novo nasce sem PIN e o app pede para criar no primeiro acesso; troca pelo menu da conta exigindo o PIN atual; guardado com hash e fora das respostas da API; PINs fáceis (0000, 1234, 4321) recusados; 5 erros bloqueiam por 15 min a troca e a desativação do SOS; a solicitação de corrida exige o PIN (`EMERGENCY_PIN_REQUIRED`).
   - [ ] Tela de perfil nos dois apps (nome, e-mail, foto), usando o `PUT /api/v1/auth/profile`, que já existe e não é chamado.
   - [ ] Exclusão de conta pelo app nos dois apps (exigida pela Google Play e pela App Store para apps com cadastro), com confirmação; apagar ou anonimizar os dados pessoais (Casa/Trabalho e histórico de destinos já saem no evento `deleted` do `User`).
   - [ ] Contatos de confiança do passageiro (citados no README e no protótipo do SOS): cadastro e aviso a eles quando o SOS é acionado.
@@ -329,7 +329,7 @@ Este documento registra todas as fases do desenvolvimento da plataforma **VOZTRI
   - [ ] Painel admin: nota média real no lugar do 4.88 fixo; endpoints de volume por categoria e de incidentes SOS.
   - [ ] Tipos do `shared-types` alinhados à API (camelCase nos tipos e snake_case nas respostas).
   - [ ] Helper de testes `rnTree.ts` em um só lugar (hoje há três cópias iguais).
-  - [ ] DOCUMENTACAO: corrigir o `POST /rides/{id}/sos`, que diz que o app envia o embarque "pois ainda não lê o GPS" (o app já envia a posição atual e só usa o embarque se o GPS falhar).
+  - [x] (2026-11-02, junto com o PIN da Fase 12) DOCUMENTACAO: corrigir o `POST /rides/{id}/sos`, que diz que o app envia o embarque "pois ainda não lê o GPS" (o app já envia a posição atual e só usa o embarque se o GPS falhar).
 - **Dependências**: Nenhuma.
 - **Critérios de Aceite**: Cada item fechado com teste e registro no `CONTEXTO.md`.
 - **Testes**: Os de cada item.

@@ -12,10 +12,13 @@ import { DriverEnRouteScreen } from './screens/DriverEnRouteScreen.js';
 import { ChatModal } from './screens/ChatModal.js';
 import { SosModal } from './screens/SosModal.js';
 import { TripCompletedModal } from './screens/TripCompletedModal.js';
+import { EmergencyPinScreen } from './screens/EmergencyPinScreen.js';
 
 export const App: React.FC = () => {
   const {
     sessionStatus,
+    user,
+    changingPin,
     currentStep,
     activeRide,
     error,
@@ -53,6 +56,19 @@ export const App: React.FC = () => {
       <SafeAreaView style={[styles.root, { backgroundColor: '#F4F6FA' }]}>
         <StatusBar barStyle="dark-content" backgroundColor="#F4F6FA" />
         <LoginScreen />
+      </SafeAreaView>
+    );
+  }
+
+  // Sem PIN de emergência, o passageiro define o dele antes de seguir (é ele que desativa
+  // o SOS). Uma corrida já em andamento (conta de antes da mudança) não é interrompida.
+  const pinMode = changingPin ? 'change' : user?.hasEmergencyPin === false && !activeRide ? 'create' : null;
+  if (pinMode) {
+    return (
+      <SafeAreaView style={[styles.root, { backgroundColor: '#FFFFFF' }]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        {connectionError && <Banner tone="warning" message={connectionError} />}
+        <EmergencyPinScreen key={pinMode} mode={pinMode} />
       </SafeAreaView>
     );
   }

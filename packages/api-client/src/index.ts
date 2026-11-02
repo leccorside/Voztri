@@ -7,4 +7,5 @@ export * from './endpoints/admin.js';
 export * from './endpoints/device.js';
 export * from './endpoints/geo.js';
 export * from './endpoints/places.js';
+export * from './endpoints/passenger.js';
 

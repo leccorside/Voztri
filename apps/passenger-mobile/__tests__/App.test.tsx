@@ -26,6 +26,7 @@ jest.mock('../src/api', () => ({
   authApi: { requestOtp: jest.fn(), verifyOtp: jest.fn(), getMe: jest.fn() },
   geoApi: { reverse: jest.fn(), search: jest.fn() },
   placesApi: { list: jest.fn(), save: jest.fn(), remove: jest.fn(), recent: jest.fn(), removeRecent: jest.fn(), clearRecent: jest.fn() },
+  passengerApi: { setEmergencyPin: jest.fn() },
   rideApi: {
     getEstimates: jest.fn(),
     requestRide: jest.fn(),
@@ -80,13 +81,15 @@ const m = api as unknown as {
   billingApi: Mocks<'submitRating'>;
   geoApi: Mocks<'reverse' | 'search'>;
   placesApi: Mocks<'list' | 'save' | 'remove' | 'recent' | 'removeRecent' | 'clearRecent'>;
+  passengerApi: Mocks<'setEmergencyPin'>;
 };
 const loc = location as unknown as Mocks<'requestLocationPermission' | 'getCurrentPosition'>;
 const pushMock = push as unknown as Mocks<'enablePush' | 'disablePush'>;
 /** Callback que o store passou ao enablePush (simula a chegada de um push da corrida). */
 let deliverPush: ((rideId: string) => void) | null = null;
 
-const PASSENGER = { id: 'u-bia', name: 'Beatriz Lima', role: 'passenger', status: 'active', phone: '11999991111' };
+// Já com PIN de emergência (o fluxo de definição tem testes próprios)
+const PASSENGER = { id: 'u-bia', name: 'Beatriz Lima', role: 'passenger', status: 'active', phone: '11999991111', hasEmergencyPin: true };
 
 const ESTIMATES: FareEstimate[] = [
   { category: 'pop', categoryName: 'VozTri Pop', priceCents: 1869, formattedPrice: 'R$ 18,69', estimatedMinutes: 10, distanceKm: 4.86, surgeMultiplier: 1, description: 'Pop' },
@@ -141,9 +144,9 @@ let chat: ChatMessage[];
 let tree: ReactTestRenderer;
 const initialState = usePassengerStore.getState();
 
-async function renderLoggedIn(storedRideId: string | null = null) {
+async function renderLoggedIn(storedRideId: string | null = null, user: object = PASSENGER) {
   m.session.load.mockResolvedValue('token-salvo');
-  m.authApi.getMe.mockResolvedValue(PASSENGER);
+  m.authApi.getMe.mockResolvedValue(user);
   m.activeRideMemory.load.mockResolvedValue(storedRideId);
   act(() => {
     tree = renderer.create(<App />);
@@ -210,6 +213,7 @@ beforeEach(() => {
   m.placesApi.recent.mockResolvedValue([]);
   m.placesApi.removeRecent.mockResolvedValue(undefined);
   m.placesApi.clearRecent.mockResolvedValue(undefined);
+  m.passengerApi.setEmergencyPin.mockResolvedValue({ hasEmergencyPin: true });
   // Praça da Sé: diferente da origem padrão, para provar que a estimativa usa o GPS
   loc.requestLocationPermission.mockResolvedValue('granted');
   loc.getCurrentPosition.mockResolvedValue(gpsAt(-23.55052, -46.633308));
@@ -463,16 +467,116 @@ describe('passenger-mobile integrado à API', () => {
     );
   });
 
-  it('sai da conta pelo avatar', async () => {
+  it('sai da conta pelo avatar (menu da conta → confirmação)', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
-      buttons?.find((b) => b.text === 'Sair')?.onPress?.();
+      // Menu da conta: "Sair da conta"; confirmação: "Sair"
+      buttons?.find((b) => b.text === 'Sair da conta' || b.text === 'Sair')?.onPress?.();
     });
     await renderLoggedIn();
     await pressAsync(tree, /^Conta de Beatriz Lima/);
     await settle();
+    expect(alertSpy).toHaveBeenCalledTimes(2);
+    expect(alertSpy.mock.calls[1][0]).toBe('Sair da conta');
     expect(m.session.clear).toHaveBeenCalled();
     expect(visibleText(tree)).toContain('Entrar na VOZTRI');
     alertSpy.mockRestore();
+  });
+
+  describe('PIN de emergência definido pelo passageiro', () => {
+    const NO_PIN = { ...PASSENGER, hasEmergencyPin: false };
+
+    const renderWithoutPin = () => renderLoggedIn(null, NO_PIN);
+
+    async function fillPin(fields: Record<string, string>) {
+      for (const [label, value] of Object.entries(fields)) await typeAsync(tree, label, value);
+      await pressAsync(tree, 'Salvar PIN');
+    }
+
+    it('sem PIN, o app pede para criar antes de seguir e salva na conta', async () => {
+      await renderWithoutPin();
+      expectNoStrayText(tree);
+      let text = visibleText(tree);
+      expect(text).toContain('Crie seu PIN de emergência');
+      expect(text).toContain('É com ele que você desativa o alerta SOS');
+      expect(text).not.toContain('Para onde vamos hoje?');
+
+      await fillPin({ 'PIN de emergência': '2580', 'Confirme o PIN': '2580' });
+
+      expect(m.passengerApi.setEmergencyPin).toHaveBeenCalledWith('2580', undefined);
+      expectNoStrayText(tree);
+      text = visibleText(tree);
+      expect(text).toContain('Para onde vamos hoje?');
+      expect(usePassengerStore.getState().user?.hasEmergencyPin).toBe(true);
+    });
+
+    it('a confirmação diferente não chama a API', async () => {
+      await renderWithoutPin();
+      await fillPin({ 'PIN de emergência': '2580', 'Confirme o PIN': '2589' });
+
+      expect(m.passengerApi.setEmergencyPin).not.toHaveBeenCalled();
+      expect(visibleText(tree)).toContain('Os dois PINs não são iguais. Digite de novo.');
+    });
+
+    it('PIN fácil recusado pela API: mostra o motivo e continua na tela', async () => {
+      m.passengerApi.setEmergencyPin.mockRejectedValueOnce({
+        code: 'WEAK_EMERGENCY_PIN',
+        message: 'Escolha um PIN mais difícil de adivinhar: sem números repetidos (0000) nem sequências (1234, 4321).',
+      });
+      await renderWithoutPin();
+      await fillPin({ 'PIN de emergência': '1234', 'Confirme o PIN': '1234' });
+
+      const text = visibleText(tree);
+      expect(text).toContain('Escolha um PIN mais difícil de adivinhar');
+      expect(text).toContain('Crie seu PIN de emergência');
+    });
+
+    it('só aceita dígitos e no máximo 4', async () => {
+      await renderWithoutPin();
+      await typeAsync(tree, 'PIN de emergência', '12a3456');
+      const input = tree.root.find((n) => n.props.accessibilityLabel === 'PIN de emergência' && n.props.onChangeText);
+      expect(input.props.value).toBe('1234');
+    });
+
+    it('troca pelo menu da conta exige o PIN atual', async () => {
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
+        buttons?.find((b) => b.text === 'Trocar PIN de emergência')?.onPress?.();
+      });
+      await renderLoggedIn();
+      await pressAsync(tree, /^Conta de Beatriz Lima/);
+      alertSpy.mockRestore();
+
+      expect(visibleText(tree)).toContain('Trocar PIN de emergência');
+      m.passengerApi.setEmergencyPin.mockRejectedValueOnce({ code: 'INVALID_EMERGENCY_PIN', message: 'PIN de emergência atual incorreto.' });
+      await fillPin({ 'PIN atual': '1111', 'Novo PIN': '3691', 'Confirme o PIN': '3691' });
+      expect(visibleText(tree)).toContain('PIN atual incorreto.');
+
+      await fillPin({ 'PIN atual': '2580', 'Novo PIN': '3691', 'Confirme o PIN': '3691' });
+      expect(m.passengerApi.setEmergencyPin).toHaveBeenLastCalledWith('3691', '2580');
+      expect(visibleText(tree)).toContain('Para onde vamos hoje?');
+    });
+
+    it('cancelar a troca volta ao início sem chamar a API', async () => {
+      await renderLoggedIn();
+      act(() => usePassengerStore.getState().setChangingPin(true));
+      await pressAsync(tree, 'Cancelar');
+
+      expect(m.passengerApi.setEmergencyPin).not.toHaveBeenCalled();
+      expect(visibleText(tree)).toContain('Para onde vamos hoje?');
+    });
+
+    it('a API exigindo o PIN na solicitação abre a criação e depois a corrida segue', async () => {
+      m.rideApi.requestRide.mockRejectedValueOnce({ code: 'EMERGENCY_PIN_REQUIRED', message: 'Defina seu PIN de emergência antes de pedir a corrida.' });
+      await renderLoggedIn();
+      await chooseFariaLima();
+      await pressAsync(tree, /^SOLICITAR VOZTRI POP/);
+
+      expect(visibleText(tree)).toContain('Crie seu PIN de emergência');
+      await fillPin({ 'PIN de emergência': '2580', 'Confirme o PIN': '2580' });
+
+      // De volta à escolha da categoria, com o mesmo destino
+      await pressAsync(tree, /^SOLICITAR VOZTRI POP/);
+      expect(m.rideApi.requestRide).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('endereços salvos (Casa e Trabalho)', () => {
@@ -1188,8 +1292,9 @@ describe('passenger-mobile integrado à API', () => {
       const order: string[] = [];
       pushMock.disablePush.mockImplementation(async () => void order.push('push'));
       m.session.clear.mockImplementation(async () => void order.push('session'));
+      // Menu da conta ("Sair da conta") e confirmação ("Sair")
       const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
-        buttons?.find((b) => b.text === 'Sair')?.onPress?.();
+        buttons?.find((b) => b.text === 'Sair da conta' || b.text === 'Sair')?.onPress?.();
       });
       await renderLoggedIn();
       await pressAsync(tree, /^Conta de Beatriz Lima/);

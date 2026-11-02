@@ -28,6 +28,7 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
     savedPlaces,
     setDestination,
     openPlacePicker,
+    setChangingPin,
   } = usePassengerStore();
 
   const pickupText =
@@ -41,6 +42,14 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
     Alert.alert('Sair da conta', 'Deseja sair da VOZTRI neste aparelho?', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Sair', style: 'destructive', onPress: () => void logout() },
+    ]);
+
+  // Menu da conta: trocar o PIN de emergência ou sair (com confirmação)
+  const openAccountMenu = () =>
+    Alert.alert(user?.name ?? 'Sua conta', undefined, [
+      { text: 'Trocar PIN de emergência', onPress: () => setChangingPin(true) },
+      { text: 'Sair da conta', style: 'destructive', onPress: confirmLogout },
+      { text: 'Cancelar', style: 'cancel' },
     ]);
 
   return (
@@ -60,9 +69,9 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
         </View>
 
         <Pressable
-          onPress={confirmLogout}
+          onPress={openAccountMenu}
           accessibilityRole="button"
-          accessibilityLabel={`Conta de ${user?.name ?? 'passageiro'}. Toque para sair`}
+          accessibilityLabel={`Conta de ${user?.name ?? 'passageiro'}. Toque para trocar o PIN de emergência ou sair`}
           style={({ pressed }) => [styles.avatar, pressed && styles.pressed]}
         >
           <Text style={[styles.avatarText, { color: VoztriColors.brand.primary }]}>{initials(user?.name)}</Text>

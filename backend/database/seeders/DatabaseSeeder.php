@@ -69,7 +69,8 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
         ]);
         UserProfile::create(['user_id' => $passengerUser->id, 'rating_avg' => 4.95, 'total_ratings' => 38]);
-        Passenger::create(['id' => Str::uuid(), 'user_id' => $passengerUser->id, 'emergency_pin' => '1234']);
+        // Sem PIN de emergência: o app pede para a passageira definir o dela no primeiro acesso
+        Passenger::create(['id' => Str::uuid(), 'user_id' => $passengerUser->id]);
 
         // 4. Motorista Homologado e Online
         $driverUser = User::create([

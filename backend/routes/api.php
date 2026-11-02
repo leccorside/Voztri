@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\GeoController;
 use App\Http\Controllers\Api\V1\SavedPlaceController;
 use App\Http\Controllers\Api\V1\RecentDestinationController;
+use App\Http\Controllers\Api\V1\EmergencyPinController;
 
 Route::prefix('v1')->group(function () {
     // Health Check
@@ -46,6 +47,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/geo/reverse', [GeoController::class, 'reverse'])->middleware('throttle:30,1');
         // Busca de destino pelo texto (o app espera a digitação parar antes de chamar)
         Route::get('/geo/search', [GeoController::class, 'search'])->middleware('throttle:60,1');
+
+        // PIN de emergência do passageiro (desativa o SOS); limite contra força bruta
+        Route::prefix('passenger')->middleware('role:passenger')->group(function () {
+            Route::get('/emergency-pin', [EmergencyPinController::class, 'show']);
+            Route::put('/emergency-pin', [EmergencyPinController::class, 'update'])->middleware('throttle:10,1');
+        });
 
         // Endereços salvos do passageiro (Casa e Trabalho) e histórico dos últimos destinos
         Route::prefix('places')->middleware('role:passenger')->group(function () {
