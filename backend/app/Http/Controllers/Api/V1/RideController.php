@@ -8,6 +8,7 @@ use App\Domain\Ride\Services\RideDispatcher;
 use App\Domain\Ride\Services\RideStateMachine;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\RidePresenter;
+use App\Jobs\ExpireRideSearch;
 use App\Jobs\SendRideStatusPush;
 use App\Models\Driver;
 use App\Models\FinancialLedger;
@@ -120,6 +121,10 @@ class RideController extends Controller
 
             $this->stateMachine->transition($ride, 'SEARCHING', $user->id);
             $this->dispatcher->offerNext($ride);
+            // Timeout da busca mesmo sem polling (app do passageiro minimizado)
+            ExpireRideSearch::dispatch($ride->id)
+                ->delay($this->dispatcher->searchDeadline($ride))
+                ->afterCommit();
 
             return $ride;
         });

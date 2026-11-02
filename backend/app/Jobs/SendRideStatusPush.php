@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Domain\Ride\Services\FareCalculator;
 use App\Domain\Ride\Services\RideDispatcher;
+use App\Http\Presenters\RidePresenter;
 use App\Infrastructure\Push\PushMessage;
 use App\Infrastructure\Push\PushNotifier;
 use App\Models\Ride;
@@ -21,7 +22,8 @@ use Illuminate\Support\Facades\DB;
  *   coloca a corrida a caminho, então é uma notificação só, e não duas);
  * - DRIVER_ARRIVED: o motorista chegou ao embarque;
  * - CANCELLED: só quando quem cancelou foi o motorista (o passageiro que cancela já sabe);
- * - COMPLETED: viagem concluída, com o total e o convite para avaliar.
+ * - COMPLETED: viagem concluída, com o total e o convite para avaliar;
+ * - NO_DRIVER_AVAILABLE: a busca venceu o prazo sem motorista (sem motorista atribuído).
  *
  * Todas usam a mesma tag por corrida: cada aviso substitui o anterior.
  */
@@ -33,6 +35,7 @@ class SendRideStatusPush implements ShouldQueue
     public const ARRIVED = 'DRIVER_ARRIVED';
     public const CANCELLED = 'CANCELLED';
     public const COMPLETED = 'COMPLETED';
+    public const NO_DRIVER = 'NO_DRIVER_AVAILABLE';
 
     /** Depois disso o aviso perde o sentido (a corrida já andou ou foi cancelada). */
     private const TTL_SECONDS = [
@@ -40,6 +43,7 @@ class SendRideStatusPush implements ShouldQueue
         self::ARRIVED => 600,
         self::CANCELLED => 1800,
         self::COMPLETED => 86400, // o convite para avaliar vale até o dia seguinte
+        self::NO_DRIVER => 1800,
     ];
 
     /** Já com a preposição: "Total: R$ 30,52 em dinheiro". */
@@ -58,7 +62,14 @@ class SendRideStatusPush implements ShouldQueue
     {
         $ride = Ride::with(['passenger.user', 'driver.user', 'driver.activeVehicle'])->find($this->rideId);
         // A corrida mudou antes de o job rodar (cancelada, já embarcou...): não avisar
-        if (!$ride || $ride->status !== $this->status || !$ride->passenger?->user || !$ride->driver) {
+        if (!$ride || $ride->status !== $this->status || !$ride->passenger?->user) {
+            return;
+        }
+        if ($this->status === self::NO_DRIVER) {
+            $this->sendNoDriver($push, $ride);
+            return;
+        }
+        if (!$ride->driver) {
             return;
         }
         // Cancelada pelo próprio passageiro (ou pelo sistema): não há o que avisar
@@ -102,6 +113,23 @@ class SendRideStatusPush implements ShouldQueue
             tag: "ride_{$ride->id}",
             // A conclusão não precisa acordar o aparelho; os outros avisos exigem ação
             urgent: $this->status !== self::COMPLETED,
+        ));
+    }
+
+    /** A busca terminou sem motorista: o passageiro pode pedir de novo. */
+    private function sendNoDriver(PushNotifier $push, Ride $ride): void
+    {
+        $category = FareCalculator::CATEGORIES[$ride->category]['categoryName'] ?? 'VOZTRI';
+
+        $push->sendToUser($ride->passenger->user, new PushMessage(
+            title: 'Nenhum motorista disponível',
+            body: "Não encontramos um motorista {$category} perto de " . RidePresenter::shortAddress($ride->pickup_address)
+                . '. Toque para tentar de novo.',
+            data: ['type' => 'ride_status', 'rideId' => $ride->id, 'status' => self::NO_DRIVER],
+            ttlSeconds: self::TTL_SECONDS[self::NO_DRIVER],
+            androidChannel: 'ride_updates',
+            tag: "ride_{$ride->id}",
+            urgent: true,
         ));
     }
 

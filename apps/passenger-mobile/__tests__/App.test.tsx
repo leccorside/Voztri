@@ -504,16 +504,34 @@ describe('passenger-mobile integrado à API', () => {
       expect(visibleText(tree)).toContain('Para onde vamos hoje?');
     });
 
-    it('ignora aviso de corrida sem motorista ou diferente da que está na tela', async () => {
+    it('busca encerrada sem motorista: volta ao início com aviso, pelo polling ou pelo push', async () => {
+      await renderLoggedIn();
+      await requestBlackRide();
+      expect(visibleText(tree)).toContain('Buscando o melhor motorista...');
+
+      // A API encerrou a busca (3 min sem motorista); o push chega antes do polling
+      serverRide = ride('NO_DRIVER_AVAILABLE');
+      await act(async () => deliverPush!('ride-1'));
+      await settle();
+      expectNoStrayText(tree);
+      expect(visibleText(tree)).toContain('Nenhum motorista disponível no momento. Tente de novo em instantes.');
+      expect(visibleText(tree)).toContain('Para onde vamos hoje?');
+      expect(m.activeRideMemory.clear).toHaveBeenCalled();
+    });
+
+    it('aberto pela notificação de busca sem motorista, sem corrida na tela, explica o que houve', async () => {
       await renderLoggedIn(null);
       serverRide = ride('NO_DRIVER_AVAILABLE');
       await act(async () => deliverPush!('ride-1'));
       await settle();
       expect(m.activeRideMemory.save).not.toHaveBeenCalled();
       expect(usePassengerStore.getState().activeRide).toBeNull();
-      expect(usePassengerStore.getState().error).toBeNull();
+      expect(visibleText(tree)).toContain('Nenhum motorista disponível no momento. Tente de novo em instantes.');
+      expect(visibleText(tree)).toContain('Para onde vamos hoje?');
+    });
 
-      // Com outra corrida em andamento, aviso antigo não troca a corrida
+    it('ignora aviso de uma corrida diferente da que está na tela', async () => {
+      await renderLoggedIn(null);
       serverRide = ride('DRIVER_EN_ROUTE');
       await act(async () => deliverPush!('ride-1'));
       await settle();

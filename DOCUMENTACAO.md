@@ -120,9 +120,9 @@ docker compose exec app php artisan migrate --seed
 
 1. O passageiro solicita: a corrida é oferecida ao motorista **online, aprovado, livre e da mesma categoria mais próximo** do embarque (`ride_offers`, validade de **15 s**).
 2. O app do motorista consulta `GET /driver/rides/current` a cada 3 s e mostra a oferta.
-3. Aceite → `DRIVER_EN_ROUTE`. Recusa ou expiração → volta para `SEARCHING` e vai ao próximo motorista (quem já recebeu essa corrida não a recebe de novo). Sem motoristas, fica em `SEARCHING` até o passageiro cancelar.
-4. O despacho não depende de worker: ofertas vencidas são tratadas no polling do passageiro (`GET /rides/{id}`) e do motorista.
-5. Cada oferta nova também gera um **push** para o motorista (job `SendRideOfferPush` na fila, depois do commit; ver abaixo). Só o push precisa do contêiner `worker`.
+3. Aceite → `DRIVER_EN_ROUTE`. Recusa ou expiração → volta para `SEARCHING` e vai ao próximo motorista (quem já recebeu essa corrida não a recebe de novo). Sem motoristas, a corrida fica em `SEARCHING` (e é reoferecida a quem ficar online) até o prazo da busca.
+4. **Timeout da busca:** **3 min** depois da solicitação (`RideDispatcher::SEARCH_TIMEOUT_SECONDS`), a corrida que estiver ou voltar a `SEARCHING` vira `NO_DRIVER_AVAILABLE` (histórico com `reason: search_timeout`) em vez de ir ao próximo motorista, e o passageiro recebe o push "Nenhum motorista disponível". Uma oferta válida no vencimento **não é interrompida**: se o motorista aceitar, a corrida segue; se recusar ou deixar vencer, a busca termina. O prazo é conferido no polling e por um job atrasado (`ExpireRideSearch`, agendado na solicitação para o vencimento e reagendado para logo depois da oferta em andamento), então funciona mesmo com o app do passageiro minimizado. Ofertas vencidas também são tratadas no polling do passageiro (`GET /rides/{id}`) e do motorista.
+5. Cada oferta nova também gera um **push** para o motorista (job `SendRideOfferPush` na fila, depois do commit; ver abaixo). O push e o timeout da busca sem polling precisam do contêiner `worker`.
 
 ### Notificações push (novas ofertas)
 
@@ -136,6 +136,7 @@ docker compose exec app php artisan migrate --seed
   - na **chegada** (automática pelo `/driver/location` com distância + precisão do GPS até 100 m, ou pelo `POST /rides/{id}/arrived` a até 300 m): "Seu motorista chegou" com "{Nome} está no embarque: carro • placa. Confira a placa antes de entrar." O PIN de embarque **não** vai na notificação (ficaria visível na tela bloqueada);
   - no **cancelamento pelo motorista** (`POST /rides/{id}/cancel` feito pelo motorista atribuído): "Corrida cancelada pelo motorista" com "{Nome} cancelou a corrida. Toque para pedir outro motorista." O **motivo digitado não vai na notificação** (texto livre, visível na tela bloqueada). O cancelamento pelo passageiro não gera push; o job confere `cancelled_by` mesmo se for disparado;
   - na **conclusão** (`POST /rides/{id}/complete`): "Viagem concluída" com "Total: R$ X no Pix / no cartão / em dinheiro / com o saldo da carteira. Toque para avaliar {Nome}.", em **prioridade normal** (as outras são urgentes);
+  - no **fim da busca sem motorista** (`NO_DRIVER_AVAILABLE`, ver o timeout acima): "Nenhum motorista disponível" com "Não encontramos um motorista {categoria} perto de {embarque}. Toque para tentar de novo." (urgente, validade de 30 min);
   - `data = { type: "ride_status", rideId, status }`; mesma tag/`apns-collapse-id` (`ride_{id}`), então cada aviso substitui o anterior da corrida; validade de 15 min (a caminho), 10 min (chegada), 30 min (cancelamento) e 24 h (conclusão). O job não envia se a corrida mudou de status antes de ele rodar.
   - O app do passageiro registra o token como o do motorista. Ao receber a mensagem com o app aberto, ou ao tocar na notificação, atualiza a corrida (cancelada → volta ao início com aviso; concluída → avaliação). Se não houver corrida na tela (app aberto pela notificação), passa a acompanhar a corrida do aviso se ainda estiver em andamento, abre a avaliação se estiver concluída e, se foi cancelada, mostra "O motorista cancelou a corrida. Peça um novo motorista quando quiser."
 

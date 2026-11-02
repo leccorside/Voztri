@@ -3,6 +3,7 @@
 namespace App\Domain\Ride\Services;
 
 use App\Jobs\SendRideOfferPush;
+use App\Jobs\SendRideStatusPush;
 use App\Models\Driver;
 use App\Models\Ride;
 use App\Models\RideOffer;
@@ -14,12 +15,20 @@ use Illuminate\Support\Facades\DB;
  *
  * Fluxo: SEARCHING -> (oferta a um motorista) OFFERED -> aceite (ACCEPTED) ou
  * recusa/expiração (volta a SEARCHING e a corrida vai ao próximo motorista).
- * Não há worker em segundo plano: refresh() é chamado pelo polling do
- * passageiro (GET /rides/{id}) e do motorista (GET /driver/rides/current).
+ * refresh() é chamado pelo polling do passageiro (GET /rides/{id}) e do
+ * motorista (GET /driver/rides/current).
+ *
+ * Timeout da busca: SEARCH_TIMEOUT_SECONDS depois da solicitação, a corrida que
+ * voltar a SEARCHING vira NO_DRIVER_AVAILABLE (e o passageiro recebe push) em vez
+ * de ir ao próximo motorista. Uma oferta em andamento no vencimento não é
+ * interrompida. O job ExpireRideSearch garante o timeout mesmo sem polling.
  */
 class RideDispatcher
 {
     public const OFFER_TIMEOUT_SECONDS = 15;
+
+    /** Tempo máximo de busca por motorista, contado da solicitação. */
+    public const SEARCH_TIMEOUT_SECONDS = 180;
 
     /** Posição mais antiga que isto é tratada como desconhecida no despacho. */
     public const LOCATION_MAX_AGE_MINUTES = 10;
@@ -61,6 +70,17 @@ class RideDispatcher
      */
     public function offerNext(Ride $ride): ?RideOffer
     {
+        // Prazo da busca vencido: encerra em vez de oferecer ao próximo
+        if ($ride->status === 'SEARCHING' && $this->searchDeadline($ride)->lessThanOrEqualTo(Carbon::now())) {
+            $this->stateMachine->transition($ride, 'NO_DRIVER_AVAILABLE', null, [
+                'reason' => 'search_timeout',
+                'timeout_seconds' => self::SEARCH_TIMEOUT_SECONDS,
+            ]);
+            SendRideStatusPush::dispatch($ride->id, SendRideStatusPush::NO_DRIVER)->afterCommit();
+
+            return null;
+        }
+
         $alreadyOffered = RideOffer::where('ride_id', $ride->id)->pluck('driver_id');
         $busy = Ride::whereIn('status', self::DRIVER_BUSY_STATUSES)->whereNotNull('driver_id')->pluck('driver_id');
         $withPendingOffer = RideOffer::where('status', 'sent')->where('expires_at', '>', Carbon::now())->pluck('driver_id');
@@ -112,6 +132,12 @@ class RideDispatcher
         SendRideOfferPush::dispatch($offer->id)->afterCommit();
 
         return $offer;
+    }
+
+    /** Até quando a corrida pode procurar motorista. */
+    public function searchDeadline(Ride $ride): Carbon
+    {
+        return Carbon::parse($ride->created_at)->addSeconds(self::SEARCH_TIMEOUT_SECONDS);
     }
 
     /** Oferta enviada e ainda não respondida da corrida (pode estar vencida). */

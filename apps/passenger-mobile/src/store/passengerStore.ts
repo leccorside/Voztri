@@ -93,6 +93,8 @@ const DEFAULT_ORIGIN: AddressLocation = {
 };
 
 const DRIVER_CANCELLED_MESSAGE = 'O motorista cancelou a corrida. Peça um novo motorista quando quiser.';
+/** A API encerra a busca depois de 3 min sem motorista (NO_DRIVER_AVAILABLE). */
+const NO_DRIVER_MESSAGE = 'Nenhum motorista disponível no momento. Tente de novo em instantes.';
 
 const OPEN_STATUSES: RideStatus[] = ['REQUESTED', 'SEARCHING', 'OFFERED', 'ACCEPTED', 'DRIVER_EN_ROUTE', 'DRIVER_ARRIVED', 'IN_PROGRESS'];
 
@@ -162,7 +164,7 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
       const byMe = get().activeRide === null;
       set({
         ...tripReset,
-        error: byMe ? null : ride.status === 'CANCELLED' ? 'A corrida foi cancelada.' : 'Nenhum motorista disponível no momento.',
+        error: byMe ? null : ride.status === 'CANCELLED' ? 'A corrida foi cancelada.' : NO_DRIVER_MESSAGE,
       });
       return;
     }
@@ -375,9 +377,10 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
       try {
         const ride = await rideApi.getRide(rideId);
         if (get().activeRide) return;
-        if (ride.status === 'CANCELLED') {
-          // Só o cancelamento pelo motorista gera push: avisa por que a corrida sumiu
-          set({ error: DRIVER_CANCELLED_MESSAGE, connectionError: null });
+        if (ride.status === 'CANCELLED' || ride.status === 'NO_DRIVER_AVAILABLE') {
+          // Só o cancelamento pelo motorista e o fim da busca geram push: explica o que houve
+          await activeRideMemory.clear();
+          set({ error: ride.status === 'CANCELLED' ? DRIVER_CANCELLED_MESSAGE : NO_DRIVER_MESSAGE, connectionError: null });
           return;
         }
         // Concluída: o aviso convida a avaliar (avaliação repetida é tratada no envio)

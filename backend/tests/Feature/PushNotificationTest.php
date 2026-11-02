@@ -6,6 +6,7 @@ use App\Infrastructure\Push\FcmPushNotifier;
 use App\Infrastructure\Push\NullPushNotifier;
 use App\Infrastructure\Push\PushMessage;
 use App\Infrastructure\Push\PushNotifier;
+use App\Jobs\ExpireRideSearch;
 use App\Jobs\SendRideOfferPush;
 use App\Jobs\SendRideStatusPush;
 use App\Models\Driver;
@@ -296,6 +297,127 @@ class PushNotificationTest extends TestCase
         (new SendRideStatusPush($rideId, SendRideStatusPush::COMPLETED))->handle($this->push, app(\App\Domain\Ride\Services\FareCalculator::class));
 
         $this->assertStringContainsString(' em dinheiro. Toque para avaliar Motorista.', $this->push->messagesFor($passenger)[1]->body);
+    }
+
+    // ------------------------------------------------------------ timeout da busca
+
+    private function getRide(User $user, string $rideId)
+    {
+        return $this->actingAs($user, 'sanctum')->getJson("/api/v1/rides/{$rideId}")->assertOk();
+    }
+
+    private function runExpireJob(string $rideId): void
+    {
+        (new ExpireRideSearch($rideId))->handle(app(\App\Domain\Ride\Services\RideDispatcher::class));
+    }
+
+    public function test_search_without_driver_times_out_after_3_minutes_with_push(): void
+    {
+        $passenger = $this->passenger();
+        $rideId = $this->requestRide($passenger); // nenhum motorista online
+
+        $this->travel(179)->seconds();
+        $this->getRide($passenger, $rideId)->assertJsonPath('status', 'SEARCHING');
+
+        $this->travel(2)->seconds();
+        $this->getRide($passenger, $rideId)->assertJsonPath('status', 'NO_DRIVER_AVAILABLE');
+
+        $messages = $this->push->messagesFor($passenger);
+        $this->assertCount(1, $messages);
+        $this->assertSame('Nenhum motorista disponível', $messages[0]->title);
+        $this->assertSame('Não encontramos um motorista VozTri Pop perto de Av. Paulista, 1578. Toque para tentar de novo.', $messages[0]->body);
+        $this->assertSame(['type' => 'ride_status', 'rideId' => $rideId, 'status' => 'NO_DRIVER_AVAILABLE'], $messages[0]->data);
+        $this->assertSame("ride_{$rideId}", $messages[0]->tag);
+        $this->assertTrue($messages[0]->urgent);
+
+        $history = \App\Models\RideStatusHistory::where('ride_id', $rideId)->where('to_status', 'NO_DRIVER_AVAILABLE')->firstOrFail();
+        $this->assertSame(['reason' => 'search_timeout', 'timeout_seconds' => 180], $history->metadata);
+
+        // Polling e job seguintes não repetem a transição nem o push
+        $this->getRide($passenger, $rideId)->assertJsonPath('status', 'NO_DRIVER_AVAILABLE');
+        $this->runExpireJob($rideId);
+        $this->assertCount(1, $this->push->messagesFor($passenger));
+    }
+
+    public function test_expire_job_ends_search_without_any_polling(): void
+    {
+        $passenger = $this->passenger();
+        $rideId = $this->requestRide($passenger);
+
+        // Antes do prazo (fila sem atraso): não mexe na corrida
+        $this->runExpireJob($rideId);
+        $this->assertSame('SEARCHING', $this->rideStatus($rideId));
+
+        $this->travel(181)->seconds();
+        $this->runExpireJob($rideId);
+        $this->assertSame('NO_DRIVER_AVAILABLE', $this->rideStatus($rideId));
+        $this->assertCount(1, $this->push->messagesFor($passenger));
+    }
+
+    public function test_offer_in_progress_at_deadline_is_not_interrupted(): void
+    {
+        $passenger = $this->passenger();
+        $rideId = $this->requestRide($passenger);
+
+        // Um motorista fica online aos 2:55 e recebe a oferta (vale até 3:10)
+        $this->travel(175)->seconds();
+        $driver = $this->driver('11922220001');
+        $this->getRide($passenger, $rideId)->assertJsonPath('status', 'OFFERED');
+
+        // 3:01: prazo vencido, mas a oferta segue válida
+        $this->travel(6)->seconds();
+        $this->runExpireJob($rideId);
+        $this->getRide($passenger, $rideId)->assertJsonPath('status', 'OFFERED');
+
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/accept")->assertOk()->assertJsonPath('status', 'DRIVER_EN_ROUTE');
+        $this->runExpireJob($rideId);
+        $this->assertSame('DRIVER_EN_ROUTE', $this->rideStatus($rideId));
+        $this->assertSame(['DRIVER_EN_ROUTE'], array_map(fn ($m) => $m->data['status'], $this->push->messagesFor($passenger)));
+    }
+
+    public function test_rejection_or_expiry_after_deadline_ends_search(): void
+    {
+        $passenger = $this->passenger();
+        $rideId = $this->requestRide($passenger);
+        $this->travel(175)->seconds();
+        $a = $this->driver('11922220001');
+        $this->driver('11922220002', -23.5700, -46.6600); // outro motorista livre, que não recebe a corrida
+        $this->getRide($passenger, $rideId)->assertJsonPath('status', 'OFFERED');
+
+        // Recusa depois do prazo: não vai ao próximo motorista
+        $this->travel(6)->seconds();
+        $this->actingAs($a, 'sanctum')->postJson("/api/v1/rides/{$rideId}/reject")->assertOk();
+        $this->assertSame('NO_DRIVER_AVAILABLE', $this->rideStatus($rideId));
+        $this->assertSame(1, RideOffer::where('ride_id', $rideId)->count());
+        $this->assertSame(['NO_DRIVER_AVAILABLE'], array_map(fn ($m) => $m->data['status'], $this->push->messagesFor($passenger)));
+    }
+
+    public function test_offer_expiring_after_deadline_ends_search_via_job(): void
+    {
+        $passenger = $this->passenger();
+        $rideId = $this->requestRide($passenger);
+        $this->travel(175)->seconds();
+        $this->driver('11922220001');
+        $this->getRide($passenger, $rideId)->assertJsonPath('status', 'OFFERED');
+
+        // Ninguém faz polling; a oferta vence aos 3:10 e o job confere de novo
+        $this->travel(16)->seconds();
+        $this->runExpireJob($rideId);
+        $this->assertSame('NO_DRIVER_AVAILABLE', $this->rideStatus($rideId));
+        $this->assertSame('expired', RideOffer::where('ride_id', $rideId)->value('status'));
+        $this->assertCount(1, $this->push->messagesFor($passenger));
+    }
+
+    public function test_cancelled_search_is_left_alone_by_the_job(): void
+    {
+        $passenger = $this->passenger();
+        $rideId = $this->requestRide($passenger);
+        $this->actingAs($passenger, 'sanctum')->postJson("/api/v1/rides/{$rideId}/cancel", ['reason' => 'Mudei de ideia'])->assertOk();
+
+        $this->travel(181)->seconds();
+        $this->runExpireJob($rideId);
+        $this->assertSame('CANCELLED', $this->rideStatus($rideId));
+        $this->assertCount(0, $this->push->messagesFor($passenger));
     }
 
     // ------------------------------------------------------------ chegada pela posição
