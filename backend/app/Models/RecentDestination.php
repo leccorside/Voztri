@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,9 @@ class RecentDestination extends Model
 
     /** Destinos a menos disso de um já guardado contam como o mesmo lugar. */
     public const SAME_PLACE_METERS = 50;
+
+    /** Prazo de retenção: destinos sem uso há mais que isso são apagados (PruneRecentDestinations). */
+    public const RETENTION_DAYS = 90;
 
     protected $fillable = ['user_id', 'address', 'short_address', 'city', 'state', 'latitude', 'longitude', 'used_at'];
 
@@ -60,6 +64,18 @@ class RecentDestination extends Model
 
         $keep = static::where('user_id', $user->id)->orderByDesc('used_at')->limit(self::LIMIT)->pluck('id');
         static::where('user_id', $user->id)->whereNotIn('id', $keep)->delete();
+    }
+
+    /** Ainda dentro do prazo de retenção (contado do último uso). */
+    public function scopeWithinRetention(Builder $query): Builder
+    {
+        return $query->where('used_at', '>=', now()->subDays(self::RETENTION_DAYS));
+    }
+
+    /** Fora do prazo de retenção: o job agendado apaga. */
+    public function scopeExpired(Builder $query): Builder
+    {
+        return $query->where('used_at', '<', now()->subDays(self::RETENTION_DAYS));
     }
 
     /** Formato do app (AddressLocation) com o id, para remover do histórico. */

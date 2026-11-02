@@ -45,4 +45,9 @@ export class PlacesApi {
   async removeRecent(id: string): Promise<void> {
     await this.client.delete(`/places/recent/${id}`);
   }
+
+  /** Limpa o histórico inteiro da conta. */
+  async clearRecent(): Promise<void> {
+    await this.client.delete('/places/recent');
+  }
 }

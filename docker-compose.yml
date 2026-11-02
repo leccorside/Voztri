@@ -71,6 +71,26 @@ services:
       - app
       - redis
 
+  # Agendador do Laravel (routes/console.php): dispara as tarefas na hora certa
+  # e coloca os jobs na fila do worker (ex.: retenção do histórico de destinos)
+  scheduler:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.php
+    container_name: voztri_scheduler
+    restart: unless-stopped
+    working_dir: /var/www/html
+    env_file: .env
+    environment:
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    command: php artisan schedule:work
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - app
+      - redis
+
   # PostgreSQL 16 com PostGIS 3.4
   postgres:
     image: postgis/postgis:16-3.4-alpine

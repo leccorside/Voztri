@@ -88,6 +88,7 @@ export interface PassengerState {
   /** Busca o histórico na API (a cada abertura da busca: a última corrida entra nele). */
   loadRecentDestinations: () => Promise<void>;
   removeRecentDestination: (id: string) => Promise<boolean>;
+  clearRecentDestinations: () => Promise<boolean>;
   setDestination: (destination: AddressLocation) => Promise<void>;
   loadEstimates: () => Promise<void>;
   selectCategory: (category: Category) => void;
@@ -447,6 +448,16 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
       });
       if (!done) return false;
       set({ recentDestinations: get().recentDestinations.filter((r) => r.id !== id) });
+      return true;
+    },
+
+    clearRecentDestinations: async () => {
+      const done = await run(async () => {
+        await placesApi.clearRecent();
+        return true;
+      });
+      if (!done) return false; // erro no aviso; a lista continua
+      set({ recentDestinations: [] });
       return true;
     },
 

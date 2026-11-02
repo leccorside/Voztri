@@ -15,7 +15,9 @@ class RecentDestinationController extends Controller
     /** { recent: [AddressLocation + id] }, do mais recente para o mais antigo. */
     public function index(Request $request)
     {
+        // Os vencidos ficam de fora mesmo antes de o job diário apagá-los
         $recent = RecentDestination::where('user_id', $request->user()->id)
+            ->withinRetention()
             ->orderByDesc('used_at')
             ->limit(RecentDestination::LIMIT)
             ->get();
@@ -27,6 +29,14 @@ class RecentDestinationController extends Controller
     public function destroy(Request $request, string $id)
     {
         RecentDestination::where('user_id', $request->user()->id)->whereKey($id)->delete();
+
+        return response()->noContent();
+    }
+
+    /** Limpa o histórico inteiro da conta ("Limpar histórico"). */
+    public function clear(Request $request)
+    {
+        RecentDestination::where('user_id', $request->user()->id)->delete();
 
         return response()->noContent();
     }

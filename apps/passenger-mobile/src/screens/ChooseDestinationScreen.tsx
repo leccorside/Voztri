@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { AddressLocation } from '@voztri/shared-types';
 import { VoztriColors } from '@voztri/design-tokens';
 import { usePassengerStore } from '../store/passengerStore.js';
@@ -23,7 +23,14 @@ export const ChooseDestinationScreen: React.FC<Props> = ({ onBack }) => {
     recentDestinations,
     loadRecentDestinations,
     removeRecentDestination,
+    clearRecentDestinations,
   } = usePassengerStore();
+  // Sem desfazer: pede confirmação antes de apagar tudo
+  const confirmClear = () =>
+    Alert.alert('Limpar histórico', 'Apagar todos os destinos recentes desta conta?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Limpar', style: 'destructive', onPress: () => void clearRecentDestinations() },
+    ]);
   // O histórico muda a cada corrida solicitada: atualiza ao abrir a busca
   useEffect(() => {
     void loadRecentDestinations();
@@ -94,7 +101,18 @@ export const ChooseDestinationScreen: React.FC<Props> = ({ onBack }) => {
           <Text style={styles.empty}>Digite pelo menos {MIN_SEARCH_LENGTH} letras do endereço ou do nome do lugar.</Text>
         )}
 
-        {status === 'idle' && recentDestinations.length > 0 && <Text style={styles.sectionTitle}>Recentes</Text>}
+        {status === 'idle' && recentDestinations.length > 0 && (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recentes</Text>
+            <Button
+              label="Limpar histórico"
+              onPress={confirmClear}
+              disabled={busy}
+              style={styles.clear}
+              textStyle={[styles.clearText, { color: VoztriColors.brand.primary }]}
+            />
+          </View>
+        )}
 
         {status === 'idle' &&
           recentDestinations.map(({ id, ...dest }) => (
@@ -253,6 +271,19 @@ const styles = StyleSheet.create({
   list: {
     paddingVertical: 10,
     paddingHorizontal: 20,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  clear: {
+    paddingVertical: 8,
+    paddingLeft: 12,
+  },
+  clearText: {
+    fontWeight: '700',
+    fontSize: 13,
   },
   sectionTitle: {
     fontSize: 12,

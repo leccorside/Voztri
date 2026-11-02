@@ -50,6 +50,7 @@ Route::prefix('v1')->group(function () {
         // Endereços salvos do passageiro (Casa e Trabalho) e histórico dos últimos destinos
         Route::prefix('places')->middleware('role:passenger')->group(function () {
             Route::get('/recent', [RecentDestinationController::class, 'index']);
+            Route::delete('/recent', [RecentDestinationController::class, 'clear']);
             Route::delete('/recent/{id}', [RecentDestinationController::class, 'destroy'])->whereUuid('id');
             Route::get('/', [SavedPlaceController::class, 'index']);
             Route::put('/{kind}', [SavedPlaceController::class, 'update'])->whereIn('kind', ['home', 'work']);

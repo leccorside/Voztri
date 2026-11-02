@@ -25,7 +25,7 @@ jest.mock('../src/api', () => ({
   onUnauthorized: jest.fn(),
   authApi: { requestOtp: jest.fn(), verifyOtp: jest.fn(), getMe: jest.fn() },
   geoApi: { reverse: jest.fn(), search: jest.fn() },
-  placesApi: { list: jest.fn(), save: jest.fn(), remove: jest.fn(), recent: jest.fn(), removeRecent: jest.fn() },
+  placesApi: { list: jest.fn(), save: jest.fn(), remove: jest.fn(), recent: jest.fn(), removeRecent: jest.fn(), clearRecent: jest.fn() },
   rideApi: {
     getEstimates: jest.fn(),
     requestRide: jest.fn(),
@@ -79,7 +79,7 @@ const m = api as unknown as {
   >;
   billingApi: Mocks<'submitRating'>;
   geoApi: Mocks<'reverse' | 'search'>;
-  placesApi: Mocks<'list' | 'save' | 'remove' | 'recent' | 'removeRecent'>;
+  placesApi: Mocks<'list' | 'save' | 'remove' | 'recent' | 'removeRecent' | 'clearRecent'>;
 };
 const loc = location as unknown as Mocks<'requestLocationPermission' | 'getCurrentPosition'>;
 const pushMock = push as unknown as Mocks<'enablePush' | 'disablePush'>;
@@ -209,6 +209,7 @@ beforeEach(() => {
   // Sem histórico de destinos por padrão
   m.placesApi.recent.mockResolvedValue([]);
   m.placesApi.removeRecent.mockResolvedValue(undefined);
+  m.placesApi.clearRecent.mockResolvedValue(undefined);
   // Praça da Sé: diferente da origem padrão, para provar que a estimativa usa o GPS
   loc.requestLocationPermission.mockResolvedValue('granted');
   loc.getCurrentPosition.mockResolvedValue(gpsAt(-23.55052, -46.633308));
@@ -693,6 +694,64 @@ describe('passenger-mobile integrado à API', () => {
       expect(m.placesApi.save).toHaveBeenCalledWith('home', FARIA_LIMA);
       expect(m.rideApi.getEstimates).not.toHaveBeenCalled();
       expect(visibleText(tree)).toContain('Para onde vamos hoje?');
+    });
+
+    /** Responde ao diálogo de confirmação com o botão indicado. */
+    const answerAlert = (button: 'Limpar' | 'Cancelar') =>
+      jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
+        buttons?.find((b) => b.text === button)?.onPress?.();
+      });
+
+    it('"Limpar histórico" pede confirmação e apaga todos os destinos da conta', async () => {
+      const alertSpy = answerAlert('Limpar');
+      m.placesApi.recent.mockResolvedValue(RECENT);
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+
+      await pressAsync(tree, 'Limpar histórico');
+      await settle();
+      expect(alertSpy).toHaveBeenCalledWith('Limpar histórico', 'Apagar todos os destinos recentes desta conta?', expect.any(Array));
+      expect(m.placesApi.clearRecent).toHaveBeenCalledTimes(1);
+      expectNoStrayText(tree);
+      const text = visibleText(tree);
+      expect(text).not.toContain('Recentes');
+      expect(text).not.toContain('Limpar histórico');
+      expect(text).not.toContain('Rua Augusta, 1500');
+      expect(text).toContain(HINT);
+      alertSpy.mockRestore();
+    });
+
+    it('cancelar a confirmação mantém o histórico', async () => {
+      const alertSpy = answerAlert('Cancelar');
+      m.placesApi.recent.mockResolvedValue(RECENT);
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+
+      await pressAsync(tree, 'Limpar histórico');
+      await settle();
+      expect(m.placesApi.clearRecent).not.toHaveBeenCalled();
+      expect(visibleText(tree)).toContain('Rua Augusta, 1500');
+      alertSpy.mockRestore();
+    });
+
+    it('falha ao limpar mostra o erro e mantém o histórico', async () => {
+      const alertSpy = answerAlert('Limpar');
+      m.placesApi.recent.mockResolvedValue(RECENT);
+      m.placesApi.clearRecent.mockRejectedValueOnce({ message: 'Sem conexão com a API.' });
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+
+      await pressAsync(tree, 'Limpar histórico');
+      await settle();
+      expect(usePassengerStore.getState().error).toBe('Sem conexão com a API.');
+      expect(visibleText(tree)).toContain('Rua Augusta, 1500');
+      alertSpy.mockRestore();
+    });
+
+    it('sem histórico, não há "Limpar histórico"', async () => {
+      await renderLoggedIn();
+      await pressAsync(tree, 'Buscar endereço de destino');
+      expect(visibleText(tree)).not.toContain('Limpar histórico');
     });
 
     it('sem conseguir carregar o histórico, mostra a dica sem aviso', async () => {

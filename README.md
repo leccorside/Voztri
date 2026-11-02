@@ -287,7 +287,7 @@ docker compose exec app php artisan key:generate --show
 
 # 2. Cole o valor em APP_KEY= no .env da raiz e recrie os contêineres PHP
 #    (o env_file só é lido quando o contêiner é criado)
-docker compose up -d --force-recreate app worker reverb
+docker compose up -d --force-recreate app worker scheduler reverb
 
 # 3. Rode as migrations e o seed
 docker compose exec app php artisan migrate --seed
@@ -431,6 +431,8 @@ Os testes substituem a camada de API por mocks e percorrem o fluxo completo de c
 | Mailpit (interface) | `http://localhost:8026` | Visualização de e-mails em desenvolvimento |
 | MinIO (API S3) | `http://localhost:9010` | Armazenamento de objetos |
 | MinIO Console | `http://localhost:9011` | Gestão de objetos e documentos |
+
+Sem porta exposta, dois contêineres rodam o trabalho em segundo plano do Laravel: o `worker` (`queue:work`, executa os jobs da fila: push, timeout da busca) e o `scheduler` (`schedule:work`, dispara as tarefas agendadas de `backend/routes/console.php`, como a limpeza diária do histórico de destinos com mais de 90 dias, e as coloca na fila do `worker`). Em produção, o `scheduler` equivale a um cron com `php artisan schedule:run` a cada minuto.
 
 As portas do host saem das variáveis `FORWARD_*` do `.env` e foram escolhidas para não conflitar com outros stacks locais que usam as portas padrão (5432, 6379, 9000/9001, 1025/8025). Entre os contêineres, a comunicação continua pelas portas internas (`postgres:5432`, `redis:6379`, `minio:9000`, `mailpit:1025`).
 

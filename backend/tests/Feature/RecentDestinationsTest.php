@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\PruneRecentDestinations;
 use App\Models\Passenger;
 use App\Models\RecentDestination;
 use App\Models\User;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -123,5 +125,76 @@ class RecentDestinationsTest extends TestCase
         $u->delete();
 
         $this->assertSame(0, RecentDestination::count());
+    }
+
+    public function test_clear_removes_the_whole_history_of_the_account_only(): void
+    {
+        $bia = $this->passenger();
+        $ana = $this->passenger('11911110002');
+        $this->rideTo($bia, self::FARIA_LIMA);
+        $this->rideTo($bia, $this->place('Rua Augusta, 1500', -23.5565, -46.6586));
+        $this->rideTo($ana, self::FARIA_LIMA);
+
+        $this->actingAs($bia, 'sanctum')->deleteJson('/api/v1/places/recent')->assertNoContent();
+        $this->actingAs($bia, 'sanctum')->deleteJson('/api/v1/places/recent')->assertNoContent(); // já vazio
+
+        $this->actingAs($bia, 'sanctum')->getJson('/api/v1/places/recent')->assertExactJson(['recent' => []]);
+        $this->assertSame(1, RecentDestination::where('user_id', $ana->id)->count(), 'O da Ana fica.');
+
+        $driver = User::create(['name' => 'Carlos', 'phone' => '11922220001', 'role' => 'driver', 'status' => 'active']);
+        $this->actingAs($driver, 'sanctum')->deleteJson('/api/v1/places/recent')->assertForbidden();
+    }
+
+    /** Destino gravado direto no banco, com o último uso há $days dias. */
+    private function usedDaysAgo(User $u, string $short, int $days): RecentDestination
+    {
+        return RecentDestination::create([
+            'user_id' => $u->id,
+            'address' => "{$short} - Centro, São Paulo - SP",
+            'short_address' => $short,
+            'latitude' => -23.5 - $days / 1000,
+            'longitude' => -46.6,
+            'used_at' => now()->subDays($days),
+        ]);
+    }
+
+    public function test_entries_older_than_90_days_are_hidden_and_pruned_by_the_job(): void
+    {
+        $bia = $this->passenger();
+        $ana = $this->passenger('11911110002');
+        $this->usedDaysAgo($bia, 'Recente', 1);
+        $this->usedDaysAgo($bia, 'No limite', 89);
+        $this->usedDaysAgo($bia, 'Vencido', 91);
+        $this->usedDaysAgo($ana, 'Muito antigo', 400);
+
+        // Antes do job, a API já não mostra os vencidos
+        $recent = $this->actingAs($bia, 'sanctum')->getJson('/api/v1/places/recent')->json('recent');
+        $this->assertSame(['Recente', 'No limite'], array_column($recent, 'shortAddress'));
+
+        (new PruneRecentDestinations)->handle();
+
+        $this->assertSame(['No limite', 'Recente'], RecentDestination::orderBy('used_at')->pluck('short_address')->all());
+    }
+
+    public function test_using_a_destination_again_restarts_the_retention_period(): void
+    {
+        $u = $this->passenger();
+        $old = $this->usedDaysAgo($u, 'Av. Faria Lima, 3477', 89);
+
+        // Mesmo lugar (a menos de 50 m): o último uso passa a ser agora
+        $this->rideTo($u, ['address' => $old->address, 'shortAddress' => 'Av. Faria Lima, 3477', 'latitude' => $old->latitude, 'longitude' => $old->longitude]);
+        $this->travel(5)->days();
+        (new PruneRecentDestinations)->handle();
+
+        $this->assertSame(1, RecentDestination::count());
+    }
+
+    public function test_pruning_is_scheduled_daily_at_dawn_in_sao_paulo(): void
+    {
+        $event = collect(app(Schedule::class)->events())->first(fn ($e) => $e->description === 'prune-recent-destinations');
+
+        $this->assertNotNull($event, 'Tarefa não agendada em routes/console.php.');
+        $this->assertSame('30 3 * * *', $event->expression);
+        $this->assertSame('America/Sao_Paulo', $event->timezone);
     }
 }
