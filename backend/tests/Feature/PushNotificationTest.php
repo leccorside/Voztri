@@ -7,6 +7,7 @@ use App\Infrastructure\Push\NullPushNotifier;
 use App\Infrastructure\Push\PushMessage;
 use App\Infrastructure\Push\PushNotifier;
 use App\Jobs\SendRideOfferPush;
+use App\Jobs\SendRideStatusPush;
 use App\Models\Driver;
 use App\Models\DriverVehicle;
 use App\Models\Passenger;
@@ -138,6 +139,98 @@ class PushNotificationTest extends TestCase
         (new SendRideOfferPush($offer->id))->handle($this->push, app(\App\Domain\Ride\Services\FareCalculator::class));
 
         $this->assertCount(0, $this->push->messagesFor($driver));
+    }
+
+    // ------------------------------------------------------------ passageiro
+
+    public function test_accept_pushes_driver_en_route_to_passenger(): void
+    {
+        $driver = $this->driver('11922220001');
+        $passenger = $this->passenger();
+        $rideId = $this->requestRide($passenger);
+        $this->assertCount(0, $this->push->messagesFor($passenger), 'Nada antes do aceite.');
+
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/accept")->assertOk();
+
+        $messages = $this->push->messagesFor($passenger);
+        $this->assertCount(1, $messages, 'Aceite e "a caminho" viram uma notificação só.');
+        $msg = $messages[0];
+        $this->assertSame('Motorista está a caminho', $msg->title);
+        $this->assertSame('Toyota Corolla Prata • PSH0001 • chega em ~4 min', $msg->body);
+        $this->assertSame(['type' => 'ride_status', 'rideId' => $rideId, 'status' => 'DRIVER_EN_ROUTE'], $msg->data);
+        $this->assertSame('ride_updates', $msg->androidChannel);
+        $this->assertSame("ride_{$rideId}", $msg->tag);
+        $this->assertTrue($msg->urgent);
+    }
+
+    public function test_driver_arrival_pushes_once_and_pin_still_starts_trip(): void
+    {
+        $driver = $this->driver('11922220001');
+        $passenger = $this->passenger();
+        $rideId = $this->requestRide($passenger);
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/accept")->assertOk();
+
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/arrived")
+            ->assertOk()->assertJsonPath('status', 'DRIVER_ARRIVED');
+        // Repetir (toque duplo, nova tentativa de rede) não reenvia
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/arrived")->assertOk();
+
+        $messages = $this->push->messagesFor($passenger);
+        $this->assertCount(2, $messages);
+        $this->assertSame('Seu motorista chegou', $messages[1]->title);
+        $this->assertSame('Motorista está no embarque: Toyota Corolla Prata • PSH0001. Confira a placa antes de entrar.', $messages[1]->body);
+        $this->assertSame('DRIVER_ARRIVED', $messages[1]->data['status']);
+        $this->assertSame($messages[0]->tag, $messages[1]->tag, 'A chegada substitui o "a caminho".');
+
+        $this->assertDatabaseHas('ride_status_history', ['ride_id' => $rideId, 'from_status' => 'DRIVER_EN_ROUTE', 'to_status' => 'DRIVER_ARRIVED']);
+
+        $pin = \App\Models\Ride::findOrFail($rideId)->boarding_pin;
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/validate-pin", ['pin' => $pin])
+            ->assertOk()->assertJsonPath('status', 'IN_PROGRESS');
+        $this->assertCount(2, $this->push->messagesFor($passenger), 'Embarque não gera push.');
+    }
+
+    public function test_arrival_requires_assigned_driver_en_route(): void
+    {
+        $driver = $this->driver('11922220001');
+        $other = $this->driver('11922220002', -23.70, -46.80);
+        $passenger = $this->passenger();
+        $rideId = $this->requestRide($passenger);
+
+        // Ainda não aceita
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/arrived")->assertForbidden();
+
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/accept")->assertOk();
+        $this->actingAs($other, 'sanctum')->postJson("/api/v1/rides/{$rideId}/arrived")->assertForbidden();
+        $this->actingAs($passenger, 'sanctum')->postJson("/api/v1/rides/{$rideId}/arrived")->assertForbidden();
+
+        $pin = \App\Models\Ride::findOrFail($rideId)->boarding_pin;
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/validate-pin", ['pin' => $pin])->assertOk();
+        $this->actingAs($driver, 'sanctum')->postJson("/api/v1/rides/{$rideId}/arrived")
+            ->assertStatus(409)->assertJsonPath('error', 'INVALID_STATE');
+
+        $this->assertCount(1, $this->push->messagesFor($passenger));
+    }
+
+    public function test_status_push_skips_changed_ride_and_omits_stale_eta(): void
+    {
+        $driverUser = $this->driver('11922220001');
+        $passenger = $this->passenger();
+        $rideId = $this->requestRide($passenger);
+        $this->actingAs($driverUser, 'sanctum')->postJson("/api/v1/rides/{$rideId}/accept")->assertOk();
+        $this->push->sent = [];
+        $fares = app(\App\Domain\Ride\Services\FareCalculator::class);
+
+        // Posição do motorista velha: sem estimativa de chegada
+        Driver::where('user_id', $driverUser->id)->update(['last_location_at' => now()->subHour()]);
+        (new SendRideStatusPush($rideId, SendRideStatusPush::EN_ROUTE))->handle($this->push, $fares);
+        $this->assertSame('Toyota Corolla Prata • PSH0001 • motorista confirmado', $this->push->messagesFor($passenger)[0]->body);
+
+        // Cancelada antes de o job rodar: não avisa
+        $this->actingAs($passenger, 'sanctum')->postJson("/api/v1/rides/{$rideId}/cancel", ['reason' => 'Mudei de ideia'])->assertOk();
+        (new SendRideStatusPush($rideId, SendRideStatusPush::EN_ROUTE))->handle($this->push, $fares);
+        (new SendRideStatusPush($rideId, SendRideStatusPush::ARRIVED))->handle($this->push, $fares);
+        $this->assertCount(1, $this->push->messagesFor($passenger));
     }
 
     // ------------------------------------------------------------ FCM HTTP v1

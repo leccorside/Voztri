@@ -6,6 +6,7 @@ import { App } from '../src/App';
 import { usePassengerStore } from '../src/store/passengerStore';
 import * as api from '../src/api';
 import * as location from '../src/location';
+import * as push from '../src/push';
 import {
   advanceAsync,
   expectNoStrayText,
@@ -36,6 +37,13 @@ jest.mock('../src/api', () => ({
   apiErrorCode: (err: { code?: string }) => err?.code ?? null,
   errorBody: (err: { body?: unknown }) => err?.body ?? null,
   errorMessage: (err: { message?: string }) => err?.message ?? 'Erro',
+}));
+
+// Push simulado: o teste guarda o callback para "entregar" uma mensagem
+jest.mock('../src/push', () => ({
+  enablePush: jest.fn(),
+  disablePush: jest.fn(),
+  registerBackgroundHandler: jest.fn(),
 }));
 
 // GPS e permissões simulados
@@ -69,6 +77,9 @@ const m = api as unknown as {
   billingApi: Mocks<'submitRating'>;
 };
 const loc = location as unknown as Mocks<'requestLocationPermission' | 'getCurrentPosition'>;
+const pushMock = push as unknown as Mocks<'enablePush' | 'disablePush'>;
+/** Callback que o store passou ao enablePush (simula a chegada de um push da corrida). */
+let deliverPush: ((rideId: string) => void) | null = null;
 
 const PASSENGER = { id: 'u-bia', name: 'Beatriz Lima', role: 'passenger', status: 'active', phone: '11999991111' };
 
@@ -138,6 +149,12 @@ beforeEach(() => {
   usePassengerStore.setState(initialState, true);
   serverRide = ride('SEARCHING');
   chat = [];
+  deliverPush = null;
+  pushMock.enablePush.mockImplementation(async (onRideUpdate: (rideId: string) => void) => {
+    deliverPush = onRideUpdate;
+    return 'enabled';
+  });
+  pushMock.disablePush.mockResolvedValue(undefined);
   m.session.load.mockResolvedValue(null);
   m.session.save.mockResolvedValue(undefined);
   m.session.clear.mockResolvedValue(undefined);
@@ -411,5 +428,85 @@ describe('passenger-mobile integrado à API', () => {
     expect(m.session.clear).toHaveBeenCalled();
     expect(visibleText(tree)).toContain('Entrar na VOZTRI');
     alertSpy.mockRestore();
+  });
+
+  describe('push do andamento da corrida', () => {
+    it('ativa o push ao entrar e mostra a chegada do motorista assim que a mensagem chega', async () => {
+      serverRide = ride('DRIVER_EN_ROUTE');
+      await renderLoggedIn('ride-1');
+      expect(pushMock.enablePush).toHaveBeenCalledTimes(1);
+      expect(usePassengerStore.getState().pushStatus).toBe('enabled');
+      expect(visibleText(tree)).toContain('Seu motorista está a caminho');
+
+      // Chegada avisada por push antes do próximo ciclo do polling
+      serverRide = ride('DRIVER_ARRIVED');
+      const calls = m.rideApi.getRide.mock.calls.length;
+      await act(async () => deliverPush!('ride-1'));
+      await settle();
+      expect(m.rideApi.getRide.mock.calls.length).toBe(calls + 1);
+      expectNoStrayText(tree);
+      expect(visibleText(tree)).toContain('Seu motorista chegou ao embarque');
+    });
+
+    it('aberto pela notificação sem corrida na tela, passa a acompanhar a corrida', async () => {
+      await renderLoggedIn(null);
+      expect(visibleText(tree)).not.toContain('Seu motorista');
+
+      serverRide = ride('DRIVER_EN_ROUTE');
+      await act(async () => deliverPush!('ride-1'));
+      await settle();
+      expect(m.rideApi.getRide).toHaveBeenCalledWith('ride-1');
+      expect(m.activeRideMemory.save).toHaveBeenCalledWith('ride-1');
+      expect(visibleText(tree)).toContain('Seu motorista está a caminho');
+    });
+
+    it('ignora aviso de corrida já encerrada ou diferente da que está na tela', async () => {
+      await renderLoggedIn(null);
+      serverRide = ride('COMPLETED');
+      await act(async () => deliverPush!('ride-1'));
+      await settle();
+      expect(m.activeRideMemory.save).not.toHaveBeenCalled();
+      expect(usePassengerStore.getState().activeRide).toBeNull();
+
+      // Com outra corrida em andamento, aviso antigo não troca a corrida
+      serverRide = ride('DRIVER_EN_ROUTE');
+      await act(async () => deliverPush!('ride-1'));
+      await settle();
+      const calls = m.rideApi.getRide.mock.calls.length;
+      await act(async () => deliverPush!('ride-velha'));
+      await settle();
+      expect(m.rideApi.getRide.mock.calls.length).toBe(calls);
+      expect(usePassengerStore.getState().activeRide?.id).toBe('ride-1');
+    });
+
+    it('sem Firebase configurado o app segue só com o polling', async () => {
+      pushMock.enablePush.mockResolvedValue('unavailable');
+      await renderLoggedIn();
+      expect(usePassengerStore.getState().pushStatus).toBe('unavailable');
+      expect(visibleText(tree)).toContain('Sua localização atual');
+    });
+
+    it('remove o token antes de limpar a sessão no logout', async () => {
+      const order: string[] = [];
+      pushMock.disablePush.mockImplementation(async () => void order.push('push'));
+      m.session.clear.mockImplementation(async () => void order.push('session'));
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
+        buttons?.find((b) => b.text === 'Sair')?.onPress?.();
+      });
+      await renderLoggedIn();
+      await pressAsync(tree, /^Conta de Beatriz Lima/);
+      await settle();
+      expect(pushMock.disablePush).toHaveBeenCalledWith();
+      expect(order).toEqual(['push', 'session']);
+      alertSpy.mockRestore();
+    });
+
+    it('sessão expirada invalida o token do aparelho', async () => {
+      await renderLoggedIn();
+      const handler = (api as unknown as { onUnauthorized: jest.Mock }).onUnauthorized.mock.calls.at(-1)![0] as () => void;
+      await act(async () => handler());
+      expect(pushMock.disablePush).toHaveBeenLastCalledWith({ revoke: true });
+      expect(usePassengerStore.getState().pushStatus).toBe('off');
+    });
   });
 });

@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">VOZTRI</string>
+
+    <!-- Push do andamento da corrida (FCM, canal ride_updates) -->
+    <string name="ride_updates_channel_name">Sua corrida</string>
+    <string name="ride_updates_channel_description">Avisa quando o motorista aceita a corrida, está a caminho e chega ao embarque.</string>
 </resources>

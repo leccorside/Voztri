@@ -36,7 +36,7 @@ jest.mock('../src/api', () => ({
     rejectOffer: jest.fn(),
     updateLocation: jest.fn(),
   },
-  rideApi: { validatePin: jest.fn(), completeRide: jest.fn() },
+  rideApi: { validatePin: jest.fn(), completeRide: jest.fn(), markArrived: jest.fn() },
   billingApi: { requestPayout: jest.fn() },
   apiErrorCode: (err: { code?: string }) => err?.code ?? null,
   errorMessage: (err: { message?: string }) => err?.message ?? 'Erro',
@@ -85,7 +85,7 @@ const m = api as unknown as {
     'getCurrent' | 'getEarnings' | 'setOnlineStatus' | 'acceptOffer' | 'rejectOffer' | 'updateLocation',
     jest.Mock
   >;
-  rideApi: Record<'validatePin' | 'completeRide', jest.Mock>;
+  rideApi: Record<'validatePin' | 'completeRide' | 'markArrived', jest.Mock>;
   billingApi: Record<'requestPayout', jest.Mock>;
 };
 const loc = location as unknown as Record<
@@ -316,6 +316,18 @@ describe('driver-mobile integrado à API', () => {
     expectNoStrayText(tree);
     expect(visibleText(tree)).toContain('Buscar passageiro em');
 
+    // Chegada ao embarque: a API avisa o passageiro por push
+    m.rideApi.markArrived.mockImplementation(async () => {
+      server.ride = ride('DRIVER_ARRIVED');
+      return server.ride;
+    });
+    await pressAsync(tree, 'CHEGUEI AO EMBARQUE');
+    expect(m.rideApi.markArrived).toHaveBeenCalledWith('ride-1');
+    expectNoStrayText(tree);
+    text = visibleText(tree);
+    expect(text).toContain('No embarque • passageiro avisado');
+    expect(text).not.toContain('CHEGUEI AO EMBARQUE');
+
     await pressAsync(tree, 'VALIDAR PIN DE EMBARQUE');
     m.rideApi.validatePin.mockRejectedValueOnce({ code: 'INVALID_PIN', message: 'PIN de embarque incorreto.' });
     for (const d of ['9', '9', '9', '9']) await pressAsync(tree, d);
@@ -343,6 +355,23 @@ describe('driver-mobile integrado à API', () => {
     expect(m.rideApi.completeRide).toHaveBeenCalledWith('ride-1');
     expect(m.driverApi.getEarnings.mock.calls.length).toBeGreaterThan(earningsCalls);
     expect(visibleText(tree)).toContain('Painel Operacional');
+  });
+
+  it('valida o PIN direto, sem avisar a chegada, e mostra a falha do aviso', async () => {
+    server = { isOnline: true, offer: null, ride: ride('DRIVER_EN_ROUTE') };
+    await renderLoggedIn();
+    expect(visibleText(tree)).toContain('CHEGUEI AO EMBARQUE');
+
+    m.rideApi.markArrived.mockRejectedValueOnce({ code: 'INVALID_STATE', message: 'A corrida não está a caminho do embarque.' });
+    await pressAsync(tree, 'CHEGUEI AO EMBARQUE');
+    expect(visibleText(tree)).toContain('A corrida não está a caminho do embarque.');
+    expect(useDriverStore.getState().currentRide?.status).toBe('DRIVER_EN_ROUTE');
+
+    // O PIN segue disponível como ação secundária
+    await pressAsync(tree, 'VALIDAR PIN DE EMBARQUE');
+    m.rideApi.validatePin.mockResolvedValueOnce(ride('IN_PROGRESS'));
+    for (const d of ['4', '8', '2', '1']) await pressAsync(tree, d);
+    expect(m.rideApi.validatePin).toHaveBeenCalledWith('ride-1', '4821');
   });
 
   it('recusa a oferta pela API', async () => {

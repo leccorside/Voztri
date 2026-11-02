@@ -343,6 +343,7 @@ O endereço da API fica em `src/config.ts` de cada app: `http://10.0.2.2:8080/ap
   - **iOS:** o próprio app segue recebendo o GPS em segundo plano (`allowsBackgroundLocationUpdates`, ligado só no turno online; o `UIBackgroundModes: location` já está no `Info.plist`). O iOS mostra o indicador azul de localização.
 - **Permissões:** depois de ficar online, o app explica o motivo e pede à parte a localização em segundo plano: "Permitir o tempo todo" (`ACCESS_BACKGROUND_LOCATION`) no Android 10+ e "Sempre" no iOS. No Android 13+ também pede a permissão de notificação, para o aviso do serviço aparecer. Se o motorista recusar, o envio continua com o app aberto e, no Android, também pelo serviço iniciado com o app aberto.
 - **Push de novas ofertas:** com o app do motorista em segundo plano ou fechado, cada oferta chega como notificação ("Nova corrida: R$ X", com o embarque e o tempo para responder), que expira junto com a oferta. Tocar abre o app já com a oferta. Ver [Ativando as notificações push](#ativando-as-notificações-push).
+- **Push para o passageiro:** quando o motorista aceita, chega "Carlos está a caminho" (carro, placa e tempo estimado até o embarque); quando ele toca em **"Cheguei ao embarque"** no app do motorista, chega "Seu motorista chegou", e essa notificação substitui a anterior. Tocar abre o acompanhamento da corrida. O motorista também pode validar o PIN direto, sem avisar a chegada.
 - **Emulador Android:** a posição padrão do emulador fica nos Estados Unidos. Defina uma posição em São Paulo em *Extended controls → Location* (por exemplo, `-23.561414, -46.655881`), senão as estimativas calculam a distância até lá. No simulador iOS: *Features → Location → Custom Location*.
 
 **Android** (JDK 17+, Android SDK 34 e um emulador ou aparelho com depuração USB):
@@ -368,13 +369,13 @@ npx react-native run-ios
 
 #### Ativando as notificações push
 
-O push está implementado, mas **desligado até as credenciais do Firebase serem adicionadas**: sem elas o backend só registra no log e os apps compilam e rodam normalmente (as ofertas seguem pelo polling). Os arquivos abaixo estão no `.gitignore`.
+O push está implementado nos dois apps, mas **desligado até as credenciais do Firebase serem adicionadas**: sem elas o backend só registra no log e os apps compilam e rodam normalmente (ofertas e andamento da corrida seguem pelo polling). Os arquivos abaixo estão no `.gitignore`.
 
-1. Crie um projeto no [console do Firebase](https://console.firebase.google.com) e adicione os apps **Android** `br.com.voztri.driver` e **iOS** `br.com.voztri.driver`.
-2. **Android:** baixe o `google-services.json` para `apps/driver-mobile/android/app/`. O Gradle aplica o plugin `google-services` só quando o arquivo existe.
-3. **iOS:** baixe o `GoogleService-Info.plist`, arraste-o para o grupo `VoztriDriver` no Xcode (marcando o target), e envie a chave de APNs (`.p8`, em *Apple Developer → Keys*) em *Firebase → Configurações do projeto → Cloud Messaging*. A capability Push Notifications já está nos entitlements (`aps-environment`); confirme o time de assinatura no Xcode.
+1. Crie um projeto no [console do Firebase](https://console.firebase.google.com) e adicione quatro apps: **Android** `br.com.voztri.driver` e `br.com.voztri.passenger`, e **iOS** com os mesmos bundle ids.
+2. **Android:** baixe o `google-services.json` de cada app para `apps/driver-mobile/android/app/` e `apps/passenger-mobile/android/app/`. O Gradle aplica o plugin `google-services` só quando o arquivo existe.
+3. **iOS:** baixe o `GoogleService-Info.plist` de cada app, arraste-o para o grupo `VoztriDriver` / `VoztriPassenger` no Xcode (marcando o target), e envie a chave de APNs (`.p8`, em *Apple Developer → Keys*) em *Firebase → Configurações do projeto → Cloud Messaging*. A capability Push Notifications já está nos entitlements (`aps-environment`); confirme o time de assinatura no Xcode.
 4. **Backend:** em *Firebase → Configurações do projeto → Contas de serviço*, gere uma chave privada e salve como `backend/storage/app/firebase/service-account.json`. No `.env` da raiz: `FCM_CREDENTIALS=/var/www/html/storage/app/firebase/service-account.json`. Recrie os contêineres PHP (`docker compose up -d --force-recreate app worker`). O envio roda na fila, então o `worker` precisa estar no ar.
-5. Recompile o app (`run-android` / `pod install` + `run-ios`), entre como motorista e confira o registro em `user_devices`.
+5. Recompile os apps (`run-android` / `pod install` + `run-ios`), entre como motorista e como passageiro e confira os registros em `user_devices`.
 
 **Testes das telas** (Jest com o preset `react-native`, sem precisar de emulador):
 

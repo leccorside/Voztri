@@ -37,5 +37,10 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+      <!-- Push (FCM): ícone padrão das notificações. O canal padrão (ride_updates) vem do
+           firebase.json; o canal em si é criado em MainApplication.onCreate. -->
+      <meta-data
+        android:name="com.google.firebase.messaging.default_notification_icon"
+        android:resource="@drawable/ic_stat_ride" />
     </application>
 </manifest>

@@ -12,6 +12,7 @@ import {
   session,
 } from '../api.js';
 import { getCurrentPosition, LocationError, requestLocationPermission } from '../location.js';
+import { disablePush, enablePush, PushStatus } from '../push.js';
 
 export type SessionStatus = 'checking' | 'anonymous' | 'authenticated';
 
@@ -49,6 +50,8 @@ export interface PassengerState {
   activeRide: Ride | null;
   chatMessages: ChatMessage[];
   isSosActive: boolean;
+  /** Push do andamento da corrida (off: ainda não ativado nesta sessão). */
+  pushStatus: PushStatus | 'off';
 
   busy: boolean;
   error: string | null;
@@ -68,6 +71,8 @@ export interface PassengerState {
   selectPaymentMethod: (method: PaymentMethodType) => void;
   confirmRideRequest: () => Promise<void>;
   refreshRide: () => Promise<void>;
+  /** Chegou um push sobre a corrida (app aberto ou toque na notificação). */
+  onRidePush: (rideId: string) => Promise<void>;
   cancelActiveRide: (reason: string) => Promise<void>;
   loadChat: () => Promise<void>;
   sendChat: (text: string) => Promise<void>;
@@ -129,6 +134,7 @@ const signedOut = {
   originWarning: null,
   selectedCategory: 'pop' as Category,
   selectedPaymentMethod: 'pix' as PaymentMethodType,
+  pushStatus: 'off' as PushStatus | 'off',
   busy: false,
   error: null,
   connectionError: null,
@@ -167,6 +173,11 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
   const startSession = async (user: User) => {
     set({ ...signedOut, sessionStatus: 'authenticated', user });
     void get().locateOrigin();
+    // Push em paralelo: avisa quando o motorista aceita e quando chega, com o app em
+    // segundo plano; com o app aberto (ou ao tocar na notificação) só antecipa o polling.
+    void enablePush((rideId) => void get().onRidePush(rideId)).then((pushStatus) => {
+      if (get().user?.id === user.id) set({ pushStatus });
+    });
     // Retoma a corrida em andamento (ou a avaliação pendente) após reabrir o app
     const rideId = await activeRideMemory.load();
     if (!rideId) return;
@@ -189,6 +200,8 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
     bootstrap: async () => {
       onUnauthorized(() => {
         void session.clear();
+        // Sem sessão não dá para chamar DELETE /devices: invalida o token no Firebase
+        void disablePush({ revoke: true });
         set({ ...signedOut, error: 'Sua sessão expirou. Entre novamente.' });
       });
 
@@ -228,6 +241,8 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
     },
 
     logout: async () => {
+      // Antes de limpar a sessão: o DELETE /devices precisa do token da API
+      await disablePush();
       await session.clear();
       set({ ...signedOut });
     },
@@ -340,6 +355,26 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
         const updated = await rideApi.getRide(ride.id);
         set({ connectionError: null });
         await applyRide(updated);
+      } catch (err) {
+        set({ connectionError: errorMessage(err) });
+      }
+    },
+
+    onRidePush: async (rideId) => {
+      if (get().sessionStatus !== 'authenticated') return;
+      const current = get().activeRide;
+      if (current?.id === rideId) {
+        await get().refreshRide();
+        return;
+      }
+      // Aviso de outra corrida (antiga) com uma em andamento: ignora
+      if (current) return;
+      // Sem corrida na tela (ex.: app aberto pela notificação): passa a acompanhar esta
+      try {
+        const ride = await rideApi.getRide(rideId);
+        if (get().activeRide || !OPEN_STATUSES.includes(ride.status)) return;
+        await activeRideMemory.save(ride.id);
+        set({ activeRide: ride, currentStep: stepForStatus(ride.status), connectionError: null });
       } catch (err) {
         set({ connectionError: errorMessage(err) });
       }

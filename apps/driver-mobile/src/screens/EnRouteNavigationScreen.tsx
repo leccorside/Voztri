@@ -23,13 +23,14 @@ function initials(name: string | undefined): string {
 }
 
 export const EnRouteNavigationScreen: React.FC<Props> = ({ onOpenPinModal, onFinishRide }) => {
-  const { currentRide, busy } = useDriverStore();
+  const { currentRide, busy, markArrived } = useDriverStore();
   const [finishing, setFinishing] = useState(false);
 
   if (!currentRide) return null;
 
   // Até o PIN ser validado, o motorista está indo buscar o passageiro
   const goingToPickup = ['ACCEPTED', 'DRIVER_EN_ROUTE', 'DRIVER_ARRIVED'].includes(currentRide.status);
+  const arrived = currentRide.status === 'DRIVER_ARRIVED';
   const target = goingToPickup ? currentRide.origin : currentRide.destination;
   const passengerName = currentRide.passenger?.user?.name ?? 'Passageiro';
   const passengerRating = currentRide.passenger?.user?.rating;
@@ -51,7 +52,9 @@ export const EnRouteNavigationScreen: React.FC<Props> = ({ onOpenPinModal, onFin
           <Text style={styles.turnArrow}>{goingToPickup ? '📍' : '🏁'}</Text>
         </View>
         <View style={styles.flex}>
-          <Text style={styles.distance}>{goingToPickup ? 'Buscar passageiro em' : 'Levar passageiro até'}</Text>
+          <Text style={styles.distance}>
+            {arrived ? 'No embarque • passageiro avisado' : goingToPickup ? 'Buscar passageiro em' : 'Levar passageiro até'}
+          </Text>
           <Text style={styles.instructionText}>{target.address}</Text>
         </View>
       </View>
@@ -86,7 +89,26 @@ export const EnRouteNavigationScreen: React.FC<Props> = ({ onOpenPinModal, onFin
           </View>
         </View>
 
-        {goingToPickup ? (
+        {goingToPickup && !arrived ? (
+          <>
+            <Button
+              label={busy ? 'AVISANDO…' : 'CHEGUEI AO EMBARQUE'}
+              accessibilityLabel="CHEGUEI AO EMBARQUE"
+              onPress={() => void markArrived()}
+              disabled={busy}
+              style={[styles.action, { backgroundColor: VoztriColors.brand.primary }, shadow(0.35, 20, 6, 8, '#6A00FF')]}
+              textStyle={styles.actionText}
+            />
+            {/* Quem já está com o passageiro pode validar o PIN direto */}
+            <Button
+              label="Validar PIN de embarque"
+              accessibilityLabel="VALIDAR PIN DE EMBARQUE"
+              onPress={onOpenPinModal}
+              style={styles.secondary}
+              textStyle={[styles.secondaryText, { color: VoztriColors.brand.primary }]}
+            />
+          </>
+        ) : goingToPickup ? (
           <Button
             label="VALIDAR PIN DE EMBARQUE"
             onPress={onOpenPinModal}
@@ -238,5 +260,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 16,
+  },
+  secondary: {
+    width: '100%',
+    marginTop: 8,
+    padding: 12,
+    borderRadius: 14,
+  },
+  secondaryText: {
+    fontWeight: '700',
+    fontSize: 14,
   },
 });

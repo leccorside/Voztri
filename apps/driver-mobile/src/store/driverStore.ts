@@ -71,6 +71,8 @@ export interface DriverState {
   toggleOnline: () => Promise<void>;
   acceptOffer: () => Promise<void>;
   rejectOffer: () => Promise<void>;
+  /** Avisa o passageiro de que o motorista chegou ao embarque. */
+  markArrived: () => Promise<boolean>;
   validatePin: (pin: string) => Promise<boolean>;
   completeRide: () => Promise<boolean>;
   requestPayout: () => Promise<number | null>;
@@ -309,6 +311,15 @@ export const useDriverStore = create<DriverState>((set, get) => {
       set({ offer: null });
       // 404 = a oferta já tinha expirado no servidor; não é erro para o usuário
       await driverApi.rejectOffer(offer.rideId).catch(() => undefined);
+    },
+
+    markArrived: async () => {
+      const ride = get().currentRide;
+      if (!ride) return false;
+      const updated = await run(() => rideApi.markArrived(ride.id));
+      if (!updated) return false;
+      set({ currentRide: updated });
+      return true;
     },
 
     validatePin: async (pin) => {

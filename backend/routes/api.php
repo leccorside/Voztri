@@ -51,6 +51,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/{id}/cancel', [RideController::class, 'cancel']);
             Route::post('/{id}/accept', [RideController::class, 'accept']);
             Route::post('/{id}/reject', [RideController::class, 'reject']);
+            Route::post('/{id}/arrived', [RideController::class, 'arrived']);
             Route::post('/{id}/validate-pin', [RideController::class, 'validatePin']);
             Route::post('/{id}/complete', [RideController::class, 'complete']);
             Route::post('/{id}/sos', [RideController::class, 'triggerSos']);

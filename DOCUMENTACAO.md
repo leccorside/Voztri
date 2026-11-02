@@ -131,6 +131,11 @@ docker compose exec app php artisan migrate --seed
 - **Mensagem:** título "Nova corrida: R$ X" (ganho líquido), corpo "Embarque: {endereço} • X km • responda em N s" e `data = { type: "ride_offer", rideId, expiresAt }`. A validade acompanha a oferta: `android.ttl` e `apns-expiration` iguais aos segundos restantes, para não chegar uma oferta vencida. No Android, prioridade `HIGH` e canal `ride_offers`; no iOS, `apns-priority: 10`, `interruption-level: time-sensitive` e `apns-collapse-id` (uma oferta substitui a anterior).
 - **Tokens:** o token de acesso OAuth (JWT RS256 da conta de serviço) fica em cache por 55 min. Token respondido como `UNREGISTERED`, `SENDER_ID_MISMATCH` ou 404 é apagado de `user_devices`; falhas temporárias (503, `INVALID_ARGUMENT`) não apagam.
 - **App do motorista:** registra o token ao entrar, remove no logout e invalida no Firebase quando a sessão expira. Com o app aberto a notificação não aparece; a mensagem só antecipa o polling. Ao tocar na notificação, o app abre e busca a oferta.
+- **Passageiro (job `SendRideStatusPush`, canal Android `ride_updates`):**
+  - no **aceite**: "{Nome} está a caminho" com "Marca Modelo Cor • PLACA • chega em ~X min" (tempo pela posição atual do motorista; sem posição recente, "motorista confirmado"). O aceite já coloca a corrida em `DRIVER_EN_ROUTE`, então "aceitou" e "a caminho" são **uma notificação só**;
+  - na **chegada** (`POST /rides/{id}/arrived`): "Seu motorista chegou" com "{Nome} está no embarque: carro • placa. Confira a placa antes de entrar." O PIN de embarque **não** vai na notificação (ficaria visível na tela bloqueada);
+  - `data = { type: "ride_status", rideId, status }`; mesma tag/`apns-collapse-id` (`ride_{id}`), então a chegada substitui o "a caminho"; validade de 15 min (a caminho) e 10 min (chegada). O job não envia se a corrida mudou de status antes de ele rodar (cancelada, já embarcou).
+  - O app do passageiro registra o token como o do motorista. Ao receber a mensagem com o app aberto, ou ao tocar na notificação, atualiza a corrida; se não houver corrida na tela (app aberto pela notificação), passa a acompanhar a corrida do aviso, desde que ainda esteja em andamento.
 
 ### Aparelhos (push)
 
@@ -151,7 +156,8 @@ docker compose exec app php artisan migrate --seed
 - `GET /api/v1/rides/{id}`: Participantes, motorista que recebeu oferta ou admin. Também faz a corrida avançar no despacho.
 - `POST /api/v1/rides/{id}/accept`: Motorista que recebeu a oferta (403 `NO_OFFER`; 409 `OFFER_EXPIRED`, `RIDE_UNAVAILABLE` ou `DRIVER_BUSY`). Lock atômico.
 - `POST /api/v1/rides/{id}/reject`: Motorista recusa a oferta; a corrida segue para o próximo.
-- `POST /api/v1/rides/{id}/validate-pin`: Motorista atribuído valida o PIN informado pelo passageiro e inicia a viagem (422 `INVALID_PIN`; 409 fora de `DRIVER_EN_ROUTE`/`DRIVER_ARRIVED`).
+- `POST /api/v1/rides/{id}/arrived`: Motorista atribuído avisa que chegou ao embarque (`DRIVER_EN_ROUTE → DRIVER_ARRIVED`) e o passageiro recebe um push. Repetir com a corrida já em `DRIVER_ARRIVED` responde 200 sem novo push; outros status → 409 `INVALID_STATE`; outro usuário → 403.
+- `POST /api/v1/rides/{id}/validate-pin`: Motorista atribuído valida o PIN informado pelo passageiro e inicia a viagem (422 `INVALID_PIN`; 409 fora de `DRIVER_EN_ROUTE`/`DRIVER_ARRIVED`). Aceita a corrida ainda em `DRIVER_EN_ROUTE`, para o motorista que não avisou a chegada (registra `DRIVER_ARRIVED` no histórico, sem push).
 - `POST /api/v1/rides/{id}/complete`: Motorista atribuído, só em `IN_PROGRESS`. Lança no ledger o líquido do motorista e a comissão de 15%.
 - `POST /api/v1/rides/{id}/cancel`: Passageiro dono ou motorista atribuído, com `reason`. Recolhe a oferta pendente.
 - `POST /api/v1/billing/rating`: Passageiro dono, só corrida `COMPLETED`, uma vez (409 `ALREADY_RATED`). Atualiza a média do motorista.

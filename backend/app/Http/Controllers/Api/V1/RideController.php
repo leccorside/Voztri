@@ -7,6 +7,7 @@ use App\Domain\Ride\Services\RideDispatcher;
 use App\Domain\Ride\Services\RideStateMachine;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\RidePresenter;
+use App\Jobs\SendRideStatusPush;
 use App\Models\Driver;
 use App\Models\FinancialLedger;
 use App\Models\Passenger;
@@ -188,6 +189,32 @@ class RideController extends Controller
             $this->stateMachine->transition($ride, 'ACCEPTED', $user->id, ['offer_id' => $offer->id]);
             // O motorista parte imediatamente para o embarque
             $this->stateMachine->transition($ride, 'DRIVER_EN_ROUTE', $user->id);
+            SendRideStatusPush::dispatch($ride->id, SendRideStatusPush::EN_ROUTE)->afterCommit();
+
+            return response()->json($this->presenter->present($ride->fresh(), $user));
+        });
+    }
+
+    /**
+     * Motorista avisa que chegou ao embarque (o passageiro recebe um push).
+     * Repetir o aviso não reenvia a notificação.
+     */
+    public function arrived(Request $request, $id)
+    {
+        $user = $request->user();
+
+        return DB::transaction(function () use ($id, $user) {
+            $ride = Ride::lockForUpdate()->findOrFail($id);
+            if (!$this->isAssignedDriver($ride, $user)) {
+                return $this->forbidden();
+            }
+
+            if ($ride->status === 'DRIVER_EN_ROUTE') {
+                $this->stateMachine->transition($ride, 'DRIVER_ARRIVED', $user->id);
+                SendRideStatusPush::dispatch($ride->id, SendRideStatusPush::ARRIVED)->afterCommit();
+            } elseif ($ride->status !== 'DRIVER_ARRIVED') {
+                return $this->error('A corrida não está a caminho do embarque.', 'INVALID_STATE', 409);
+            }
 
             return response()->json($this->presenter->present($ride->fresh(), $user));
         });

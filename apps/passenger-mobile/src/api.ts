@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AuthApi, BillingApi, RideApi, VoztriApiClient } from '@voztri/api-client';
+import { AuthApi, BillingApi, DeviceApi, RideApi, VoztriApiClient } from '@voztri/api-client';
 import { isAxiosError } from 'axios';
 import { API_URL } from './config.js';
 
@@ -46,6 +46,7 @@ const client = new VoztriApiClient({
 export const authApi = new AuthApi(client);
 export const rideApi = new RideApi(client);
 export const billingApi = new BillingApi(client);
+export const deviceApi = new DeviceApi(client);
 
 /** Código de erro da API ("INVALID_EMERGENCY_PIN", "RIDE_ALREADY_ACTIVE"...), se houver. */
 export function apiErrorCode(err: unknown): string | null {

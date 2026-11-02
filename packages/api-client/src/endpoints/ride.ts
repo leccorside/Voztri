@@ -33,6 +33,12 @@ export class RideApi {
     return res.data;
   }
 
+  /** Motorista avisa que chegou ao embarque (o passageiro recebe um push). Idempotente. */
+  async markArrived(rideId: string): Promise<Ride> {
+    const res = await this.client.post<Ride>(`/rides/${rideId}/arrived`);
+    return res.data;
+  }
+
   /** Motorista valida o PIN informado pelo passageiro e inicia a viagem. */
   async validatePin(rideId: string, pin: string): Promise<Ride> {
     const res = await this.client.post<Ride>(`/rides/${rideId}/validate-pin`, { pin });
