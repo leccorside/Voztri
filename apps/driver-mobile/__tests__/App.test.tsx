@@ -48,6 +48,7 @@ jest.mock('../src/api', () => ({
     getRegistration: jest.fn(),
     savePersonalData: jest.fn(),
     saveCnh: jest.fn(),
+    saveVehicle: jest.fn(),
   },
   rideApi: { validatePin: jest.fn(), completeRide: jest.fn(), markArrived: jest.fn() },
   billingApi: { requestPayout: jest.fn() },
@@ -104,7 +105,8 @@ const m = api as unknown as {
     | 'updateLocation'
     | 'getRegistration'
     | 'savePersonalData'
-    | 'saveCnh',
+    | 'saveCnh'
+    | 'saveVehicle',
     jest.Mock
   >;
   rideApi: Record<'validatePin' | 'completeRide' | 'markArrived', jest.Mock>;
@@ -938,17 +940,23 @@ describe('driver-mobile integrado à API', () => {
     });
   });
 
-  describe('cadastro do motorista (dados pessoais e CNH)', () => {
+  describe('cadastro do motorista (dados pessoais, CNH e veículo)', () => {
     const NEW_DRIVER = { ...DRIVER, name: 'Usuário VOZTRI', cpf: null, email: null, driverStatus: 'registering' };
-    const reg = (over: { personal?: object; cnh?: object; nextStep?: string | null } = {}) => ({
+    const reg = (over: { personal?: object; cnh?: object; vehicle?: object; nextStep?: string | null } = {}) => ({
       status: 'registering',
       steps: {
         personal: { done: false, data: { name: 'Usuário VOZTRI', cpf: null, birthDate: null, email: null }, ...over.personal },
         cnh: { done: false, data: { number: null, category: null, expiresAt: null, hasEar: false }, ...over.cnh },
+        vehicle: {
+          done: false,
+          data: { brand: null, model: null, year: null, color: null, plate: null, renavam: null, category: null },
+          ...over.vehicle,
+        },
       },
       nextStep: over.nextStep === undefined ? 'personal' : over.nextStep,
     });
     const PERSONAL_DONE = { done: true, data: { name: 'Carlos Eduardo Silva', cpf: '52998224725', birthDate: '1990-05-20', email: null } };
+    const CNH_DONE = (category: string) => ({ done: true, data: { number: '01234567890', category, expiresAt: '2030-01-31', hasEar: true } });
 
     async function renderRegistering(registration = reg()) {
       m.session.load.mockResolvedValue('token-salvo');
@@ -1012,9 +1020,7 @@ describe('driver-mobile integrado à API', () => {
     });
 
     it('CNH: exige a EAR, envia a categoria e conclui esta parte', async () => {
-      m.driverApi.saveCnh.mockResolvedValueOnce(
-        reg({ personal: PERSONAL_DONE, cnh: { done: true, data: { number: '01234567890', category: 'B', expiresAt: '2030-01-31', hasEar: true } }, nextStep: null }),
-      );
+      m.driverApi.saveCnh.mockResolvedValueOnce(reg({ personal: PERSONAL_DONE, cnh: CNH_DONE('B'), nextStep: 'vehicle' }));
       await renderRegistering(reg({ personal: PERSONAL_DONE, nextStep: 'cnh' }));
       expect(visibleText(tree)).toContain('Etapa 2 de 4 · CNH');
 
@@ -1028,14 +1034,80 @@ describe('driver-mobile integrado à API', () => {
       await pressAsync(tree, 'Minha CNH tem a observação EAR');
       await pressAsync(tree, 'Salvar CNH');
       expect(m.driverApi.saveCnh).toHaveBeenCalledWith({ number: '01234567890', category: 'B', expiresAt: '2030-01-31', hasEar: true });
-      const text = visibleText(tree);
-      expect(text).toContain('Dados pessoais e CNH salvos');
-      expect(text).toContain('Etapa 3 de 4 · Veículo');
+      expect(visibleText(tree)).toContain('Etapa 3 de 4 · Veículo');
 
-      // Revisar volta à etapa com o que foi salvo
-      await pressAsync(tree, 'Revisar dados pessoais');
+      // Voltar à etapa anterior mostra o que foi salvo
+      await pressAsync(tree, 'Voltar à CNH');
+      await pressAsync(tree, 'Voltar aos dados pessoais');
       const cpf = tree.root.find((n) => n.props.accessibilityLabel === 'CPF' && n.props.onChangeText);
       expect(cpf.props.value).toBe('529.982.247-25');
+    });
+
+    it('veículo: só oferece o que a CNH permite e envia a placa e o RENAVAM limpos', async () => {
+      m.driverApi.saveVehicle.mockResolvedValueOnce(
+        reg({
+          personal: PERSONAL_DONE,
+          cnh: CNH_DONE('B'),
+          vehicle: { done: true, data: { brand: 'Fiat', model: 'Argo', year: 2022, color: 'Prata', plate: 'BRA2E19', renavam: '01234567890', category: 'pop' } },
+          nextStep: null,
+        }),
+      );
+      await renderRegistering(reg({ personal: PERSONAL_DONE, cnh: CNH_DONE('B'), nextStep: 'vehicle' }));
+      expectNoStrayText(tree);
+      let text = visibleText(tree);
+      expect(text).toContain('Etapa 3 de 4 · Veículo');
+      // CNH B: moto desabilitada, com o motivo
+      expect(text).toContain('Sua CNH (B) não permite');
+      const moto = tree.root.find((n) => n.props.accessibilityLabel === 'Categoria Moto' && n.props.onPress);
+      expect(moto.props.disabled).toBe(true);
+
+      await pressAsync(tree, 'Salvar veículo');
+      expect(visibleText(tree)).toContain('Escolha a categoria.');
+      expect(m.driverApi.saveVehicle).not.toHaveBeenCalled();
+
+      await pressAsync(tree, 'Categoria Pop');
+      await typeAsync(tree, 'Marca', 'Fiat');
+      await typeAsync(tree, 'Modelo', 'Argo');
+      await typeAsync(tree, 'Ano', '2022');
+      await typeAsync(tree, 'Cor', 'Prata');
+      await typeAsync(tree, 'Placa', 'bra-2e19');
+      await typeAsync(tree, 'RENAVAM', '0123456789-0');
+      const plate = tree.root.find((n) => n.props.accessibilityLabel === 'Placa' && n.props.onChangeText);
+      expect(plate.props.value).toBe('BRA2E19');
+      await pressAsync(tree, 'Salvar veículo');
+
+      expect(m.driverApi.saveVehicle).toHaveBeenCalledWith({
+        brand: 'Fiat',
+        model: 'Argo',
+        year: 2022,
+        color: 'Prata',
+        plate: 'BRA2E19',
+        renavam: '01234567890',
+        category: 'pop',
+      });
+      text = visibleText(tree);
+      expect(text).toContain('Dados pessoais, CNH e veículo salvos');
+      expect(text).toContain('Etapa 4 de 4 · Documentos');
+    });
+
+    it('veículo: CNH só A oferece só a moto; erro da API aparece no campo', async () => {
+      m.driverApi.saveVehicle.mockRejectedValueOnce({ message: 'x', fields: { plate: 'Esta placa já está cadastrada por outro motorista.' } });
+      await renderRegistering(reg({ personal: PERSONAL_DONE, cnh: CNH_DONE('A'), nextStep: 'vehicle' }));
+      const disabled = (label: string) => tree.root.find((n) => n.props.accessibilityLabel === label && n.props.onPress).props.disabled;
+      expect(disabled('Categoria Pop')).toBe(true);
+      expect(disabled('Categoria Black')).toBe(true);
+      expect(disabled('Categoria Moto')).toBe(false);
+
+      await pressAsync(tree, 'Categoria Moto');
+      await typeAsync(tree, 'Marca', 'Honda');
+      await typeAsync(tree, 'Modelo', 'CG 160');
+      await typeAsync(tree, 'Ano', '2021');
+      await typeAsync(tree, 'Cor', 'Vermelha');
+      await typeAsync(tree, 'Placa', 'ABC1234');
+      await typeAsync(tree, 'RENAVAM', '123456789');
+      await pressAsync(tree, 'Salvar veículo');
+      expect(m.driverApi.saveVehicle).toHaveBeenCalledWith(expect.objectContaining({ category: 'moto', renavam: '123456789' }));
+      expect(visibleText(tree)).toContain('Esta placa já está cadastrada por outro motorista.');
     });
 
     it('sair da conta pelo cadastro', async () => {

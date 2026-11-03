@@ -228,7 +228,7 @@ Este documento registra todas as fases do desenvolvimento da plataforma **VOZTRI
 - **Objetivo**: Permitir que um motorista novo se cadastre pelo app (hoje só existe motorista do seed ou criado pelo painel). Completa a Fase 3, que previa essas telas.
 - **Tarefas**:
   - [x] Fluxo de cadastro depois do primeiro login: dados pessoais e CNH (número, categoria, validade, EAR) (2026-11-03): motorista novo nasce `registering` (antes o login o aprovava com CNH fictícia), tela "Cadastro de motorista" no lugar do painel com as etapas, `GET /driver/registration` e `PUT .../personal` e `.../cnh` (CPF conferido, 18 anos ou mais, EAR obrigatória); o antigo `POST /driver/register`, que aprovava qualquer usuário, foi removido; o painel não aprova cadastro incompleto.
-  - [ ] Cadastro do veículo (marca, modelo, ano, cor, placa, RENAVAM, categoria).
+  - [x] Cadastro do veículo (marca, modelo, ano, cor, placa, RENAVAM, categoria) (2026-11-03): etapa "Veículo" no app e `PUT /driver/registration/vehicle`, conferindo se a categoria da CNH permite o tipo (moto: A; Pop/Black: B ou acima); idade máxima de 15 anos (Black, 8); placa antiga ou Mercosul; RENAVAM de 11 dígitos; placa e RENAVAM sem repetir; categoria Mulher definida pela equipe na análise.
   - [ ] Envio de fotos de CNH, CRLV e selfie pelo `POST /api/v1/driver/documents` (já existe no backend, sem uso no app), com câmera e galeria; armazenamento no MinIO.
   - [ ] Permissão `CAMERA` no `AndroidManifest.xml` do motorista (o `Info.plist` já pede a câmera).
   - [ ] Tela de status da análise (pendente, aprovado, recusado com motivo) e bloqueio do botão "Ficar online" até a aprovação.

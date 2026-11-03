@@ -1,5 +1,13 @@
 import { create } from 'zustand';
-import type { CnhCategory, DriverEarningsSummary, DriverRegistration, DriverRideOffer, Ride, User } from '@voztri/shared-types';
+import type {
+  CnhCategory,
+  DriverEarningsSummary,
+  DriverRegistration,
+  DriverRideOffer,
+  Ride,
+  SelfServiceVehicleCategory,
+  User,
+} from '@voztri/shared-types';
 import type { PickedPhoto, ProfileFields, ProfileSaveResult } from '@voztri/mobile-core';
 import {
   apiErrorCode,
@@ -117,6 +125,16 @@ export interface DriverState {
   savePersonalData: (data: { name: string; cpf: string; birthDate: string; email: string | null }) => Promise<RegistrationSaveResult>;
   /** Etapa "CNH" do cadastro (validade em AAAA-MM-DD). */
   saveCnh: (data: { number: string; category: CnhCategory; expiresAt: string; hasEar: boolean }) => Promise<RegistrationSaveResult>;
+  /** Etapa "Veículo" do cadastro. */
+  saveVehicle: (data: {
+    brand: string;
+    model: string;
+    year: number;
+    color: string;
+    plate: string;
+    renavam: string;
+    category: SelfServiceVehicleCategory;
+  }) => Promise<RegistrationSaveResult>;
 
   /** Recebe uma posição do GPS e envia à API respeitando o intervalo mínimo. */
   reportPosition: (position: DevicePosition, force?: boolean) => Promise<void>;
@@ -536,6 +554,8 @@ export const useDriverStore = create<DriverState>((set, get) => {
     savePersonalData: (data) => saveStep(() => driverApi.savePersonalData(data)),
 
     saveCnh: (data) => saveStep(() => driverApi.saveCnh(data)),
+
+    saveVehicle: (data) => saveStep(() => driverApi.saveVehicle(data)),
 
     deleteAccount: async (confirmation) => {
       try {

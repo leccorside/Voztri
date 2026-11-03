@@ -32,7 +32,10 @@ export interface DriverCurrentState {
 export type DriverStatus = 'registering' | 'pending_approval' | 'approved' | 'rejected' | 'blocked' | 'deleted';
 
 /** Etapas do cadastro do motorista pelo app (as seguintes entram nas próximas partes). */
-export type DriverRegistrationStepKey = 'personal' | 'cnh';
+export type DriverRegistrationStepKey = 'personal' | 'cnh' | 'vehicle';
+
+/** Categorias que o motorista escolhe no cadastro (Mulher é definida pela equipe na análise). */
+export type SelfServiceVehicleCategory = 'pop' | 'black' | 'moto';
 
 /** Categorias da CNH aceitas pela API. */
 export type CnhCategory = 'A' | 'B' | 'AB' | 'C' | 'AC' | 'D' | 'AD' | 'E' | 'AE';
@@ -56,12 +59,25 @@ export interface DriverCnhData {
   hasEar: boolean;
 }
 
+export interface DriverVehicleData {
+  brand: string | null;
+  model: string | null;
+  year: number | null;
+  color: string | null;
+  /** Só letras e números, em maiúsculas: ABC1D23 ou ABC1234. */
+  plate: string | null;
+  /** 11 dígitos. */
+  renavam: string | null;
+  category: VehicleCategory | null;
+}
+
 /** GET /driver/registration: status, o que cada etapa já tem e a próxima pendente. */
 export interface DriverRegistration {
   status: DriverStatus;
   steps: {
     personal: { done: boolean; data: DriverPersonalData };
     cnh: { done: boolean; data: DriverCnhData };
+    vehicle: { done: boolean; data: DriverVehicleData };
   };
   /** null: as etapas desta parte estão completas. */
   nextStep: DriverRegistrationStepKey | null;

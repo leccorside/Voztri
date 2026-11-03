@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Driver;
+use App\Models\DriverVehicle;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Support\Cpf;
@@ -114,6 +115,12 @@ class DriverRegistrationController extends Controller
                 && Driver::where('cnh_number', $number)->where('user_id', '!=', $user->id)->exists()) {
                 $v->errors()->add('number', 'Esta CNH já está cadastrada em outra conta.');
             }
+            // Trocar a categoria não pode deixar o veículo já cadastrado sem habilitação
+            $vehicle = $this->driver($user)->vehicles()->first();
+            if ($vehicle && is_string($input['category']) && in_array($input['category'], Driver::CNH_CATEGORIES, true)
+                && ($message = $this->incompatibility($input['category'], $vehicle->category))) {
+                $v->errors()->add('category', $message);
+            }
         })->validate();
 
         $driver = $this->driver($user);
@@ -125,6 +132,103 @@ class DriverRegistrationController extends Controller
         ])->save();
 
         return response()->json($this->summary($user->fresh()));
+    }
+
+    /**
+     * Veículo: marca, modelo, ano, cor, placa, RENAVAM e categoria (pop, black ou
+     * moto). A categoria da CNH precisa permitir o tipo (moto: A; carro: B ou acima),
+     * por isso a CNH vem antes.
+     */
+    public function updateVehicle(Request $request)
+    {
+        $user = $request->user();
+        if ($locked = $this->locked($user)) {
+            return $locked;
+        }
+        $driver = $this->driver($user);
+        if (!$driver->cnh_number) {
+            return response()->json([
+                'message' => 'Preencha a CNH antes do veículo: a categoria dela define se você pode dirigir carro ou moto.',
+                'error' => 'CNH_REQUIRED',
+            ], 422);
+        }
+
+        $clean = fn (string $key) => is_string($request->input($key)) ? preg_replace('/\s+/u', ' ', trim($request->input($key))) : $request->input($key);
+        $renavam = is_string($request->input('renavam')) ? preg_replace('/\D/', '', $request->input('renavam')) : $request->input('renavam');
+        $input = [
+            'brand' => $clean('brand'),
+            'model' => $clean('model'),
+            'year' => $request->input('year'),
+            'color' => $clean('color'),
+            'plate' => is_string($request->input('plate')) ? DriverVehicle::normalizePlate($request->input('plate')) : $request->input('plate'),
+            // RENAVAM antigo tem 9 dígitos: completa com zeros à esquerda (formato atual, 11)
+            'renavam' => is_string($renavam) && strlen($renavam) === 9 ? '00' . $renavam : $renavam,
+            'category' => is_string($request->input('category')) ? strtolower(trim($request->input('category'))) : $request->input('category'),
+        ];
+
+        $thisYear = (int) Carbon::now()->year;
+        $data = validator($input, [
+            'brand' => 'required|string|min:2|max:50',
+            'model' => 'required|string|min:1|max:50',
+            'year' => 'required|integer|max:' . ($thisYear + 1),
+            'color' => 'required|string|min:3|max:30',
+            'plate' => ['required', 'string', 'regex:/^[A-Z]{3}\d[A-Z0-9]\d{2}$/'],
+            'renavam' => ['required', 'string', 'regex:/^\d{11}$/', 'not_regex:/^(\d)\1{10}$/'],
+            'category' => 'required|string|in:' . implode(',', DriverVehicle::SELF_SERVICE_CATEGORIES),
+        ], [
+            'brand.required' => 'Informe a marca.',
+            'brand.min' => 'Informe a marca.',
+            'model.required' => 'Informe o modelo.',
+            'year.required' => 'Informe o ano do veículo.',
+            'year.integer' => 'Informe o ano com 4 números.',
+            'year.max' => 'Confira o ano do veículo.',
+            'color.required' => 'Informe a cor.',
+            'color.min' => 'Informe a cor por extenso (ex.: Prata).',
+            'plate.required' => 'Informe a placa.',
+            'plate.regex' => 'Placa inválida. Use o formato ABC1D23 (Mercosul) ou ABC1234.',
+            'renavam.required' => 'Informe o RENAVAM (está no documento do veículo, o CRLV).',
+            'renavam.regex' => 'O RENAVAM tem 11 números (ou 9, nos documentos antigos).',
+            'renavam.not_regex' => 'Confira o RENAVAM.',
+            'category.required' => 'Escolha a categoria.',
+            'category.in' => 'Escolha Pop, Black ou Moto. A categoria Mulher é definida pela equipe VOZTRI na análise.',
+        ])->after(function (Validator $v) use ($input, $driver, $thisYear) {
+            $category = $input['category'];
+            if (!is_string($category) || !in_array($category, DriverVehicle::SELF_SERVICE_CATEGORIES, true)) {
+                return;
+            }
+            if ($message = $this->incompatibility($driver->cnh_category, $category)) {
+                $v->errors()->add('category', $message);
+            }
+            if (is_numeric($input['year'])) {
+                $maxAge = $category === 'black' ? DriverVehicle::BLACK_MAX_AGE_YEARS : DriverVehicle::MAX_AGE_YEARS;
+                if ((int) $input['year'] < $thisYear - $maxAge) {
+                    $v->errors()->add('year', $category === 'black'
+                        ? 'Para a Black, o veículo pode ter no máximo ' . DriverVehicle::BLACK_MAX_AGE_YEARS . ' anos (ano ' . ($thisYear - DriverVehicle::BLACK_MAX_AGE_YEARS) . ' ou mais novo).'
+                        : 'O veículo pode ter no máximo ' . DriverVehicle::MAX_AGE_YEARS . ' anos (ano ' . ($thisYear - DriverVehicle::MAX_AGE_YEARS) . ' ou mais novo).');
+                }
+            }
+            // Veículos de contas excluídas ficam (histórico das corridas), mas não bloqueiam
+            // o mesmo carro num cadastro novo
+            $others = fn () => DriverVehicle::where('driver_id', '!=', $driver->id)
+                ->whereNotIn('driver_id', Driver::where('status', 'deleted')->select('id'));
+            if (is_string($input['plate']) && $others()->where('plate', $input['plate'])->exists()) {
+                $v->errors()->add('plate', 'Esta placa já está cadastrada por outro motorista.');
+            }
+            if (is_string($input['renavam']) && $others()->where('renavam', $input['renavam'])->exists()) {
+                $v->errors()->add('renavam', 'Este RENAVAM já está cadastrado por outro motorista.');
+            }
+        })->validate();
+
+        // Um veículo no cadastro: a etapa substitui o anterior
+        $vehicle = $driver->vehicles()->first() ?? new DriverVehicle(['driver_id' => $driver->id]);
+        $vehicle->fill([...$data, 'year' => (int) $data['year'], 'is_active' => true])->save();
+
+        return response()->json($this->summary($user->fresh()));
+    }
+
+    private function incompatibility(?string $cnhCategory, string $vehicleCategory): ?string
+    {
+        return Driver::vehicleIncompatibility($cnhCategory, $vehicleCategory);
     }
 
     private function driver(User $user): Driver
@@ -171,13 +275,26 @@ class DriverRegistrationController extends Controller
         ];
         $cnhDone = (bool) ($driver->cnh_number && $driver->cnh_expires_at && $driver->cnh_has_ear);
 
+        $v = $driver->vehicles()->first();
+        $vehicle = [
+            'brand' => $v?->brand,
+            'model' => $v?->model,
+            'year' => $v?->year,
+            'color' => $v?->color,
+            'plate' => $v?->plate,
+            'renavam' => $v?->renavam,
+            'category' => $v?->category,
+        ];
+        $vehicleDone = (bool) ($v && $v->renavam);
+
         return [
             'status' => $driver->status,
             'steps' => [
                 'personal' => ['done' => $personalDone, 'data' => $personal],
                 'cnh' => ['done' => $cnhDone, 'data' => $cnh],
+                'vehicle' => ['done' => $vehicleDone, 'data' => $vehicle],
             ],
-            'nextStep' => !$personalDone ? 'personal' : (!$cnhDone ? 'cnh' : null),
+            'nextStep' => !$personalDone ? 'personal' : (!$cnhDone ? 'cnh' : (!$vehicleDone ? 'vehicle' : null)),
         ];
     }
 }

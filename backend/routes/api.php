@@ -35,41 +35,45 @@ Route::prefix('v1')->group(function () {
         // Login do painel administrativo: nunca cria usuário e só autentica
         // administradores ativos. Limite de 5 tentativas/minuto por IP contra
         // força bruta do código de 6 dígitos.
-        Route::prefix('admin')->middleware('throttle:5,1')->group(function () {
+        Route::prefix('admin')->middleware('throttle:5,1,admin-login')->group(function () {
             Route::post('/request-otp', [AuthController::class, 'requestAdminOtp']);
             Route::post('/verify-otp', [AuthController::class, 'verifyAdminOtp']);
         });
     });
+
+    // Limites (throttle:N,minutos,prefixo): o prefixo separa a contagem de cada rota. Sem
+    // ele, o Laravel usa uma contagem só por usuário para todas as rotas com limite (a
+    // busca de destino, 60/min, esgotava a troca do PIN, 10/min, e a exclusão da conta).
 
     // Rotas Protegidas (Sanctum)
     Route::middleware('auth:sanctum')->group(function () {
         // Usuário & Perfil
         Route::get('/auth/me', [AuthController::class, 'me']);
         // Limite também contra descobrir e-mails cadastrados pela resposta "já em uso"
-        Route::put('/auth/profile', [AuthController::class, 'updateProfile'])->middleware('throttle:10,1');
+        Route::put('/auth/profile', [AuthController::class, 'updateProfile'])->middleware('throttle:10,1,profile');
 
         // Foto do perfil (MinIO), servida pela API só a quem pode vê-la
-        Route::post('/auth/avatar', [AvatarController::class, 'store'])->middleware('throttle:10,1');
+        Route::post('/auth/avatar', [AvatarController::class, 'store'])->middleware('throttle:10,1,avatar');
         Route::delete('/auth/avatar', [AvatarController::class, 'destroy']);
         Route::get('/users/{id}/avatar', [AvatarController::class, 'show'])->whereUuid('id');
 
         // Exclusão da conta pelo app (exigida pelas lojas); dados pessoais apagados
-        Route::delete('/auth/account', [AccountController::class, 'destroy'])->middleware('throttle:5,1');
+        Route::delete('/auth/account', [AccountController::class, 'destroy'])->middleware('throttle:5,1,account-delete');
 
         // Endereço da coordenada do GPS (embarque do passageiro); limite por usuário
-        Route::get('/geo/reverse', [GeoController::class, 'reverse'])->middleware('throttle:30,1');
+        Route::get('/geo/reverse', [GeoController::class, 'reverse'])->middleware('throttle:30,1,geo-reverse');
         // Busca de destino pelo texto (o app espera a digitação parar antes de chamar)
-        Route::get('/geo/search', [GeoController::class, 'search'])->middleware('throttle:60,1');
+        Route::get('/geo/search', [GeoController::class, 'search'])->middleware('throttle:60,1,geo-search');
 
         // PIN de emergência do passageiro (desativa o SOS); limite contra força bruta
         Route::prefix('passenger')->middleware('role:passenger')->group(function () {
             Route::get('/emergency-pin', [EmergencyPinController::class, 'show']);
-            Route::put('/emergency-pin', [EmergencyPinController::class, 'update'])->middleware('throttle:10,1');
+            Route::put('/emergency-pin', [EmergencyPinController::class, 'update'])->middleware('throttle:10,1,emergency-pin');
 
             // Contatos de confiança (avisados por SMS quando o SOS é acionado)
             Route::get('/trusted-contacts', [TrustedContactController::class, 'index']);
-            Route::post('/trusted-contacts', [TrustedContactController::class, 'store'])->middleware('throttle:20,1');
-            Route::put('/trusted-contacts/{id}', [TrustedContactController::class, 'update'])->whereUuid('id')->middleware('throttle:20,1');
+            Route::post('/trusted-contacts', [TrustedContactController::class, 'store'])->middleware('throttle:20,1,trusted-contacts');
+            Route::put('/trusted-contacts/{id}', [TrustedContactController::class, 'update'])->whereUuid('id')->middleware('throttle:20,1,trusted-contacts');
             Route::delete('/trusted-contacts/{id}', [TrustedContactController::class, 'destroy'])->whereUuid('id');
         });
 
@@ -109,8 +113,9 @@ Route::prefix('v1')->group(function () {
         // aprovava qualquer usuário na hora e virava motorista quem chamasse)
         Route::prefix('driver/registration')->middleware('role:driver')->group(function () {
             Route::get('/', [DriverRegistrationController::class, 'show']);
-            Route::put('/personal', [DriverRegistrationController::class, 'updatePersonal'])->middleware('throttle:20,1');
-            Route::put('/cnh', [DriverRegistrationController::class, 'updateCnh'])->middleware('throttle:20,1');
+            Route::put('/personal', [DriverRegistrationController::class, 'updatePersonal'])->middleware('throttle:20,1,driver-registration');
+            Route::put('/cnh', [DriverRegistrationController::class, 'updateCnh'])->middleware('throttle:20,1,driver-registration');
+            Route::put('/vehicle', [DriverRegistrationController::class, 'updateVehicle'])->middleware('throttle:20,1,driver-registration');
         });
 
         Route::prefix('driver')->group(function () {

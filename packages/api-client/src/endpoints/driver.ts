@@ -1,5 +1,12 @@
 import { VoztriApiClient } from '../client.js';
-import { CnhCategory, DriverCurrentState, DriverEarningsSummary, DriverRegistration, Ride } from '@voztri/shared-types';
+import {
+  CnhCategory,
+  DriverCurrentState,
+  DriverEarningsSummary,
+  DriverRegistration,
+  Ride,
+  SelfServiceVehicleCategory,
+} from '@voztri/shared-types';
 
 export class DriverApi {
   constructor(private client: VoztriApiClient) {}
@@ -68,6 +75,23 @@ export class DriverApi {
   /** Etapa "CNH": número (11 dígitos), categoria, validade (AAAA-MM-DD) e EAR. */
   async saveCnh(data: { number: string; category: CnhCategory; expiresAt: string; hasEar: boolean }): Promise<DriverRegistration> {
     const res = await this.client.put<DriverRegistration>('/driver/registration/cnh', data);
+    return res.data;
+  }
+
+  /**
+   * Etapa "Veículo". A categoria da CNH precisa permitir o tipo (moto: A; carro: B ou
+   * acima): senão, 422 em `errors.category`. Sem a CNH, 422 CNH_REQUIRED.
+   */
+  async saveVehicle(data: {
+    brand: string;
+    model: string;
+    year: number;
+    color: string;
+    plate: string;
+    renavam: string;
+    category: SelfServiceVehicleCategory;
+  }): Promise<DriverRegistration> {
+    const res = await this.client.put<DriverRegistration>('/driver/registration/vehicle', data);
     return res.data;
   }
 }

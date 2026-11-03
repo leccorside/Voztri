@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { VoztriColors } from '@voztri/design-tokens';
-import type { CnhCategory, DriverRegistration } from '@voztri/shared-types';
+import type { CnhCategory, DriverRegistration, SelfServiceVehicleCategory } from '@voztri/shared-types';
 import { Button } from '@voztri/mobile-core';
 import { useDriverStore } from '../store/driverStore.js';
 
@@ -278,15 +278,161 @@ const CnhStep: React.FC<{ registration: DriverRegistration; onBack: () => void; 
   );
 };
 
+/** O que a categoria da CNH permite (a API confere de novo). */
+export const cnhAllowsMotorcycle = (category: CnhCategory | null) => !!category && category.includes('A');
+export const cnhAllowsCar = (category: CnhCategory | null) => !!category && /[BCDE]/.test(category);
+
+/** Placa enquanto digita: só letras e números, maiúsculas, até 7 (ABC1D23). */
+export const maskPlate = (text: string) => text.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+
+const VEHICLE_OPTIONS: { key: SelfServiceVehicleCategory; label: string; detail: string }[] = [
+  { key: 'pop', label: 'Pop', detail: 'Carro com até 15 anos' },
+  { key: 'black', label: 'Black', detail: 'Carro com até 8 anos' },
+  { key: 'moto', label: 'Moto', detail: 'CNH categoria A' },
+];
+
+const VehicleStep: React.FC<{ registration: DriverRegistration; onBack: () => void; onDone: () => void }> = ({
+  registration,
+  onBack,
+  onDone,
+}) => {
+  const { saveVehicle, busy } = useDriverStore();
+  const saved = registration.steps.vehicle.data;
+  const cnh = registration.steps.cnh.data.category;
+  const [category, setCategory] = useState<SelfServiceVehicleCategory | null>(
+    saved.category && saved.category !== 'mulher' ? saved.category : null,
+  );
+  const [brand, setBrand] = useState(saved.brand ?? '');
+  const [model, setModel] = useState(saved.model ?? '');
+  const [year, setYear] = useState(saved.year ? String(saved.year) : '');
+  const [color, setColor] = useState(saved.color ?? '');
+  const [plate, setPlate] = useState(saved.plate ?? '');
+  const [renavam, setRenavam] = useState(saved.renavam ?? '');
+  const [errors, setErrors] = useState<Errors>({});
+  const [message, setMessage] = useState<string | null>(null);
+
+  const allowed = (key: SelfServiceVehicleCategory) => (key === 'moto' ? cnhAllowsMotorcycle(cnh) : cnhAllowsCar(cnh));
+  const edit = (field: string, setter: (v: string) => void, mask?: (v: string) => string) => (text: string) => {
+    setter(mask ? mask(text) : text);
+    setErrors((e) => ({ ...e, [field]: undefined }));
+    setMessage(null);
+  };
+
+  const onContinue = async () => {
+    const local: Errors = {};
+    if (!category) local.category = 'Escolha a categoria.';
+    if (brand.trim().length < 2) local.brand = 'Informe a marca.';
+    if (!model.trim()) local.model = 'Informe o modelo.';
+    if (!/^\d{4}$/.test(year)) local.year = 'Informe o ano com 4 números.';
+    if (color.trim().length < 3) local.color = 'Informe a cor por extenso (ex.: Prata).';
+    if (!/^[A-Z]{3}\d[A-Z0-9]\d{2}$/.test(plate)) local.plate = 'Placa inválida. Use o formato ABC1D23 (Mercosul) ou ABC1234.';
+    if (!/^(\d{9}|\d{11})$/.test(renavam)) local.renavam = 'O RENAVAM tem 11 números (ou 9, nos documentos antigos).';
+    if (Object.keys(local).length > 0) {
+      setErrors(local);
+      return;
+    }
+    const result = await saveVehicle({
+      brand: brand.trim(),
+      model: model.trim(),
+      year: Number(year),
+      color: color.trim(),
+      plate,
+      renavam,
+      category: category!,
+    });
+    if (result.ok) {
+      onDone();
+    } else {
+      setErrors(result.fields);
+      if (Object.keys(result.fields).length === 0) setMessage(result.message);
+    }
+  };
+
+  return (
+    <View>
+      <View style={styles.field}>
+        <Text style={styles.label}>Categoria</Text>
+        {VEHICLE_OPTIONS.map((option) => {
+          const ok = allowed(option.key);
+          const selected = category === option.key;
+          return (
+            <Pressable
+              key={option.key}
+              disabled={!ok}
+              onPress={() => {
+                setCategory(option.key);
+                setErrors((e) => ({ ...e, category: undefined }));
+              }}
+              accessibilityRole="radio"
+              accessibilityState={{ selected, disabled: !ok }}
+              accessibilityLabel={`Categoria ${option.label}`}
+              style={[styles.option, selected ? styles.optionOn : null, !ok ? styles.optionOff : null]}
+            >
+              <Text style={[styles.optionLabel, selected ? styles.chipTextOn : null]}>{option.label}</Text>
+              <Text style={[styles.optionDetail, selected ? styles.chipTextOn : null]}>
+                {ok ? option.detail : `Sua CNH (${cnh ?? '—'}) não permite`}
+              </Text>
+            </Pressable>
+          );
+        })}
+        {errors.category ? (
+          <Text style={styles.fieldError}>{errors.category}</Text>
+        ) : (
+          <Text style={styles.hint}>A categoria Mulher é definida pela equipe VOZTRI na análise do cadastro.</Text>
+        )}
+      </View>
+
+      <Field label="Marca" value={brand} onChange={edit('brand', setBrand)} error={errors.brand} autoCapitalize="words" placeholder="Ex.: Fiat" />
+      <Field label="Modelo" value={model} onChange={edit('model', setModel)} error={errors.model} autoCapitalize="words" placeholder="Ex.: Argo" />
+      <Field
+        label="Ano"
+        value={year}
+        onChange={edit('year', setYear, (t) => t.replace(/\D/g, '').slice(0, 4))}
+        error={errors.year}
+        keyboardType="number-pad"
+        placeholder="Ex.: 2022"
+      />
+      <Field label="Cor" value={color} onChange={edit('color', setColor)} error={errors.color} autoCapitalize="words" placeholder="Ex.: Prata" />
+      <Field
+        label="Placa"
+        value={plate}
+        onChange={edit('plate', setPlate, maskPlate)}
+        error={errors.plate}
+        autoCapitalize="characters"
+        placeholder="ABC1D23"
+      />
+      <Field
+        label="RENAVAM"
+        value={renavam}
+        onChange={edit('renavam', setRenavam, (t) => t.replace(/\D/g, '').slice(0, 11))}
+        error={errors.renavam}
+        keyboardType="number-pad"
+        hint="Está no documento do veículo (CRLV)."
+      />
+
+      {message && <Text style={styles.message}>{message}</Text>}
+      <Button
+        label={busy ? 'Salvando…' : 'Continuar'}
+        accessibilityLabel="Salvar veículo"
+        onPress={() => void onContinue()}
+        disabled={busy}
+        style={[styles.primary, { backgroundColor: VoztriColors.brand.primary }]}
+        textStyle={styles.primaryText}
+      />
+      <Button label="Voltar à CNH" onPress={onBack} style={styles.secondary} textStyle={styles.secondaryText} />
+    </View>
+  );
+};
+
 /**
  * Cadastro do motorista pelo app, no lugar do painel enquanto o status é
- * `registering`. Esta parte tem os dados pessoais e a CNH; as etapas de veículo e
- * documentos aparecem como as próximas (ainda não disponíveis).
+ * `registering`. Esta parte tem os dados pessoais, a CNH e o veículo; a etapa de
+ * documentos aparece como a próxima (ainda não disponível).
  */
 export const RegistrationScreen: React.FC = () => {
   const { registration, logout, loadRegistration } = useDriverStore();
   // A etapa aberta: a próxima pendente, ou a escolhida pelo motorista (voltar)
-  const [step, setStep] = useState<'personal' | 'cnh' | null>(null);
+  const [step, setStep] = useState<'personal' | 'cnh' | 'vehicle' | null>(null);
   const current = step ?? registration?.nextStep ?? null;
 
   if (!registration) {
@@ -298,7 +444,7 @@ export const RegistrationScreen: React.FC = () => {
     );
   }
 
-  const index = current === 'personal' ? 0 : current === 'cnh' ? 1 : 2;
+  const index = current === 'personal' ? 0 : current === 'cnh' ? 1 : current === 'vehicle' ? 2 : 3;
 
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -321,15 +467,19 @@ export const RegistrationScreen: React.FC = () => {
 
         {current === 'personal' && <PersonalStep registration={registration} onDone={() => setStep(null)} />}
         {current === 'cnh' && <CnhStep registration={registration} onBack={() => setStep('personal')} onDone={() => setStep(null)} />}
+        {current === 'vehicle' && (
+          <VehicleStep registration={registration} onBack={() => setStep('cnh')} onDone={() => setStep(null)} />
+        )}
         {current === null && (
           <View>
-            <Text style={styles.doneTitle}>Dados pessoais e CNH salvos ✓</Text>
+            <Text style={styles.doneTitle}>Dados pessoais, CNH e veículo salvos ✓</Text>
             <Text style={styles.intro}>
-              As próximas etapas são o cadastro do veículo e o envio das fotos da CNH, do documento do carro (CRLV) e
-              de uma selfie. Elas chegam numa próxima atualização do app; seus dados ficam guardados.
+              Falta o envio das fotos da CNH, do documento do veículo (CRLV) e de uma selfie. Essa etapa chega numa
+              próxima atualização do app; seus dados ficam guardados.
             </Text>
             <Button label="Revisar dados pessoais" onPress={() => setStep('personal')} style={styles.secondary} textStyle={styles.secondaryText} />
             <Button label="Revisar CNH" onPress={() => setStep('cnh')} style={styles.secondary} textStyle={styles.secondaryText} />
+            <Button label="Revisar veículo" onPress={() => setStep('vehicle')} style={styles.secondary} textStyle={styles.secondaryText} />
           </View>
         )}
       </ScrollView>
@@ -388,5 +538,10 @@ const styles = StyleSheet.create({
   primaryText: { color: '#FFFFFF', fontWeight: '800', fontSize: 16 },
   secondary: { paddingVertical: 13, borderRadius: 14, borderWidth: 1, borderColor: '#ECECFF', marginTop: 10 },
   secondaryText: { color: '#6A00FF', fontWeight: '800', fontSize: 15 },
+  option: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1, borderColor: '#ECECFF', marginBottom: 8 },
+  optionOn: { backgroundColor: '#6A00FF', borderColor: '#6A00FF' },
+  optionOff: { opacity: 0.45 },
+  optionLabel: { fontSize: 15, fontWeight: '800', color: '#151A31' },
+  optionDetail: { fontSize: 12, color: '#494457', marginTop: 2 },
   doneTitle: { fontSize: 18, fontWeight: '800', color: '#00873C', marginBottom: 10 },
 });

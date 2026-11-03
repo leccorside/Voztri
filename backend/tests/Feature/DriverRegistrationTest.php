@@ -100,7 +100,7 @@ class DriverRegistrationTest extends TestCase
             ->assertJsonPath('steps.cnh.data.number', '01234567890')
             ->assertJsonPath('steps.cnh.data.category', 'B')
             ->assertJsonPath('steps.cnh.data.hasEar', true)
-            ->assertJsonPath('nextStep', null);
+            ->assertJsonPath('nextStep', 'vehicle');
 
         // Continua em andamento (veículo e documentos vêm depois): ainda não fica online
         $this->assertSame(Driver::STATUS_REGISTERING, $u->driver->fresh()->status);
@@ -160,6 +160,105 @@ class DriverRegistrationTest extends TestCase
 
         $u->driver->forceFill(['status' => Driver::STATUS_PENDING])->save();
         $this->actingAs($admin, 'sanctum')->postJson("/api/v1/admin/drivers/{$u->driver->id}/approve")->assertOk();
+    }
+
+    private function vehicle(array $override = []): array
+    {
+        return [...['brand' => 'Fiat', 'model' => ' Argo  Drive ', 'year' => now()->year - 3, 'color' => 'Prata', 'plate' => 'bra-2e19', 'renavam' => '0123456789-0', 'category' => 'pop'], ...$override];
+    }
+
+    /** Motorista com dados pessoais e CNH preenchidos (categoria escolhida). */
+    private function driverWithCnh(string $category = 'B', string $phone = '11922220001', string $cnh = '01234567890'): User
+    {
+        $u = $this->newDriver($phone);
+        $u->driver->forceFill(['cnh_number' => $cnh, 'cnh_category' => $category, 'cnh_expires_at' => now()->addYears(2), 'cnh_has_ear' => true])->save();
+
+        return $u;
+    }
+
+    public function test_vehicle_is_saved_clean_and_completes_the_steps_so_far(): void
+    {
+        $u = $this->driverWithCnh('B');
+        $this->actingAs($u, 'sanctum')->putJson(self::URL . '/personal', self::PERSONAL)->assertOk();
+
+        $this->actingAs($u, 'sanctum')->putJson(self::URL . '/vehicle', $this->vehicle())->assertOk()
+            ->assertJsonPath('steps.vehicle.done', true)
+            ->assertJsonPath('steps.vehicle.data.model', 'Argo Drive')
+            ->assertJsonPath('steps.vehicle.data.plate', 'BRA2E19')
+            ->assertJsonPath('steps.vehicle.data.renavam', '01234567890')
+            ->assertJsonPath('steps.vehicle.data.category', 'pop')
+            ->assertJsonPath('nextStep', null);
+
+        // De novo substitui (um veículo no cadastro), e RENAVAM antigo de 9 dígitos ganha os zeros
+        $this->actingAs($u, 'sanctum')->putJson(self::URL . '/vehicle', $this->vehicle(['plate' => 'ABC1234', 'renavam' => '123456789', 'category' => 'black', 'year' => now()->year - 1]))
+            ->assertOk()->assertJsonPath('steps.vehicle.data.renavam', '00123456789')->assertJsonPath('steps.vehicle.data.category', 'black');
+        $this->assertSame(1, $u->driver->vehicles()->count());
+        $this->assertSame(Driver::STATUS_REGISTERING, $u->driver->fresh()->status, 'Falta enviar os documentos.');
+    }
+
+    public function test_cnh_category_must_allow_the_vehicle_type(): void
+    {
+        $carOnly = $this->driverWithCnh('B');
+        $this->actingAs($carOnly, 'sanctum')->putJson(self::URL . '/vehicle', $this->vehicle(['category' => 'moto']))->assertStatus(422)
+            ->assertJsonPath('errors.category.0', 'Sua CNH (categoria B) não permite dirigir moto. Para a Moto, a CNH precisa ter a categoria A (A, AB, AC, AD ou AE).');
+
+        $motoOnly = $this->driverWithCnh('A', '11922220002', '11122233344');
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($motoOnly, 'sanctum')->putJson(self::URL . '/vehicle', $this->vehicle())->assertStatus(422)
+            ->assertJsonPath('errors.category.0', 'Sua CNH (categoria A) não permite dirigir carro. Para Pop ou Black, a CNH precisa ter a categoria B ou acima.');
+        $this->actingAs($motoOnly, 'sanctum')->putJson(self::URL . '/vehicle', $this->vehicle(['category' => 'moto', 'brand' => 'Honda', 'model' => 'CG 160']))->assertOk();
+
+        // AB e D (que inclui a B) permitem carro; AB também moto
+        foreach (['AB' => ['pop', 'moto'], 'D' => ['black'], 'AE' => ['moto', 'pop']] as $category => $vehicles) {
+            foreach ($vehicles as $vehicle) {
+                $this->assertNull(Driver::vehicleIncompatibility($category, $vehicle), "{$category} permite {$vehicle}");
+            }
+        }
+
+        // Trocar a CNH para uma categoria que não cobre o veículo já cadastrado é recusado
+        $this->actingAs($motoOnly, 'sanctum')->putJson(self::URL . '/cnh', $this->cnh(['number' => '11122233344', 'category' => 'B']))->assertStatus(422)
+            ->assertJsonPath('errors.category.0', 'Sua CNH (categoria B) não permite dirigir moto. Para a Moto, a CNH precisa ter a categoria A (A, AB, AC, AD ou AE).');
+    }
+
+    public function test_vehicle_validation_in_portuguese(): void
+    {
+        $u = $this->driverWithCnh('B');
+        $put = fn (array $data) => $this->actingAs($u, 'sanctum')->putJson(self::URL . '/vehicle', $this->vehicle($data));
+        $year = now()->year;
+
+        $put(['plate' => 'AB12345'])->assertStatus(422)->assertJsonPath('errors.plate.0', 'Placa inválida. Use o formato ABC1D23 (Mercosul) ou ABC1234.');
+        $put(['renavam' => '1234'])->assertStatus(422)->assertJsonPath('errors.renavam.0', 'O RENAVAM tem 11 números (ou 9, nos documentos antigos).');
+        $put(['renavam' => '00000000000'])->assertStatus(422)->assertJsonPath('errors.renavam.0', 'Confira o RENAVAM.');
+        $put(['year' => $year - 16])->assertStatus(422)->assertJsonPath('errors.year.0', 'O veículo pode ter no máximo 15 anos (ano ' . ($year - 15) . ' ou mais novo).');
+        $put(['year' => $year - 15])->assertOk();
+        $put(['year' => $year - 9, 'category' => 'black'])->assertStatus(422)
+            ->assertJsonPath('errors.year.0', 'Para a Black, o veículo pode ter no máximo 8 anos (ano ' . ($year - 8) . ' ou mais novo).');
+        $put(['year' => $year + 2])->assertStatus(422)->assertJsonPath('errors.year.0', 'Confira o ano do veículo.');
+        $put(['category' => 'mulher'])->assertStatus(422)
+            ->assertJsonPath('errors.category.0', 'Escolha Pop, Black ou Moto. A categoria Mulher é definida pela equipe VOZTRI na análise.');
+        $put(['brand' => '', 'color' => 'X'])->assertStatus(422)
+            ->assertJsonPath('errors.brand.0', 'Informe a marca.')->assertJsonPath('errors.color.0', 'Informe a cor por extenso (ex.: Prata).');
+
+        // Placa e RENAVAM de outro motorista
+        $other = $this->driverWithCnh('B', '11922220002', '11122233344');
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($other, 'sanctum')->putJson(self::URL . '/vehicle', $this->vehicle(['plate' => 'XYZ9A99', 'renavam' => '98765432100']))->assertOk();
+        $this->app['auth']->forgetGuards();
+        $put(['plate' => 'XYZ-9A99'])->assertStatus(422)->assertJsonPath('errors.plate.0', 'Esta placa já está cadastrada por outro motorista.');
+        $put(['renavam' => '98765432100'])->assertStatus(422)->assertJsonPath('errors.renavam.0', 'Este RENAVAM já está cadastrado por outro motorista.');
+
+        // O outro motorista excluiu a conta: o mesmo carro pode entrar num cadastro novo
+        $other->driver->forceFill(['status' => 'deleted'])->save();
+        $put(['plate' => 'XYZ9A99', 'renavam' => '98765432100'])->assertOk();
+    }
+
+    public function test_vehicle_needs_the_cnh_first_and_is_locked_after_submission(): void
+    {
+        $u = $this->newDriver();
+        $this->actingAs($u, 'sanctum')->putJson(self::URL . '/vehicle', $this->vehicle())->assertStatus(422)->assertJsonPath('error', 'CNH_REQUIRED');
+
+        $u->driver->forceFill(['status' => Driver::STATUS_PENDING])->save();
+        $this->actingAs($u, 'sanctum')->putJson(self::URL . '/vehicle', $this->vehicle())->assertStatus(409)->assertJsonPath('error', 'REGISTRATION_LOCKED');
     }
 
     public function test_cpf_check_digits(): void
