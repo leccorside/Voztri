@@ -37,7 +37,7 @@ jest.mock('../src/api', () => ({
   currentToken: () => 'token-salvo',
   geoApi: { reverse: jest.fn(), search: jest.fn() },
   placesApi: { list: jest.fn(), save: jest.fn(), remove: jest.fn(), recent: jest.fn(), removeRecent: jest.fn(), clearRecent: jest.fn() },
-  passengerApi: { setEmergencyPin: jest.fn() },
+  passengerApi: { setEmergencyPin: jest.fn(), listTrustedContacts: jest.fn(), addTrustedContact: jest.fn(), removeTrustedContact: jest.fn() },
   rideApi: {
     getEstimates: jest.fn(),
     requestRide: jest.fn(),
@@ -93,7 +93,7 @@ const m = api as unknown as {
   billingApi: Mocks<'submitRating'>;
   geoApi: Mocks<'reverse' | 'search'>;
   placesApi: Mocks<'list' | 'save' | 'remove' | 'recent' | 'removeRecent' | 'clearRecent'>;
-  passengerApi: Mocks<'setEmergencyPin'>;
+  passengerApi: Mocks<'setEmergencyPin' | 'listTrustedContacts' | 'addTrustedContact' | 'removeTrustedContact'>;
 };
 const loc = location as unknown as Mocks<'requestLocationPermission' | 'getCurrentPosition'>;
 const pushMock = push as unknown as Mocks<'enablePush' | 'disablePush'>;
@@ -226,6 +226,7 @@ beforeEach(() => {
   m.placesApi.removeRecent.mockResolvedValue(undefined);
   m.placesApi.clearRecent.mockResolvedValue(undefined);
   m.passengerApi.setEmergencyPin.mockResolvedValue({ hasEmergencyPin: true });
+  m.passengerApi.listTrustedContacts.mockResolvedValue([]);
   // Praça da Sé: diferente da origem padrão, para provar que a estimativa usa o GPS
   loc.requestLocationPermission.mockResolvedValue('granted');
   loc.getCurrentPosition.mockResolvedValue(gpsAt(-23.55052, -46.633308));
@@ -336,12 +337,13 @@ describe('passenger-mobile integrado à API', () => {
 
     // SOS pela API: aciona, PIN errado, PIN certo
     // SOS envia a posição atual, não a do embarque
-    m.rideApi.triggerSos.mockResolvedValue({ success: true, incidentId: 'inc-1' });
+    m.rideApi.triggerSos.mockResolvedValue({ success: true, incidentId: 'inc-1', trustedContactsNotified: 2 });
     loc.getCurrentPosition.mockResolvedValueOnce(gpsAt(-23.57, -46.64));
     await pressAsync(tree, 'Acionar central de emergência SOS 24 horas');
     await pressAsync(tree, 'ACIONAR SOS IMEDIATAMENTE');
     expect(m.rideApi.triggerSos).toHaveBeenCalledWith('ride-1', -23.57, -46.64);
     expect(visibleText(tree)).toContain('O ALERTA SOS ESTÁ ATIVO!');
+    expect(visibleText(tree)).toContain('Enviamos um SMS para os seus 2 contatos de confiança.');
     m.rideApi.cancelSos.mockRejectedValueOnce({ code: 'INVALID_EMERGENCY_PIN', message: 'PIN de segurança inválido.' });
     await typeAsync(tree, 'PIN de emergência', '0000');
     await pressAsync(tree, 'Desativar Alerta com PIN');
@@ -514,13 +516,13 @@ describe('passenger-mobile integrado à API', () => {
       setOS('android');
       await pressAsync(tree, /^Conta de Beatriz Lima/);
       let [, , buttons, options] = alertSpy.mock.calls[0]!;
-      expect(buttons?.map((b) => b.text)).toEqual(['Meu perfil', 'Trocar PIN de emergência', 'Sair da conta']);
+      expect(buttons?.map((b) => b.text)).toEqual(['Meu perfil', 'Segurança', 'Sair da conta']);
       expect(options).toEqual({ cancelable: true });
 
       setOS('ios');
       await pressAsync(tree, /^Conta de Beatriz Lima/);
       [, , buttons] = alertSpy.mock.calls[1]!;
-      expect(buttons?.map((b) => b.text)).toEqual(['Meu perfil', 'Trocar PIN de emergência', 'Sair da conta', 'Cancelar']);
+      expect(buttons?.map((b) => b.text)).toEqual(['Meu perfil', 'Segurança', 'Sair da conta', 'Cancelar']);
     } finally {
       setOS(originalOS);
       alertSpy.mockRestore();
@@ -665,6 +667,72 @@ describe('passenger-mobile integrado à API', () => {
     });
   });
 
+  describe('contatos de confiança (tela Segurança)', () => {
+    async function openSafety() {
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
+        buttons?.find((b) => b.text === 'Segurança')?.onPress?.();
+      });
+      await pressAsync(tree, /^Conta de Beatriz Lima/);
+      alertSpy.mockRestore();
+      await settle();
+    }
+
+    it('lista, adiciona com a máscara do celular e remove', async () => {
+      m.passengerApi.listTrustedContacts.mockResolvedValueOnce([{ id: 'c1', name: 'Maria', phone: '11987654321' }]);
+      m.passengerApi.addTrustedContact.mockImplementation(async (c: { name: string; phone: string }) => ({ id: 'c2', ...c }));
+      m.passengerApi.removeTrustedContact.mockResolvedValueOnce([{ id: 'c2', name: 'João Souza', phone: '21998765432' }]);
+      await renderLoggedIn();
+      await openSafety();
+
+      expectNoStrayText(tree);
+      let text = visibleText(tree);
+      expect(text).toContain('Contatos de confiança');
+      expect(text).toContain('Maria');
+      expect(text).toContain('(11) 98765-4321');
+
+      await typeAsync(tree, 'Nome do contato', ' João Souza ');
+      await typeAsync(tree, 'Celular do contato', '21998765432');
+      const input = tree.root.find((n) => n.props.accessibilityLabel === 'Celular do contato' && n.props.onChangeText);
+      expect(input.props.value).toBe('(21) 99876-5432');
+      await pressAsync(tree, 'Adicionar contato');
+      expect(m.passengerApi.addTrustedContact).toHaveBeenCalledWith({ name: 'João Souza', phone: '21998765432' });
+      text = visibleText(tree);
+      expect(text).toContain('Contato adicionado.');
+      expect(text).toContain('(21) 99876-5432');
+
+      await pressAsync(tree, 'Remover Maria');
+      expect(m.passengerApi.removeTrustedContact).toHaveBeenCalledWith('c1');
+      expect(visibleText(tree)).not.toContain('(11) 98765-4321');
+    });
+
+    it('valida antes de enviar e mostra o erro da API no campo', async () => {
+      m.passengerApi.addTrustedContact.mockRejectedValueOnce({ message: 'x', fields: { phone: 'Este é o seu próprio número. Escolha outra pessoa.' } });
+      await renderLoggedIn();
+      await openSafety();
+      expect(visibleText(tree)).toContain('Nenhum contato ainda.');
+
+      await typeAsync(tree, 'Nome do contato', 'Escritório');
+      await typeAsync(tree, 'Celular do contato', '1134567890');
+      await pressAsync(tree, 'Adicionar contato');
+      expect(visibleText(tree)).toContain('Informe um celular com DDD');
+      expect(m.passengerApi.addTrustedContact).not.toHaveBeenCalled();
+
+      await typeAsync(tree, 'Celular do contato', '11999991111');
+      await pressAsync(tree, 'Adicionar contato');
+      expect(visibleText(tree)).toContain('Este é o seu próprio número. Escolha outra pessoa.');
+    });
+
+    it('com 5 contatos, o formulário dá lugar ao aviso do limite', async () => {
+      m.passengerApi.listTrustedContacts.mockResolvedValueOnce(
+        [1, 2, 3, 4, 5].map((i) => ({ id: `c${i}`, name: `Contato ${i}`, phone: `1198765432${i}` })),
+      );
+      await renderLoggedIn();
+      await openSafety();
+      expect(visibleText(tree)).toContain('Você chegou ao limite de 5 contatos.');
+      expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'Nome do contato')).toHaveLength(0);
+    });
+  });
+
   describe('PIN de emergência definido pelo passageiro', () => {
     const NO_PIN = { ...PASSENGER, hasEmergencyPin: false };
 
@@ -720,13 +788,14 @@ describe('passenger-mobile integrado à API', () => {
       expect(input.props.value).toBe('1234');
     });
 
-    it('troca pelo menu da conta exige o PIN atual', async () => {
+    it('troca pela tela Segurança exige o PIN atual e volta para ela', async () => {
       const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
-        buttons?.find((b) => b.text === 'Trocar PIN de emergência')?.onPress?.();
+        buttons?.find((b) => b.text === 'Segurança')?.onPress?.();
       });
       await renderLoggedIn();
       await pressAsync(tree, /^Conta de Beatriz Lima/);
       alertSpy.mockRestore();
+      await pressAsync(tree, 'Trocar PIN de emergência');
 
       expect(visibleText(tree)).toContain('Trocar PIN de emergência');
       m.passengerApi.setEmergencyPin.mockRejectedValueOnce({ code: 'INVALID_EMERGENCY_PIN', message: 'PIN de emergência atual incorreto.' });
@@ -735,6 +804,8 @@ describe('passenger-mobile integrado à API', () => {
 
       await fillPin({ 'PIN atual': '2580', 'Novo PIN': '3691', 'Confirme o PIN': '3691' });
       expect(m.passengerApi.setEmergencyPin).toHaveBeenLastCalledWith('3691', '2580');
+      expect(visibleText(tree)).toContain('Contatos de confiança');
+      await pressAsync(tree, 'Voltar');
       expect(visibleText(tree)).toContain('Para onde vamos hoje?');
     });
 

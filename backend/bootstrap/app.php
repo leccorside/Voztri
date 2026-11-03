@@ -29,6 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ? \App\Infrastructure\Push\FcmPushNotifier::fromFile($path)
                 : new \App\Infrastructure\Push\NullPushNotifier();
         },
+        // SMS (aviso aos contatos de confiança no SOS): sem provedor ainda, só registra no log
+        \App\Infrastructure\Sms\SmsSender::class => \App\Infrastructure\Sms\LogSmsSender::class,
         // Geocodificação reversa (endereço do embarque pelo GPS)
         \App\Infrastructure\Geo\ReverseGeocoder::class => \App\Infrastructure\Geo\PhotonGeocodingService::class,
         // Busca de destino pelo texto

@@ -9,6 +9,7 @@ use App\Domain\Ride\Services\RideStateMachine;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\RidePresenter;
 use App\Jobs\ExpireRideSearch;
+use App\Jobs\NotifyTrustedContactsOfSos;
 use App\Jobs\SendRideStatusPush;
 use App\Models\Driver;
 use App\Models\FinancialLedger;
@@ -18,6 +19,7 @@ use App\Models\Ride;
 use App\Models\RideChatMessage;
 use App\Models\RideOffer;
 use App\Models\SafetyIncident;
+use App\Models\TrustedContact;
 use App\Models\City;
 use App\Models\User;
 use Carbon\Carbon;
@@ -472,20 +474,34 @@ class RideController extends Controller
             return $this->forbidden();
         }
 
-        $incident = SafetyIncident::create([
-            'ride_id' => $ride->id,
-            'reported_by' => $user->id,
-            'type' => 'sos_trigger',
-            'latitude' => $v['latitude'],
-            'longitude' => $v['longitude'],
-            'status' => 'active',
-            'notes' => 'Alerta SOS 24h disparado pelo aplicativo móvel.',
-        ]);
+        $contacts = TrustedContact::where('passenger_id', $ride->passenger_id)->count();
+
+        // Tocar de novo com o alerta ativo só atualiza a posição: a central já está
+        // acompanhando e os contatos não recebem o mesmo aviso outra vez
+        $incident = SafetyIncident::where('ride_id', $ride->id)->where('status', 'active')->latest()->first();
+        if ($incident) {
+            $incident->update(['latitude' => $v['latitude'], 'longitude' => $v['longitude']]);
+        } else {
+            $incident = SafetyIncident::create([
+                'ride_id' => $ride->id,
+                'reported_by' => $user->id,
+                'type' => 'sos_trigger',
+                'latitude' => $v['latitude'],
+                'longitude' => $v['longitude'],
+                'status' => 'active',
+                'notes' => 'Alerta SOS 24h disparado pelo aplicativo móvel.',
+            ]);
+            if ($contacts > 0) {
+                NotifyTrustedContactsOfSos::dispatch($incident->id, NotifyTrustedContactsOfSos::TRIGGERED);
+            }
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Alerta de emergência SOS acionado! Nossa central 24h foi notificada.',
             'incidentId' => $incident->id,
+            // Quantos contatos de confiança recebem o aviso por SMS
+            'trustedContactsNotified' => $contacts,
         ]);
     }
 
@@ -522,6 +538,7 @@ class RideController extends Controller
         }
         RateLimiter::clear($key);
 
+        $active = SafetyIncident::where('ride_id', $ride->id)->where('status', 'active')->latest()->first();
         SafetyIncident::where('ride_id', $ride->id)
             ->where('status', 'active')
             ->update([
@@ -529,6 +546,11 @@ class RideController extends Controller
                 'resolved_at' => Carbon::now(),
                 'notes' => 'Desativado com autenticação do usuário.',
             ]);
+
+        // Quem recebeu o alerta fica sabendo que ele foi encerrado pelo próprio passageiro
+        if ($active && TrustedContact::where('passenger_id', $ride->passenger_id)->exists()) {
+            NotifyTrustedContactsOfSos::dispatch($active->id, NotifyTrustedContactsOfSos::RESOLVED);
+        }
 
         return response()->json(['success' => true, 'message' => 'Alerta SOS desativado com sucesso.']);
     }

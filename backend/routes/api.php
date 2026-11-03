@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\RecentDestinationController;
 use App\Http\Controllers\Api\V1\EmergencyPinController;
 use App\Http\Controllers\Api\V1\AvatarController;
 use App\Http\Controllers\Api\V1\AccountController;
+use App\Http\Controllers\Api\V1\TrustedContactController;
 
 Route::prefix('v1')->group(function () {
     // Health Check
@@ -63,6 +64,12 @@ Route::prefix('v1')->group(function () {
         Route::prefix('passenger')->middleware('role:passenger')->group(function () {
             Route::get('/emergency-pin', [EmergencyPinController::class, 'show']);
             Route::put('/emergency-pin', [EmergencyPinController::class, 'update'])->middleware('throttle:10,1');
+
+            // Contatos de confiança (avisados por SMS quando o SOS é acionado)
+            Route::get('/trusted-contacts', [TrustedContactController::class, 'index']);
+            Route::post('/trusted-contacts', [TrustedContactController::class, 'store'])->middleware('throttle:20,1');
+            Route::put('/trusted-contacts/{id}', [TrustedContactController::class, 'update'])->whereUuid('id')->middleware('throttle:20,1');
+            Route::delete('/trusted-contacts/{id}', [TrustedContactController::class, 'destroy'])->whereUuid('id');
         });
 
         // Endereços salvos do passageiro (Casa e Trabalho) e histórico dos últimos destinos

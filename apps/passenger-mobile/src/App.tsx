@@ -14,6 +14,7 @@ import { ChatModal } from './screens/ChatModal.js';
 import { SosModal } from './screens/SosModal.js';
 import { TripCompletedModal } from './screens/TripCompletedModal.js';
 import { EmergencyPinScreen } from './screens/EmergencyPinScreen.js';
+import { SafetyScreen } from './screens/SafetyScreen.js';
 
 /** O que sai com a conta do passageiro (texto da tela de exclusão). */
 const PASSENGER_DELETION_DETAILS =
@@ -34,6 +35,7 @@ export const App: React.FC = () => {
     user,
     changingPin,
     profileOpen,
+    safetyOpen,
     setProfileOpen,
     updateProfile,
     uploadAvatar,
@@ -100,6 +102,17 @@ export const App: React.FC = () => {
           deleteAccount={confirmAccountDeletion(deleteAccount)}
           deletionDetails={PASSENGER_DELETION_DETAILS}
         />
+      </SafeAreaView>
+    );
+  }
+
+  // A troca do PIN abre a partir daqui e, ao salvar ou cancelar, volta para cá
+  if (safetyOpen && user && !pinMode) {
+    return (
+      <SafeAreaView style={[styles.root, { backgroundColor: '#FFFFFF' }]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        {connectionError && <Banner tone="warning" message={connectionError} />}
+        <SafetyScreen />
       </SafeAreaView>
     );
   }

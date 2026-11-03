@@ -57,8 +57,16 @@ export class RideApi {
     return res.data;
   }
 
-  async triggerSos(rideId: string, latitude: number, longitude: number): Promise<{ success: boolean; incidentId: string }> {
-    const res = await this.client.post<{ success: boolean; incidentId: string }>(`/rides/${rideId}/sos`, { latitude, longitude });
+  /** Aciona o SOS; `trustedContactsNotified` diz quantos contatos de confiança recebem o SMS. */
+  async triggerSos(
+    rideId: string,
+    latitude: number,
+    longitude: number,
+  ): Promise<{ success: boolean; incidentId: string; trustedContactsNotified: number }> {
+    const res = await this.client.post<{ success: boolean; incidentId: string; trustedContactsNotified: number }>(
+      `/rides/${rideId}/sos`,
+      { latitude, longitude },
+    );
     return res.data;
   }
 

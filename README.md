@@ -65,7 +65,7 @@ Seu projeto técnico prioriza **autonomia sobre a infraestrutura de mapas**, **c
 - **Mapa interativo:** localização em tempo real, visualização de veículos e estimativas de chegada.
 - **Categorias de viagem:** VozTri Pop, VozTri Black, VozTri Mulher e VozTri Moto.
 - **Embarque por PIN:** código de quatro dígitos para validar o início da corrida.
-- **Recursos de segurança:** central SOS e contatos de confiança previstos no fluxo da aplicação.
+- **Recursos de segurança:** central SOS com PIN de emergência e até 5 contatos de confiança, avisados por SMS (local, carro e placa) quando o SOS é acionado. O envio do SMS ainda depende de um provedor: em desenvolvimento, o texto só vai para o log.
 - **Avaliações e gorjetas:** nota de 1 a 5 estrelas, elogios e valores sugeridos.
 
 </details>

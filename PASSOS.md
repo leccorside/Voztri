@@ -18,7 +18,7 @@ Este documento registra todas as fases do desenvolvimento da plataforma **VOZTRI
 - [Fase 9: Qualidade, Testes de Concorrência, Segurança e Resiliência](#fase-9--qualidade-testes-de-concorrência-segurança-e-resiliência) — `CONCLUÍDO`
 - [Fase 10: Compilação Android, Release Builds e Permissões de Fundo](#fase-10--compilação-android-release-builds-e-permissões-de-fundo) — `CONCLUÍDO`
 - [Fase 11: Preparação Multiplataforma iOS e Conformidade](#fase-11--preparação-multiplataforma-ios-e-conformidade) — `CONCLUÍDO`
-- [Fase 12: Conta e Segurança do Usuário](#fase-12--conta-e-segurança-do-usuário) — `EM ANDAMENTO`
+- [Fase 12: Conta e Segurança do Usuário](#fase-12--conta-e-segurança-do-usuário) — `CONCLUÍDO`
 - [Fase 13: Cadastro do Motorista no App](#fase-13--cadastro-do-motorista-no-app) — `PENDENTE`
 - [Fase 14: Pagamentos Reais, Gorjeta e Cupons](#fase-14--pagamentos-reais-gorjeta-e-cupons) — `PENDENTE`
 - [Fase 15: Mapas e Tempo Real nos Apps](#fase-15--mapas-e-tempo-real-nos-apps) — `PENDENTE`
@@ -209,14 +209,14 @@ Este documento registra todas as fases do desenvolvimento da plataforma **VOZTRI
 ---
 
 ### Fase 12 — Conta e Segurança do Usuário
-- **Status**: `EM ANDAMENTO`
+- **Status**: `CONCLUÍDO`
 - **Objetivo**: Dar ao usuário controle sobre a própria conta e sobre o PIN que desativa o SOS, e cumprir a exigência das lojas de excluir a conta pelo app.
 - **Tarefas**:
   - [x] PIN de emergência definido pelo passageiro (2026-11-02): passageiro novo nasce sem PIN e o app pede para criar no primeiro acesso; troca pelo menu da conta exigindo o PIN atual; guardado com hash e fora das respostas da API; PINs fáceis (0000, 1234, 4321) recusados; 5 erros bloqueiam por 15 min a troca e a desativação do SOS; a solicitação de corrida exige o PIN (`EMERGENCY_PIN_REQUIRED`).
   - [x] Tela de perfil nos dois apps (2026-11-02): "Meu perfil" com nome, e-mail (opcional) e o telefone só para leitura, pelo `PUT /api/v1/auth/profile` (corrigido: só os campos enviados, e-mail apagável, mensagens em português por campo, resposta no formato do login). Passageiro: menu da conta no avatar; motorista: botão "Perfil" no painel. Tela comum no `@voztri/mobile-core` (`ProfileScreen`).
   - [x] Foto do perfil (2026-11-02): câmera ou galeria nos dois apps (`react-native-image-picker`), envio para o MinIO pela API (recortada em 512 px e sem EXIF/GPS), servida pela API só a quem pode vê-la; aparece no perfil, no avatar da tela inicial do passageiro, para o passageiro na corrida (foto do motorista) e para o motorista na navegação (foto do passageiro).
   - [x] Exclusão de conta pelo app nos dois apps (2026-11-02): "Excluir conta" em "Meu perfil", com a explicação do que sai e do que fica e a palavra EXCLUIR para confirmar; `DELETE /api/v1/auth/account` apaga os dados pessoais (telefone, nome, e-mail, CPF, foto, Casa/Trabalho, destinos, contatos de confiança, PIN, CNH, documentos, Pix, aparelhos, chat, sessões) e mantém anônimos corridas, ledger e avaliações; bloqueada com corrida em aberto; o telefone pode criar uma conta nova depois.
-  - [ ] Contatos de confiança do passageiro (citados no README e no protótipo do SOS): cadastro e aviso a eles quando o SOS é acionado.
+  - [x] Contatos de confiança do passageiro (2026-11-03): tela "Segurança" no menu da conta (até 5 contatos, celular com DDD, e a troca do PIN), `GET/POST/PUT/DELETE /api/v1/passenger/trusted-contacts`; ao acionar o SOS, cada contato recebe um SMS com o local, o carro e a placa, e outro quando o alerta é desativado com o PIN. O SMS está atrás da interface `SmsSender`, que por enquanto só registra no log (provedor real na Fase 18).
 - **Dependências**: Nenhuma.
 - **Critérios de Aceite**: Passageiro define e troca o PIN de emergência e o SOS só desativa com ele; motorista e passageiro editam o perfil e excluem a conta pelo app.
 - **Testes**: Testes de API (PIN com hash, troca, exclusão e o que sobra da conta) e testes Jest das telas.
@@ -309,6 +309,7 @@ Este documento registra todas as fases do desenvolvimento da plataforma **VOZTRI
 - **Objetivo**: Itens que precisam estar resolvidos antes do primeiro deploy e da publicação nas lojas.
 - **Tarefas**:
   - [ ] Photon próprio (dados do OpenStreetMap) ou provedor contratado no lugar do `photon.komoot.io` público (trocar só o `PHOTON_GEOCODING_URL`).
+  - [ ] Provedor de SMS (ex.: Zenvia, Twilio): implementar o `SmsSender` real no lugar do `LogSmsSender` (hoje o aviso do SOS aos contatos de confiança só vai para o log) e usar o mesmo provedor para o OTP do login, que ainda é fixo (`123456`).
   - [ ] Configurar `trustProxies` no `bootstrap/app.php` (sem isso, atrás de proxy o limite do login admin vira um só para todos).
   - [ ] Confirmar com o jurídico (LGPD) o prazo de 90 dias do histórico de destinos e definir a retenção dos endereços das corridas (`rides`).
   - [ ] Deploy: cron com `php artisan schedule:run` a cada minuto e `php artisan queue:restart` a cada atualização (o `worker` não recarrega o código).

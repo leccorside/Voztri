@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { AddressLocation, ChatMessage, FareEstimate, PaymentMethodType, Ride, RideStatus, User } from '@voztri/shared-types';
-import type { RecentDestination, SavedPlaceKind, SavedPlaces } from '@voztri/api-client';
+import type { RecentDestination, SavedPlaceKind, SavedPlaces, TrustedContact } from '@voztri/api-client';
 import type { PickedPhoto, ProfileFields, ProfileSaveResult } from '@voztri/mobile-core';
 import {
   activeRideMemory,
@@ -71,6 +71,12 @@ export interface PassengerState {
   changingPin: boolean;
   /** Tela "Meu perfil" aberta. */
   profileOpen: boolean;
+  /** Tela "Segurança" (contatos de confiança e troca do PIN) aberta. */
+  safetyOpen: boolean;
+  /** Contatos de confiança (null: ainda não carregados ou falha ao carregar). */
+  trustedContacts: TrustedContact[] | null;
+  /** Quantos contatos de confiança recebem o SMS do SOS ativo (null: sem SOS acionado). */
+  sosContactsNotified: number | null;
   /** Push do andamento da corrida (off: ainda não ativado nesta sessão). */
   pushStatus: PushStatus | 'off';
 
@@ -119,8 +125,18 @@ export interface PassengerState {
    * devolve null ou a mensagem de erro, mostrada na própria tela do PIN.
    */
   saveEmergencyPin: (pin: string, currentPin?: string) => Promise<string | null>;
-  /** Abre ou fecha a troca do PIN de emergência (menu da conta). */
+  /** Abre ou fecha a troca do PIN de emergência (tela Segurança). */
   setChangingPin: (open: boolean) => void;
+  /** Abre ou fecha a tela Segurança (menu da conta); ao abrir, carrega os contatos. */
+  setSafetyOpen: (open: boolean) => void;
+  loadTrustedContacts: () => Promise<void>;
+  /** Cadastra um contato; erros por campo voltam para a tela. */
+  addTrustedContact: (
+    name: string,
+    phone: string,
+  ) => Promise<{ ok: true } | { ok: false; message: string; fields: Partial<Record<'name' | 'phone', string>> }>;
+  /** Remove um contato; devolve null ou a mensagem de erro. */
+  removeTrustedContact: (id: string) => Promise<string | null>;
   /** Salva nome e e-mail (só os alterados); erros por campo voltam para a tela. */
   updateProfile: (changes: Partial<ProfileFields>) => Promise<ProfileSaveResult>;
   /** Abre ou fecha "Meu perfil" (menu da conta). */
@@ -183,6 +199,7 @@ const tripReset = {
   noDriverRide: null,
   chatMessages: [],
   isSosActive: false,
+  sosContactsNotified: null as number | null,
 };
 
 const signedOut = {
@@ -200,6 +217,8 @@ const signedOut = {
   selectedPaymentMethod: 'pix' as PaymentMethodType,
   changingPin: false,
   profileOpen: false,
+  safetyOpen: false,
+  trustedContacts: null as TrustedContact[] | null,
   pushStatus: 'off' as PushStatus | 'off',
   busy: false,
   error: null,
@@ -242,7 +261,7 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
     try {
       const ride = await rideApi.requestRide(params);
       await activeRideMemory.save(ride.id);
-      set({ chatMessages: [], isSosActive: false });
+      set({ chatMessages: [], isSosActive: false, sosContactsNotified: null });
       await applyRide(ride);
     } catch (err) {
       // Já existe uma corrida em andamento: retoma o acompanhamento dela
@@ -635,7 +654,7 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
         // segue com o embarque: o alerta não pode deixar de ser enviado
       }
       const res = await run(() => rideApi.triggerSos(ride.id, lat, lng));
-      if (res) set({ isSosActive: true });
+      if (res) set({ isSosActive: true, sosContactsNotified: res.trustedContactsNotified ?? 0 });
     },
 
     cancelSos: async (pin) => {
@@ -644,7 +663,7 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
       set({ busy: true, error: null });
       try {
         await rideApi.cancelSos(ride.id, pin);
-        set({ isSosActive: false });
+        set({ isSosActive: false, sosContactsNotified: null });
         return null;
       } catch (err) {
         // Mostrado no próprio modal do SOS (o aviso geral fica atrás dele)
@@ -669,6 +688,43 @@ export const usePassengerStore = create<PassengerState>((set, get) => {
     },
 
     setChangingPin: (open) => set({ changingPin: open }),
+
+    setSafetyOpen: (open) => {
+      set({ safetyOpen: open });
+      if (open) void get().loadTrustedContacts();
+    },
+
+    loadTrustedContacts: async () => {
+      try {
+        set({ trustedContacts: await passengerApi.listTrustedContacts() });
+      } catch (err) {
+        set({ connectionError: errorMessage(err) });
+      }
+    },
+
+    addTrustedContact: async (name, phone) => {
+      try {
+        const contact = await passengerApi.addTrustedContact({ name, phone });
+        set({ trustedContacts: [...(get().trustedContacts ?? []), contact] });
+        return { ok: true };
+      } catch (err) {
+        const fields = fieldErrors(err);
+        return {
+          ok: false,
+          message: errorMessage(err),
+          fields: { ...(fields.name ? { name: fields.name } : {}), ...(fields.phone ? { phone: fields.phone } : {}) },
+        };
+      }
+    },
+
+    removeTrustedContact: async (id) => {
+      try {
+        set({ trustedContacts: await passengerApi.removeTrustedContact(id) });
+        return null;
+      } catch (err) {
+        return errorMessage(err);
+      }
+    },
 
     updateProfile: async (changes) => {
       set({ busy: true, error: null });

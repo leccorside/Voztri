@@ -8,7 +8,7 @@ interface Props {
 }
 
 export const SosModal: React.FC<Props> = ({ onClose }) => {
-  const { isSosActive, triggerSos, cancelSos, busy } = usePassengerStore();
+  const { isSosActive, triggerSos, cancelSos, busy, sosContactsNotified } = usePassengerStore();
   const [pin, setPin] = useState('');
   // PIN errado, tentativas esgotadas (o alerta segue ativo) ou falha de rede
   const [error, setError] = useState<string | null>(null);
@@ -42,8 +42,9 @@ export const SosModal: React.FC<Props> = ({ onClose }) => {
           {!isSosActive ? (
             <View>
               <Text style={styles.description}>
-                Ao acionar o SOS, nossa central operacional 24h receberá imediatamente seus dados, o áudio ambiente da
-                corrida e a localização GPS em tempo real, alertando também seus contatos de confiança cadastrados.
+                Ao acionar o SOS, nossa central 24h recebe seus dados, a corrida e a sua localização pelo GPS. Seus
+                contatos de confiança recebem um SMS com o local, o carro e a placa (cadastre-os em Segurança, no menu
+                da sua conta).
               </Text>
 
               <Button
@@ -60,6 +61,15 @@ export const SosModal: React.FC<Props> = ({ onClose }) => {
               <Text style={styles.activeBanner} accessibilityLiveRegion="assertive">
                 ⚠️ O ALERTA SOS ESTÁ ATIVO! Nossa equipe está monitorando esta corrida.
               </Text>
+              {sosContactsNotified !== null && (
+                <Text style={styles.contactsNotice} accessibilityLiveRegion="polite">
+                  {sosContactsNotified === 0
+                    ? 'Você não tem contatos de confiança cadastrados para receber o aviso.'
+                    : sosContactsNotified === 1
+                      ? 'Enviamos um SMS para o seu contato de confiança.'
+                      : `Enviamos um SMS para os seus ${sosContactsNotified} contatos de confiança.`}
+                </Text>
+              )}
 
               <Text style={styles.pinPrompt}>Para desativar o alerta, digite seu PIN de emergência:</Text>
 
@@ -180,6 +190,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 16,
     textAlign: 'center',
+  },
+  contactsNotice: {
+    fontSize: 13,
+    color: '#494457',
+    textAlign: 'center',
+    marginTop: -6,
+    marginBottom: 14,
   },
   pinPrompt: {
     fontSize: 13,

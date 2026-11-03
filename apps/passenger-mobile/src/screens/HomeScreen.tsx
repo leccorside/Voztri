@@ -23,7 +23,7 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
     savedPlaces,
     setDestination,
     openPlacePicker,
-    setChangingPin,
+    setSafetyOpen,
     setProfileOpen,
   } = usePassengerStore();
 
@@ -40,13 +40,13 @@ export const HomeScreen: React.FC<Props> = ({ onOpenSearch }) => {
       { text: 'Sair', style: 'destructive', onPress: () => void logout() },
     ]);
 
-  // Menu da conta: perfil, trocar o PIN de emergência ou sair (com confirmação). O
+  // Menu da conta: perfil, segurança (contatos de confiança e PIN) ou sair. O
   // Alert do Android mostra no máximo 3 botões e descartava o 4º ("Cancelar"): lá o
   // menu fecha com o "voltar" ou tocando fora (cancelable); no iOS o Cancelar fica.
   const openAccountMenu = () => {
     const options: AlertButton[] = [
       { text: 'Meu perfil', onPress: () => setProfileOpen(true) },
-      { text: 'Trocar PIN de emergência', onPress: () => setChangingPin(true) },
+      { text: 'Segurança', onPress: () => setSafetyOpen(true) },
       { text: 'Sair da conta', style: 'destructive', onPress: confirmLogout },
     ];
     Alert.alert(
