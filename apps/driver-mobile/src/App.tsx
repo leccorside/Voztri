@@ -12,6 +12,7 @@ import { EnRouteNavigationScreen } from './screens/EnRouteNavigationScreen.js';
 import { ValidatePinModal } from './screens/ValidatePinModal.js';
 import { WeeklyEarningsScreen } from './screens/WeeklyEarningsScreen.js';
 import { PixPayoutScreen } from './screens/PixPayoutScreen.js';
+import { RegistrationScreen } from './screens/RegistrationScreen.js';
 
 /** O que sai com a conta do motorista (texto da tela de exclusão). */
 const DRIVER_DELETION_DETAILS =
@@ -67,6 +68,18 @@ export const App: React.FC = () => {
       <SafeAreaView style={[styles.root, { backgroundColor: '#0B1026' }]}>
         <StatusBar barStyle="light-content" backgroundColor="#0B1026" />
         <LoginScreen />
+      </SafeAreaView>
+    );
+  }
+
+  // Cadastro em andamento: as etapas no lugar do painel (sem ofertas, ganhos nem GPS)
+  if (user?.driverStatus === 'registering') {
+    return (
+      <SafeAreaView style={[styles.root, { backgroundColor: '#FFFFFF' }]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        {connectionError && <Banner tone="warning" message={connectionError} />}
+        {error && <Banner message={error} onDismiss={dismissError} />}
+        <RegistrationScreen />
       </SafeAreaView>
     );
   }

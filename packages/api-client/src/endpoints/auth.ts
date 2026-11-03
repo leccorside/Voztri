@@ -41,6 +41,8 @@ interface RawUser {
   updated_at?: string;
   /** Só passageiros. */
   has_emergency_pin?: boolean;
+  /** Só motoristas. */
+  driver_status?: User['driverStatus'];
 }
 
 interface RawAuthResponse {
@@ -67,6 +69,7 @@ function normalizeUser(raw: RawUser): User {
     createdAt: raw.created_at ?? '',
     updatedAt: raw.updated_at ?? '',
     ...(raw.has_emergency_pin !== undefined ? { hasEmergencyPin: raw.has_emergency_pin } : {}),
+    ...(raw.driver_status !== undefined ? { driverStatus: raw.driver_status } : {}),
   };
 }
 

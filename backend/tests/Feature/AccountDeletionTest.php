@@ -157,7 +157,8 @@ class AccountDeletionTest extends TestCase
         $this->assertFalse($driver->is_online, 'Sai do mapa e das ofertas.');
         $this->assertNull($driver->current_latitude);
         $this->assertNull($driver->pix_key);
-        $this->assertSame('', $driver->cnh_number);
+        $this->assertNull($driver->cnh_number);
+        $this->assertNull($driver->cnh_expires_at);
         $this->assertSame(0, DriverDocument::where('driver_id', $driver->id)->count());
         $this->assertSame(1, FinancialLedger::where('account_id', $driver->id)->count(), 'O ledger fica (registro contábil).');
     }

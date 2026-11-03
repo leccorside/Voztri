@@ -41,7 +41,8 @@ export interface AdminVehicle {
   category: string;
 }
 
-export type AdminDriverStatus = 'pending_approval' | 'approved' | 'rejected' | 'blocked';
+/** registering: cadastro pelo app ainda incompleto (não pode ser aprovado). */
+export type AdminDriverStatus = 'registering' | 'pending_approval' | 'approved' | 'rejected' | 'blocked';
 
 export interface AdminDriver {
   id: string;

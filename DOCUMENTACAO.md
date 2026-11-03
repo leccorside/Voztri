@@ -173,7 +173,11 @@ docker compose exec app php artisan migrate --seed
 - `DELETE /api/v1/devices`: Body `{ "token": "..." }`. Remove o token da conta (logout). `204`.
 
 ### Motorista
-- `POST /api/v1/driver/register`: Cadastro de dados complementares e veículo.
+- **Cadastro pelo app, por etapas** (só `role: driver`). O motorista que entra pelo login nasce com o status **`registering`**, sem CNH, e não fica online (403 `DRIVER_NOT_APPROVED`); o login e o `/auth/me` trazem `driver_status`. Antes, o login gravava a CNH fictícia `00000000000` e já aprovava, e o `POST /driver/register` (removido) aprovava na hora e transformava qualquer usuário em motorista. As etapas só podem ser editadas em `registering`; depois, 409 `REGISTRATION_LOCKED`. Erros 422 em português por campo.
+  - `GET /api/v1/driver/registration`: `{ status, steps: { personal: { done, data: { name, cpf, birthDate, email } }, cnh: { done, data: { number, category, expiresAt, hasEar } } }, nextStep }` (`nextStep`: `personal`, `cnh` ou `null`).
+  - `PUT /api/v1/driver/registration/personal` `{ name, cpf, birthDate, email? }`: nome com sobrenome (5 a 100 caracteres); CPF com dígitos verificadores conferidos, sem repetir o de outra conta (máscara aceita, guardado só com dígitos em `users.cpf`); nascimento `AAAA-MM-DD`, **18 anos ou mais** (`user_profiles.birth_date`); e-mail opcional. Limite de 20/min. Responde a situação do cadastro.
+  - `PUT /api/v1/driver/registration/cnh` `{ number, category, expiresAt, hasEar }`: registro com 11 dígitos (sem todos iguais; a autenticidade é conferida pela foto na análise), sem repetir a CNH de outro motorista; categoria `A`, `B`, `AB`, `C`, `AC`, `D`, `AD`, `E` ou `AE`; validade `AAAA-MM-DD`, hoje ou depois; **`hasEar` precisa ser `true`** (observação EAR, Lei 13.640). Limite de 20/min.
+  - Próximas partes (veículo, documentos e envio para análise) na Fase 13 do `PASSOS.md`. O painel não aprova motorista em `registering` (422 `REGISTRATION_INCOMPLETE`) e mostra "Em cadastro".
 - `POST /api/v1/driver/documents`: Envio de CNH e CRLV para análise.
 - `POST /api/v1/driver/status`: Body `{ "isOnline": true }`. Só motoristas `approved` ficam online (403 `DRIVER_NOT_APPROVED`).
 - `GET /api/v1/driver/rides/current`: Polling do app: `{ isOnline, offer, ride }`. `offer` traz `rideId`, `secondsLeft`, endereços, `earningsCents` (líquido, após 15%), `categoryName` e `passengerName`; `ride` é a corrida em andamento.

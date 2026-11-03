@@ -66,8 +66,8 @@ class AccountDeletionService
                     'last_location_at' => null,
                     'pix_key' => null,
                     'pix_key_type' => null,
-                    // A coluna não aceita null
-                    'cnh_number' => '',
+                    'cnh_number' => null,
+                    'cnh_expires_at' => null,
                 ])->save();
             }
 

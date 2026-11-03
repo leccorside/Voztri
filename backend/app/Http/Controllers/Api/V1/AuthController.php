@@ -59,13 +59,12 @@ class AuthController extends Controller
             // Sem PIN de emergência: o próprio passageiro define no app antes da primeira corrida
             Passenger::create(['user_id' => $user->id]);
         } elseif ($role === 'driver' && !$user->driver) {
+            // Cadastro em andamento: os dados pessoais, a CNH, o veículo e os documentos
+            // vêm pelo app (DriverRegistrationController) e só o painel aprova. Antes, o
+            // login gravava uma CNH fictícia e já aprovava: qualquer telefone recebia corridas.
             Driver::create([
                 'user_id' => $user->id,
-                'cnh_number' => '00000000000',
-                'cnh_category' => 'B',
-                'cnh_expires_at' => Carbon::now()->addYears(5),
-                'cnh_has_ear' => true,
-                'status' => 'approved',
+                'status' => Driver::STATUS_REGISTERING,
                 'is_online' => false,
             ]);
         }
@@ -224,7 +223,18 @@ class AuthController extends Controller
             'role' => $user->role,
             'status' => $user->status,
             ...$this->emergencyPinStatus($user),
+            ...$this->driverStatus($user),
         ];
+    }
+
+    /** Motorista: { driver_status } (registering, pending_approval, approved...); outros: nada. */
+    private function driverStatus(User $user): array
+    {
+        if ($user->role !== 'driver') {
+            return [];
+        }
+
+        return ['driver_status' => $user->driver?->status ?? Driver::STATUS_REGISTERING];
     }
 
     /** Passageiro: { has_emergency_pin }; outros papéis: nada. */

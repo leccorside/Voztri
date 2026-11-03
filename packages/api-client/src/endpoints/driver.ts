@@ -1,5 +1,5 @@
 import { VoztriApiClient } from '../client.js';
-import { DriverCurrentState, DriverEarningsSummary, Ride } from '@voztri/shared-types';
+import { CnhCategory, DriverCurrentState, DriverEarningsSummary, DriverRegistration, Ride } from '@voztri/shared-types';
 
 export class DriverApi {
   constructor(private client: VoztriApiClient) {}
@@ -47,6 +47,27 @@ export class DriverApi {
 
   async rejectOffer(rideId: string): Promise<{ success: boolean }> {
     const res = await this.client.post<{ success: boolean }>(`/rides/${rideId}/reject`);
+    return res.data;
+  }
+
+  /** Situação do cadastro pelo app (etapas preenchidas e a próxima pendente). */
+  async getRegistration(): Promise<DriverRegistration> {
+    const res = await this.client.get<DriverRegistration>('/driver/registration');
+    return res.data;
+  }
+
+  /**
+   * Etapa "Dados pessoais". Datas em AAAA-MM-DD; CPF com ou sem máscara. Erros 422 em
+   * português por campo; 409 REGISTRATION_LOCKED depois de enviado para análise.
+   */
+  async savePersonalData(data: { name: string; cpf: string; birthDate: string; email: string | null }): Promise<DriverRegistration> {
+    const res = await this.client.put<DriverRegistration>('/driver/registration/personal', data);
+    return res.data;
+  }
+
+  /** Etapa "CNH": número (11 dígitos), categoria, validade (AAAA-MM-DD) e EAR. */
+  async saveCnh(data: { number: string; category: CnhCategory; expiresAt: string; hasEar: boolean }): Promise<DriverRegistration> {
+    const res = await this.client.put<DriverRegistration>('/driver/registration/cnh', data);
     return res.data;
   }
 }

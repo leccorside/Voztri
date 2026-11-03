@@ -89,6 +89,13 @@ class AdminController extends Controller
     public function approveDriver(Request $request, $id)
     {
         $driver = Driver::findOrFail($id);
+        // Cadastro pelo app ainda incompleto: sem CNH conferível, não há o que aprovar
+        if ($driver->status === Driver::STATUS_REGISTERING) {
+            return response()->json([
+                'message' => 'O motorista ainda não terminou o cadastro no app.',
+                'error' => 'REGISTRATION_INCOMPLETE',
+            ], 422);
+        }
         $driver->status = 'approved';
         $driver->save();
 

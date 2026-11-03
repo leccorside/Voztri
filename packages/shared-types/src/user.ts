@@ -1,3 +1,5 @@
+import type { DriverStatus } from './driver.js';
+
 export type UserRole = 'passenger' | 'driver' | 'admin';
 
 export type UserStatus = 'pending' | 'active' | 'suspended' | 'blocked';
@@ -15,6 +17,8 @@ export interface User {
   updatedAt: string;
   /** Só passageiros: se já definiu o PIN de emergência (o PIN em si nunca vem da API). */
   hasEmergencyPin?: boolean;
+  /** Só motoristas: situação do cadastro (registering enquanto preenche pelo app). */
+  driverStatus?: DriverStatus;
 }
 
 export interface UserProfile {

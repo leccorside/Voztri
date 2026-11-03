@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { DriverEarningsSummary, DriverRideOffer, Ride, User } from '@voztri/shared-types';
+import type { CnhCategory, DriverEarningsSummary, DriverRegistration, DriverRideOffer, Ride, User } from '@voztri/shared-types';
 import type { PickedPhoto, ProfileFields, ProfileSaveResult } from '@voztri/mobile-core';
 import {
   apiErrorCode,
@@ -46,6 +46,9 @@ const PERMISSION_MESSAGE: Record<Exclude<LocationPermission, 'granted'>, string>
   blocked: 'A localização está bloqueada para o VOZTRI Driver. Libere nas configurações do aparelho para ficar online.',
 };
 
+/** Resultado de uma etapa do cadastro: ok, ou a mensagem geral e as mensagens por campo (422). */
+export type RegistrationSaveResult = { ok: true } | { ok: false; message: string; fields: Record<string, string> };
+
 export interface DriverState {
   sessionStatus: SessionStatus;
   user: User | null;
@@ -82,6 +85,8 @@ export interface DriverState {
   backgroundPromptShown: boolean;
   /** Push de novas ofertas (off: ainda não ativado nesta sessão). */
   pushStatus: PushStatus | 'off';
+  /** Cadastro pelo app (só carregado enquanto o motorista está em `registering`). */
+  registration: DriverRegistration | null;
 
   bootstrap: () => Promise<void>;
   requestCode: (phone: string) => Promise<string | null>;
@@ -107,6 +112,11 @@ export interface DriverState {
   removeAvatar: () => Promise<string | null>;
   /** Exclui a conta e encerra a sessão; devolve null ou a mensagem de erro. */
   deleteAccount: (confirmation: string) => Promise<string | null>;
+  loadRegistration: () => Promise<void>;
+  /** Etapa "Dados pessoais" do cadastro (data em AAAA-MM-DD). */
+  savePersonalData: (data: { name: string; cpf: string; birthDate: string; email: string | null }) => Promise<RegistrationSaveResult>;
+  /** Etapa "CNH" do cadastro (validade em AAAA-MM-DD). */
+  saveCnh: (data: { number: string; category: CnhCategory; expiresAt: string; hasEar: boolean }) => Promise<RegistrationSaveResult>;
 
   /** Recebe uma posição do GPS e envia à API respeitando o intervalo mínimo. */
   reportPosition: (position: DevicePosition, force?: boolean) => Promise<void>;
@@ -137,6 +147,7 @@ const signedOut = {
   backgroundPermission: 'unknown' as BackgroundPermission,
   backgroundPromptShown: false,
   pushStatus: 'off' as PushStatus | 'off',
+  registration: null as DriverRegistration | null,
 };
 
 
@@ -204,7 +215,31 @@ export const useDriverStore = create<DriverState>((set, get) => {
     }).then((pushStatus) => {
       if (get().user?.id === user.id) set({ pushStatus });
     });
+    // Cadastro em andamento: o app mostra as etapas no lugar do painel (sem ofertas nem ganhos)
+    if (user.driverStatus === 'registering') {
+      await get().loadRegistration();
+      return;
+    }
     await Promise.all([get().refresh(), get().refreshEarnings()]);
+  };
+
+  /** Salva uma etapa do cadastro e guarda a situação nova (nome e CPF também no usuário). */
+  const saveStep = async (action: () => Promise<DriverRegistration>): Promise<RegistrationSaveResult> => {
+    set({ busy: true, error: null });
+    try {
+      const registration = await action();
+      const user = get().user;
+      const personal = registration.steps.personal.data;
+      set({
+        registration,
+        user: user ? { ...user, name: personal.name, cpf: personal.cpf, email: personal.email, driverStatus: registration.status } : user,
+      });
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, message: errorMessage(err), fields: fieldErrors(err) as Record<string, string> };
+    } finally {
+      set({ busy: false });
+    }
   };
 
   return {
@@ -489,6 +524,18 @@ export const useDriverStore = create<DriverState>((set, get) => {
         return errorMessage(err);
       }
     },
+
+    loadRegistration: async () => {
+      try {
+        set({ registration: await driverApi.getRegistration(), connectionError: null });
+      } catch (err) {
+        set({ connectionError: errorMessage(err) });
+      }
+    },
+
+    savePersonalData: (data) => saveStep(() => driverApi.savePersonalData(data)),
+
+    saveCnh: (data) => saveStep(() => driverApi.saveCnh(data)),
 
     deleteAccount: async (confirmation) => {
       try {

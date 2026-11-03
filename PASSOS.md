@@ -19,7 +19,7 @@ Este documento registra todas as fases do desenvolvimento da plataforma **VOZTRI
 - [Fase 10: Compilação Android, Release Builds e Permissões de Fundo](#fase-10--compilação-android-release-builds-e-permissões-de-fundo) — `CONCLUÍDO`
 - [Fase 11: Preparação Multiplataforma iOS e Conformidade](#fase-11--preparação-multiplataforma-ios-e-conformidade) — `CONCLUÍDO`
 - [Fase 12: Conta e Segurança do Usuário](#fase-12--conta-e-segurança-do-usuário) — `CONCLUÍDO`
-- [Fase 13: Cadastro do Motorista no App](#fase-13--cadastro-do-motorista-no-app) — `PENDENTE`
+- [Fase 13: Cadastro do Motorista no App](#fase-13--cadastro-do-motorista-no-app) — `EM ANDAMENTO`
 - [Fase 14: Pagamentos Reais, Gorjeta e Cupons](#fase-14--pagamentos-reais-gorjeta-e-cupons) — `PENDENTE`
 - [Fase 15: Mapas e Tempo Real nos Apps](#fase-15--mapas-e-tempo-real-nos-apps) — `PENDENTE`
 - [Fase 16: Notificações Push Ativas](#fase-16--notificações-push-ativas) — `PENDENTE`
@@ -224,10 +224,10 @@ Este documento registra todas as fases do desenvolvimento da plataforma **VOZTRI
 ---
 
 ### Fase 13 — Cadastro do Motorista no App
-- **Status**: `PENDENTE`
+- **Status**: `EM ANDAMENTO`
 - **Objetivo**: Permitir que um motorista novo se cadastre pelo app (hoje só existe motorista do seed ou criado pelo painel). Completa a Fase 3, que previa essas telas.
 - **Tarefas**:
-  - [ ] Fluxo de cadastro depois do primeiro login: dados pessoais e CNH (número, categoria, validade, EAR).
+  - [x] Fluxo de cadastro depois do primeiro login: dados pessoais e CNH (número, categoria, validade, EAR) (2026-11-03): motorista novo nasce `registering` (antes o login o aprovava com CNH fictícia), tela "Cadastro de motorista" no lugar do painel com as etapas, `GET /driver/registration` e `PUT .../personal` e `.../cnh` (CPF conferido, 18 anos ou mais, EAR obrigatória); o antigo `POST /driver/register`, que aprovava qualquer usuário, foi removido; o painel não aprova cadastro incompleto.
   - [ ] Cadastro do veículo (marca, modelo, ano, cor, placa, RENAVAM, categoria).
   - [ ] Envio de fotos de CNH, CRLV e selfie pelo `POST /api/v1/driver/documents` (já existe no backend, sem uso no app), com câmera e galeria; armazenamento no MinIO.
   - [ ] Permissão `CAMERA` no `AndroidManifest.xml` do motorista (o `Info.plist` já pede a câmera).

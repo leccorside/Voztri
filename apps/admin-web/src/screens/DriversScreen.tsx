@@ -7,6 +7,7 @@ import { categoryLabel, formatPhone } from '../lib/format.js';
 import { EmptyRow, ErrorBox, Loading, Pager } from '../components/States.js';
 
 const STATUS: Record<AdminDriverStatus, { label: string; bg: string; fg: string }> = {
+  registering: { label: 'Em cadastro', bg: '#F4F6FA', fg: '#494457' },
   approved: { label: 'Aprovado', bg: '#E8F5E9', fg: '#1B5E20' },
   pending_approval: { label: 'Pendente', bg: '#FFF3E0', fg: '#E65100' },
   rejected: { label: 'Reprovado', bg: '#FFEBEE', fg: '#B71C1C' },
@@ -125,7 +126,8 @@ export const DriversScreen: React.FC = () => {
                       </span>
                     </td>
                     <td style={{ padding: '16px 20px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      {d.status !== 'approved' && (
+                      {/* Cadastro incompleto (CNH, veículo ou documentos faltando) não se aprova */}
+                      {d.status !== 'approved' && d.status !== 'registering' && (
                         <button
                           onClick={() => void runAction(d.id, 'approve')}
                           disabled={busy}

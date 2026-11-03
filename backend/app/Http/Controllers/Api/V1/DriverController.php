@@ -10,7 +10,6 @@ use App\Http\Presenters\RidePresenter;
 use App\Models\RideOffer;
 use Illuminate\Http\Request;
 use App\Models\Driver;
-use App\Models\DriverVehicle;
 use App\Models\DriverDocument;
 use App\Models\FinancialLedger;
 use App\Models\Ride;
@@ -20,58 +19,6 @@ use Carbon\Carbon;
 
 class DriverController extends Controller
 {
-    /**
-     * Cadastro complementar de motorista e veículo
-     */
-    public function register(Request $request)
-    {
-        $user = $request->user();
-        $validated = $request->validate([
-            'cnh_number' => 'required|string|min:8|max:20',
-            'cnh_category' => 'required|string|max:5',
-            'cnh_expires_at' => 'required|date',
-            'cnh_has_ear' => 'required|boolean',
-            'vehicle_brand' => 'required|string|max:50',
-            'vehicle_model' => 'required|string|max:50',
-            'vehicle_year' => 'required|integer|min:2010',
-            'vehicle_color' => 'required|string|max:30',
-            'vehicle_plate' => 'required|string|max:10',
-            'vehicle_category' => 'required|string|in:pop,black,mulher,moto',
-        ]);
-
-        $driver = Driver::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'cnh_number' => $validated['cnh_number'],
-                'cnh_category' => $validated['cnh_category'],
-                'cnh_expires_at' => $validated['cnh_expires_at'],
-                'cnh_has_ear' => $validated['cnh_has_ear'],
-                'status' => 'approved', // Auto-aprovado para dev/sandbox
-            ]
-        );
-
-        DriverVehicle::updateOrCreate(
-            ['driver_id' => $driver->id],
-            [
-                'brand' => $validated['vehicle_brand'],
-                'model' => $validated['vehicle_model'],
-                'year' => $validated['vehicle_year'],
-                'color' => $validated['vehicle_color'],
-                'plate' => strtoupper($validated['vehicle_plate']),
-                'category' => $validated['vehicle_category'],
-                'is_active' => true,
-            ]
-        );
-
-        $user->role = 'driver';
-        $user->save();
-
-        return response()->json([
-            'message' => 'Cadastro de motorista realizado com sucesso.',
-            'driver' => $driver->load('activeVehicle'),
-        ]);
-    }
-
     /**
      * Envio de documentos (CNH / CRLV)
      */

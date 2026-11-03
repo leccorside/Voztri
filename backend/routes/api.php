@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\EmergencyPinController;
 use App\Http\Controllers\Api\V1\AvatarController;
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\TrustedContactController;
+use App\Http\Controllers\Api\V1\DriverRegistrationController;
 
 Route::prefix('v1')->group(function () {
     // Health Check
@@ -104,8 +105,15 @@ Route::prefix('v1')->group(function () {
         });
 
         // Motorista
+        // Cadastro do motorista pelo app, por etapas (o antigo POST /driver/register
+        // aprovava qualquer usuário na hora e virava motorista quem chamasse)
+        Route::prefix('driver/registration')->middleware('role:driver')->group(function () {
+            Route::get('/', [DriverRegistrationController::class, 'show']);
+            Route::put('/personal', [DriverRegistrationController::class, 'updatePersonal'])->middleware('throttle:20,1');
+            Route::put('/cnh', [DriverRegistrationController::class, 'updateCnh'])->middleware('throttle:20,1');
+        });
+
         Route::prefix('driver')->group(function () {
-            Route::post('/register', [DriverController::class, 'register']);
             Route::post('/documents', [DriverController::class, 'uploadDocument']);
             Route::post('/status', [DriverController::class, 'toggleStatus']);
             Route::get('/rides/current', [DriverController::class, 'currentRides']);

@@ -25,7 +25,47 @@ export interface DriverCurrentState {
   ride: Ride | null;
 }
 
-export type DriverStatus = 'pending_approval' | 'approved' | 'rejected' | 'blocked';
+/**
+ * registering: cadastro pelo app em andamento; pending_approval: enviado para análise;
+ * deleted: conta excluída.
+ */
+export type DriverStatus = 'registering' | 'pending_approval' | 'approved' | 'rejected' | 'blocked' | 'deleted';
+
+/** Etapas do cadastro do motorista pelo app (as seguintes entram nas próximas partes). */
+export type DriverRegistrationStepKey = 'personal' | 'cnh';
+
+/** Categorias da CNH aceitas pela API. */
+export type CnhCategory = 'A' | 'B' | 'AB' | 'C' | 'AC' | 'D' | 'AD' | 'E' | 'AE';
+
+export interface DriverPersonalData {
+  name: string;
+  /** Só dígitos. */
+  cpf: string | null;
+  /** AAAA-MM-DD. */
+  birthDate: string | null;
+  email: string | null;
+}
+
+export interface DriverCnhData {
+  /** Registro da CNH, 11 dígitos. */
+  number: string | null;
+  category: CnhCategory | null;
+  /** AAAA-MM-DD. */
+  expiresAt: string | null;
+  /** Observação EAR (Exerce Atividade Remunerada), exigida pela Lei 13.640. */
+  hasEar: boolean;
+}
+
+/** GET /driver/registration: status, o que cada etapa já tem e a próxima pendente. */
+export interface DriverRegistration {
+  status: DriverStatus;
+  steps: {
+    personal: { done: boolean; data: DriverPersonalData };
+    cnh: { done: boolean; data: DriverCnhData };
+  };
+  /** null: as etapas desta parte estão completas. */
+  nextStep: DriverRegistrationStepKey | null;
+}
 
 export type DocumentType = 'cnh' | 'crlv' | 'background_check' | 'photo';
 

@@ -45,6 +45,9 @@ jest.mock('../src/api', () => ({
     acceptOffer: jest.fn(),
     rejectOffer: jest.fn(),
     updateLocation: jest.fn(),
+    getRegistration: jest.fn(),
+    savePersonalData: jest.fn(),
+    saveCnh: jest.fn(),
   },
   rideApi: { validatePin: jest.fn(), completeRide: jest.fn(), markArrived: jest.fn() },
   billingApi: { requestPayout: jest.fn() },
@@ -93,7 +96,15 @@ const m = api as unknown as {
   session: Record<'load' | 'save' | 'clear', jest.Mock>;
   authApi: Record<'requestOtp' | 'verifyOtp' | 'getMe' | 'updateProfile' | 'uploadAvatar' | 'removeAvatar' | 'deleteAccount', jest.Mock>;
   driverApi: Record<
-    'getCurrent' | 'getEarnings' | 'setOnlineStatus' | 'acceptOffer' | 'rejectOffer' | 'updateLocation',
+    | 'getCurrent'
+    | 'getEarnings'
+    | 'setOnlineStatus'
+    | 'acceptOffer'
+    | 'rejectOffer'
+    | 'updateLocation'
+    | 'getRegistration'
+    | 'savePersonalData'
+    | 'saveCnh',
     jest.Mock
   >;
   rideApi: Record<'validatePin' | 'completeRide' | 'markArrived', jest.Mock>;
@@ -924,6 +935,114 @@ describe('driver-mobile integrado à API', () => {
 
       expect(visibleText(tree)).toContain('Informe seu nome.');
       expect(useDriverStore.getState().user?.name).toBe('Carlos Eduardo Silva');
+    });
+  });
+
+  describe('cadastro do motorista (dados pessoais e CNH)', () => {
+    const NEW_DRIVER = { ...DRIVER, name: 'Usuário VOZTRI', cpf: null, email: null, driverStatus: 'registering' };
+    const reg = (over: { personal?: object; cnh?: object; nextStep?: string | null } = {}) => ({
+      status: 'registering',
+      steps: {
+        personal: { done: false, data: { name: 'Usuário VOZTRI', cpf: null, birthDate: null, email: null }, ...over.personal },
+        cnh: { done: false, data: { number: null, category: null, expiresAt: null, hasEar: false }, ...over.cnh },
+      },
+      nextStep: over.nextStep === undefined ? 'personal' : over.nextStep,
+    });
+    const PERSONAL_DONE = { done: true, data: { name: 'Carlos Eduardo Silva', cpf: '52998224725', birthDate: '1990-05-20', email: null } };
+
+    async function renderRegistering(registration = reg()) {
+      m.session.load.mockResolvedValue('token-salvo');
+      m.authApi.getMe.mockResolvedValue(NEW_DRIVER);
+      m.driverApi.getRegistration.mockResolvedValue(registration);
+      await renderApp();
+    }
+
+    it('motorista em cadastro vê as etapas, não o painel, e nada de ofertas ou ganhos', async () => {
+      await renderRegistering();
+      expectNoStrayText(tree);
+      const text = visibleText(tree);
+      expect(text).toContain('Cadastro de motorista');
+      expect(text).toContain('Etapa 1 de 4 · Dados pessoais');
+      expect(text).not.toContain('Painel Operacional');
+      expect(m.driverApi.getCurrent).not.toHaveBeenCalled();
+      expect(m.driverApi.getEarnings).not.toHaveBeenCalled();
+      // O nome do login não vem preenchido
+      const name = tree.root.find((n) => n.props.accessibilityLabel === 'Nome completo' && n.props.onChangeText);
+      expect(name.props.value).toBe('');
+    });
+
+    it('dados pessoais: máscaras, validação local e envio com a data em AAAA-MM-DD', async () => {
+      m.driverApi.savePersonalData.mockResolvedValueOnce(reg({ personal: PERSONAL_DONE, nextStep: 'cnh' }));
+      await renderRegistering();
+
+      await typeAsync(tree, 'Nome completo', 'Carlos');
+      await typeAsync(tree, 'CPF', '52998224725');
+      await typeAsync(tree, 'Data de nascimento', '31021990');
+      await pressAsync(tree, 'Continuar para a CNH');
+      let text = visibleText(tree);
+      expect(text).toContain('Informe nome e sobrenome, como estão na CNH.');
+      expect(text).toContain('Informe a data de nascimento no formato DD/MM/AAAA.');
+      const cpfInput = tree.root.find((n) => n.props.accessibilityLabel === 'CPF' && n.props.onChangeText);
+      expect(cpfInput.props.value).toBe('529.982.247-25');
+      expect(m.driverApi.savePersonalData).not.toHaveBeenCalled();
+
+      await typeAsync(tree, 'Nome completo', '  Carlos   Eduardo Silva ');
+      await typeAsync(tree, 'Data de nascimento', '20051990');
+      await pressAsync(tree, 'Continuar para a CNH');
+      expect(m.driverApi.savePersonalData).toHaveBeenCalledWith({
+        name: 'Carlos Eduardo Silva',
+        cpf: '52998224725',
+        birthDate: '1990-05-20',
+        email: null,
+      });
+      text = visibleText(tree);
+      expect(text).toContain('Etapa 2 de 4 · CNH');
+      expect(useDriverStore.getState().user).toMatchObject({ name: 'Carlos Eduardo Silva', cpf: '52998224725' });
+    });
+
+    it('erro por campo da API aparece no campo (CPF de outra conta)', async () => {
+      m.driverApi.savePersonalData.mockRejectedValueOnce({ message: 'x', fields: { cpf: 'Este CPF já está cadastrado em outra conta.' } });
+      await renderRegistering();
+      await typeAsync(tree, 'Nome completo', 'Carlos Eduardo');
+      await typeAsync(tree, 'CPF', '52998224725');
+      await typeAsync(tree, 'Data de nascimento', '20051990');
+      await pressAsync(tree, 'Continuar para a CNH');
+      expect(visibleText(tree)).toContain('Este CPF já está cadastrado em outra conta.');
+      expect(visibleText(tree)).toContain('Etapa 1 de 4');
+    });
+
+    it('CNH: exige a EAR, envia a categoria e conclui esta parte', async () => {
+      m.driverApi.saveCnh.mockResolvedValueOnce(
+        reg({ personal: PERSONAL_DONE, cnh: { done: true, data: { number: '01234567890', category: 'B', expiresAt: '2030-01-31', hasEar: true } }, nextStep: null }),
+      );
+      await renderRegistering(reg({ personal: PERSONAL_DONE, nextStep: 'cnh' }));
+      expect(visibleText(tree)).toContain('Etapa 2 de 4 · CNH');
+
+      await typeAsync(tree, 'Número da CNH (registro)', '0123 4567 890');
+      await pressAsync(tree, 'Categoria B');
+      await typeAsync(tree, 'Validade da CNH', '31012030');
+      await pressAsync(tree, 'Salvar CNH');
+      expect(visibleText(tree)).toContain('a CNH precisa ter a observação EAR');
+      expect(m.driverApi.saveCnh).not.toHaveBeenCalled();
+
+      await pressAsync(tree, 'Minha CNH tem a observação EAR');
+      await pressAsync(tree, 'Salvar CNH');
+      expect(m.driverApi.saveCnh).toHaveBeenCalledWith({ number: '01234567890', category: 'B', expiresAt: '2030-01-31', hasEar: true });
+      const text = visibleText(tree);
+      expect(text).toContain('Dados pessoais e CNH salvos');
+      expect(text).toContain('Etapa 3 de 4 · Veículo');
+
+      // Revisar volta à etapa com o que foi salvo
+      await pressAsync(tree, 'Revisar dados pessoais');
+      const cpf = tree.root.find((n) => n.props.accessibilityLabel === 'CPF' && n.props.onChangeText);
+      expect(cpf.props.value).toBe('529.982.247-25');
+    });
+
+    it('sair da conta pelo cadastro', async () => {
+      await renderRegistering();
+      await pressAsync(tree, 'Sair da conta');
+      expect(m.session.clear).toHaveBeenCalled();
+      expect(visibleText(tree)).toContain('Entrar como motorista');
     });
   });
 
